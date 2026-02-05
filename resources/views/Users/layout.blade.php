@@ -3,15 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Phanda User</title>
+    <title>Panda User</title>
 
     {{-- Load Vite JS and users CSS (reuses firstpage entry) --}}
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/js/firstpage.js', 'resources/css/users.css'])
+        @vite(['resources/js/firstpage.js', 'resources/css/users.css','resources/css/dashboard.css'])
     @else
         <link rel="stylesheet" href="/build/assets/users.css">
         <script src="/build/assets/firstpage.js"></script>
     @endif
+    
+        
 </head>
 <body>
     <div class="dashboard-container">
@@ -19,7 +21,7 @@
             <div class="header-content">
                 <a href="/users/dashboard" class="logo">
                     <div class="logo-icon"></div>
-                    <span>Phanda User</span>
+                    <span>Panda User</span>
                 </a>
                 <div class="user-info">
                     <div class="location-badge">

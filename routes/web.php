@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\DashboardController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -75,9 +78,9 @@ Route::get('/providers/profile', function () {
 });
 
 // User area sample routes
-Route::get('/users/dashboard', function () {
-    return view('users.dashboard');
-});
+
+Route::get('/users/dashboard', [DashboardController::class, 'index'])
+    ->name('users.dashboard');
 
 Route::get('/users/services', function () {
     return view('users.services');
@@ -91,10 +94,6 @@ Route::get('/users/messages', function () {
     return view('users.messages');
 });
 
-Route::get('/users/reviews', function () {
-    return view('users.reviews');
-});
-
 Route::get('/users/profile', function () {
     return view('users.profile');
 });
@@ -102,3 +101,10 @@ Route::get('/users/profile', function () {
 Route::get('/users/settings', function () {
     return view('users.settings');
 });
+Route::get('/users/reviews', [ReviewController::class, 'index'])
+    ->name('reviews.reviews');
+Route::post('/reviews', [ReviewController::class, 'store'])
+    ->name('reviews.store');
+Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])
+    ->name('reviews.destroy');
+
