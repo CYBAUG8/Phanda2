@@ -103,8 +103,8 @@ Route::get('/users/settings', function () {
 });
 Route::get('/users/reviews', [ReviewController::class, 'index'])
     ->name('reviews.reviews');
-Route::post('/reviews', [ReviewController::class, 'store'])
+Route::post('users/reviews', [ReviewController::class, 'store'])
     ->name('reviews.store');
-Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])
+Route::delete('/users/reviews/{id}', [ReviewController::class, 'destroy'])
     ->name('reviews.destroy');
 

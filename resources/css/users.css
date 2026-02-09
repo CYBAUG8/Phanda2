@@ -78,5 +78,31 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
 
 /* Printing / print-friendly */
 @media print{ .sidebar, .header{ display:none; } .user-content{ padding:0; } }
+/* Base page links */
+.pagination .page-link {
+    color: #ff8c00; /* orange text for normal pages */
+}
+
+/* Hover state */
+.pagination .page-link:hover {
+    color: #fff;
+    background-color: #ff8c00;
+    border-color: #ff8c00;
+}
+
+/* Active page */
+.pagination .page-item.active .page-link {
+    color: #fff;
+    background-color: #ff8c00;
+    border-color: #ff8c00;
+}
+
+/* Disabled pages */
+.pagination .page-item.disabled .page-link {
+    color: #ccc;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #ddd;
+}
 
 /* end of users.css */

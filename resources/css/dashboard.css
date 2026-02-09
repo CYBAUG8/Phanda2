@@ -136,3 +136,18 @@
   .stats-grid{ grid-template-columns: 1fr; }
   .message-bubble{ max-width: 100%; }
 }
+.stat-card{
+  cursor:pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.stat-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+.row-title{
+  font-weight:600;
+}
+.row-note{
+  font-size:12px;
+  color: var(--muted);
+}

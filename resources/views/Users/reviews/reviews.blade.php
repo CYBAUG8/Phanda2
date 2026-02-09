@@ -3,7 +3,7 @@
 @section('content')
 <div class="page">
 
-    <h1 style="color:#6b4f3b">Provider Reviews</h1>
+    <h1>Provider Reviews</h1>
 
     <div class="card" style="padding:16px;border-radius:12px;border:1px solid #eee">
 
@@ -11,7 +11,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
 
             <div>
-                <h2 style="margin:0;color:#6b4f3b">
+                <h2 >
                     Reviews for {{ $selectedProvider['name'] ?? 'Provider' }}
                 </h2>
 
@@ -48,32 +48,24 @@
             </div>
         </div>
 
+        @if(session('success'))
+            <div style="padding:12px;background:#d4edda;color:#155724;border-radius:8px;margin-bottom:12px">
+                {{ session('success') }}
+            </div>
+        @endif
+
         {{-- Content --}}
         <div style="display:flex;gap:16px">
 
             {{-- Sidebar stats --}}
-            @php
-                $totalReviews = $reviews->count();
-                $average = $totalReviews
-                    ? number_format($reviews->avg('rating'), 1)
-                    : 0;
-
-                $ratingCounts = collect([5,4,3,2,1])->map(fn($s) => [
-                    'star' => $s,
-                    'count' => $reviews->where('rating', $s)->count(),
-                ]);
-            @endphp
-
             <aside style="flex:0 0 240px;background:#fff;padding:16px;border:1px solid #eee;border-radius:8px">
 
-                <h3 style="margin-top:0;color:#6b4f3b">
-                    {{ $selectedProvider['name'] ?? '' }}
-                </h3>
+                
 
                 <div style="text-align:center;margin-bottom:10px;display:grid;gap:6px;justify-items:center">
-                    <span style="font-size:32px;color:#ff8c00;font-weight:bold">{{ $average }}</span>
+                    <span style="font-size:32px;color:#ff8c00;font-weight:bold">{{ $averageRating }}</span>
 
-                    @include('users.reviews.partials.stars', ['value' => $average])
+                    @include('users.reviews.partials.stars', ['value' => $averageRating])
 
                     <small style="color:#666">
                         {{ $totalReviews }} review{{ $totalReviews !== 1 ? 's' : '' }}
@@ -90,7 +82,7 @@
                             <div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden">
                                 <div style="height:100%;width:{{ $pct }}%;background:#ff8c00"></div>
                             </div>
-                            <span>{{ $row['count'] }}</span>
+                            <span>{{$row['count']}}</span>
                         </div>
                     @endforeach
                 </div>
@@ -125,10 +117,9 @@
                             No reviews yet. Be the first!
                         </div>
                     @endforelse
-                    <div style="margin-top:12px">
-                        {{ $reviews->links('pagination::simple-bootstrap-4') }}
+                    <div class="d-flex justify-content-center mt-3">
+                        {{ $reviews->links('pagination::simple-bootstrap-5') }}
                     </div>
-
                 </div>
 
             </main>

@@ -16,7 +16,12 @@ class ReviewController extends Controller
      */
     public function index(Request $request)
     {
-        $currentUser = Auth::user();
+        // Simulated logged-in user for testing
+        $currentUser = (object)[
+            'id' => '1',
+            'name' => 'Test User',
+        ];
+
 
         // Defined available providers (could later come from DB)
         $providers = [
@@ -31,22 +36,40 @@ class ReviewController extends Controller
         $reviews = Review::with('user')
         ->where('provider_id', $selectedProviderId)
         ->orderByDesc('created_at')
-        ->paginate(2) 
-        ->withQueryString(); 
+        ->paginate(2);
 
+        // Stats calculated from ALL reviews
+        $allReviews = Review::where('provider_id', $selectedProviderId)->get();
 
-        // The current user's review for this provider (if any)
+        $totalReviews = $allReviews->count();
+        $averageRating = $totalReviews
+            ? round($allReviews->avg('rating'), 1)
+            : 0;
+
+        $ratingCounts = collect([5,4,3,2,1])->map(fn ($s) => [
+            'star' => $s,
+            'count' => $allReviews->where('rating', $s)->count(),
+        ]);
+
         $userReviewForSelected = $currentUser
-            ? $reviews->firstWhere('user_id', $currentUser->id)
+            ? $allReviews->firstWhere('user_id', $currentUser->id)
             : null;
+
+        $selectedProvider = collect($providers)
+        ->firstWhere('id', $selectedProviderId);
 
         return view('Users.reviews.reviews', compact(
             'providers',
             'selectedProviderId',
+            'selectedProvider',
             'reviews',
             'currentUser',
+            'totalReviews',
+            'averageRating',
+            'ratingCounts',
             'userReviewForSelected'
         ));
+
     }
 
 
@@ -114,43 +137,25 @@ class ReviewController extends Controller
                 'provider_id' => $validated['provider_id'],
             ],
             [
-                'id'         => (string) Str::uuid(),
                 'service_id' => $validated['service_id'],
                 'rating'     => $validated['rating'],
                 'comment'    => $validated['comment'],
             ]
         );
 
-        $review->load('user');
-
-        return response()->json([
-            'message' => 'Review submitted successfully.',
-            'review' => [
-                'id'         => $review->id,
-                'service_id' => $review->service_id,
-                'provider_id'=> $review->provider_id,
-                'user_id'    => $review->user_id,
-                'rating'     => $review->rating,
-                'comment'    => $review->comment,
-                'created_at' => $review->created_at,
-                'updated_at' => $review->updated_at,
-            ],
-        ], 201);
+        return redirect()->route('reviews.reviews', ['provider' => $validated['provider_id']])
+                        ->with('success', 'Review submitted successfully.');
     }
+
 
     /**
      * ================= API: Delete a review =================
      */
     public function destroy($id)
     {
-        $review = Review::find($id);
+        Review::where('id', $id)->delete();
 
-        if (!$review) {
-            return response()->json(['message' => 'Review not found'], 404);
-        }
-
-        $review->delete();
-
-        return response()->json(['message' => 'Review deleted successfully'], 200);
+        return redirect()->back()->with('success', 'Review deleted successfully.');
     }
+
 }
