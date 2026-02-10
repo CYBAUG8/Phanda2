@@ -59,9 +59,6 @@
 
             {{-- Sidebar stats --}}
             <aside style="flex:0 0 240px;background:#fff;padding:16px;border:1px solid #eee;border-radius:8px">
-
-                
-
                 <div style="text-align:center;margin-bottom:10px;display:grid;gap:6px;justify-items:center">
                     <span style="font-size:32px;color:#ff8c00;font-weight:bold">{{ $averageRating }}</span>
 

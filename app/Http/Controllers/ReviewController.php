@@ -28,6 +28,9 @@ class ReviewController extends Controller
             ['id' => 'cleaner-001', 'name' => 'General Cleaning'],
             ['id' => 'plumber-001', 'name' => 'Plumbing Repair'],
             ['id' => 'garden-001', 'name' => 'Garden Maintenance'],
+            ['id' => 'electrical-001', 'name' => 'Electrical Repair'],
+            ['id' => 'construction-001', 'name' => 'Bantu Construction'],
+            ['id' => 'catering-001', 'name' => 'Catering Service'],
         ];
 
         $selectedProviderId = $request->get('provider', $providers[0]['id']);
