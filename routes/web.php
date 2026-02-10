@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Http\Controllers\UserServiceController;
+use App\Http\Controllers\UserBookingController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -79,13 +81,11 @@ Route::get('/users/dashboard', function () {
     return view('users.dashboard');
 });
 
-Route::get('/users/services', function () {
-    return view('users.services');
-});
+Route::get('/users/services', [UserServiceController::class, 'index']);
 
-Route::get('/users/bookings', function () {
-    return view('users.bookings');
-});
+Route::get('/users/bookings', [UserBookingController::class, 'index']);
+Route::post('/users/bookings', [UserBookingController::class, 'store']);
+Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel']);
 
 Route::get('/users/messages', function () {
     return view('users.messages');

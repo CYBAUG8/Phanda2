@@ -3,7 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Phanda User</title>
+
+    {{-- FontAwesome CDN --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     {{-- Load Vite JS and users CSS (reuses firstpage entry) --}}
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -65,8 +69,40 @@
         </aside>
 
         <main class="user-content">
+            {{-- Flash messages --}}
+            @if(session('success'))
+                <div class="flash-message flash-message--success" id="flashMessage">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ session('success') }}</span>
+                    <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="flash-message flash-message--error" id="flashMessage">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{{ session('error') }}</span>
+                    <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                </div>
+            @endif
+
             @yield('content')
         </main>
     </div>
+
+    @stack('scripts')
+
+    <script>
+        // Auto-dismiss flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const flash = document.getElementById('flashMessage');
+            if (flash) {
+                setTimeout(() => {
+                    flash.style.opacity = '0';
+                    flash.style.transform = 'translateY(-10px)';
+                    setTimeout(() => flash.remove(), 300);
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>
