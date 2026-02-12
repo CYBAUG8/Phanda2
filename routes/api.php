@@ -3,7 +3,13 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReviewController;
-
+//profile
+use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\EmergencyContactController;
+use App\Http\Controllers\Api\LocationController;
+use App\Http\Controllers\Api\LoginHistoryController;
+use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\AuthController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -37,3 +43,58 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 });
 */
+
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // User Info & Settings
+    Route::prefix('settings')->group(function () {
+        Route::get('/userInfo', [SettingController::class, 'getUserInfo']);
+        Route::post('/updateUserInfo', [SettingController::class, 'updateUserInfo']);
+        Route::post('/sendOtp', [SettingController::class, 'sendOtp']);
+        Route::get('/getSettings', [SettingController::class, 'getSettings']);
+        Route::post('/settings', [SettingController::class, 'updateSettings']);
+        Route::post('/notification-preferences', [SettingController::class, 'updateNotificationPreferences']);
+    });
+
+    // Emergency Contact
+    Route::prefix('emergency-contact')->group(function () {
+        Route::get('/', [EmergencyContactController::class, 'show']);
+        Route::post('/', [EmergencyContactController::class, 'store']);
+        Route::put('/', [EmergencyContactController::class, 'store']); // Same as POST for update
+        Route::delete('/', [EmergencyContactController::class, 'destroy']);
+    });
+
+    // Locations
+    Route::prefix('locations')->group(function () {
+        Route::get('/', [LocationController::class, 'index']);
+        Route::post('/', [LocationController::class, 'store']);
+        Route::put('/{id}', [LocationController::class, 'update']);
+        Route::delete('/{id}', [LocationController::class, 'destroy']);
+        Route::post('/{id}/default', [LocationController::class, 'setDefault']);
+    });
+
+    // Login History
+    Route::prefix('login-history')->group(function () {
+        Route::get('/', [LoginHistoryController::class, 'index']);
+        Route::post('/', [LoginHistoryController::class, 'store']);
+    });
+
+    // Account Management
+    Route::prefix('account')->group(function () {
+        Route::post('/update-password', [AccountController::class, 'updatePassword']);
+        Route::post('/update-contact-method', [AccountController::class, 'updateContactMethod']);
+        Route::post('/toggle-data-sharing', [AccountController::class, 'toggleDataSharing']);
+        Route::get('/export-data', [AccountController::class, 'exportData']);
+        Route::delete('/', [AccountController::class, 'destroy']);
+    });
+
+    // Additional routes
+    Route::get('/user', function (Request $request) {
+        return response()->json([
+            'success' => true,
+            'user' => $request->user()
+        ]);
+    });
+});
+
+Route::post('/register', [AuthController::class, 'register']);
