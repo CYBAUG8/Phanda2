@@ -1,0 +1,108 @@
+:root{
+    --phanda-orange: #ff6a00;
+    --phanda-dark: #0b0b0b;
+    --phanda-white: #ffffff;
+    --sidebar-width: 260px;
+}
+
+/* Global reset-ish for the dashboard */
+html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: linear-gradient(180deg, #fafafa 0%, #fff 100%); color:var(--phanda-dark); }
+
+.dashboard-container{
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: 72px 1fr;
+    min-height: 100vh;
+    gap: 0;
+}
+
+/* header spans full width */
+.header{ grid-column: 1 / -1; display:flex; align-items:center; height:72px; background:var(--phanda-white); box-shadow: 0 6px 18px rgba(11,11,11,0.06); z-index:30; position:sticky; top:0; }
+.header-content{ width:100%; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
+
+.logo{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--phanda-dark); }
+.logo-icon{ width:36px; height:36px; border-radius:8px; background: linear-gradient(135deg,var(--phanda-orange), #ff8b3d); box-shadow: 0 6px 20px rgba(255,106,0,0.18); }
+.logo span{ font-weight:700; font-size:18px; letter-spacing:0.2px; }
+
+.user-info{ display:flex; align-items:center; gap:12px; }
+.location-badge{ display:flex; align-items:center; gap:8px; color:rgba(11,11,11,0.7); font-size:13px; }
+.location-badge i{ color:var(--phanda-orange); }
+.avatar{ width:36px; height:36px; background:linear-gradient(180deg,#222 0%, #111 100%); color:var(--phanda-white); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+
+/* Sidebar */
+.sidebar{ background: linear-gradient(180deg, #080808 0%, #0f0f0f 100%); padding-top:12px; }
+.sidebar-nav{ display:flex; flex-direction:column; gap:6px; padding:12px; }
+.sidebar-item{ display:flex; align-items:center; gap:12px; color:rgba(255,255,255,0.9); padding:12px 14px; border-radius:10px; text-decoration:none; transition: all .18s cubic-bezier(.2,.9,.2,1); font-size:15px; }
+.sidebar-item i{ width:20px; text-align:center; color:rgba(255,255,255,0.85); }
+.sidebar-item span{ flex:1; }
+.sidebar-item:hover{ transform:translateX(6px); box-shadow: 0 6px 18px rgba(0,0,0,0.35); background: linear-gradient(90deg, rgba(255,106,0,0.06), rgba(255,106,0,0.02)); }
+.sidebar-item.active{ background: linear-gradient(90deg, rgba(255,106,0,0.12), rgba(255,106,0,0.06)); border-left:4px solid var(--phanda-orange); padding-left:10px; box-shadow: inset 0 0 18px rgba(255,106,0,0.02); }
+
+/* content area */
+.user-content{ padding:28px 36px; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.9)); }
+.user-content h2{ margin-top:6px; margin-bottom:12px; font-size:22px; color:var(--phanda-dark); }
+.user-content p{ color:rgba(11,11,11,0.7); line-height:1.6; }
+
+/* cards */
+.card{ background:var(--phanda-white); padding:18px; border-radius:12px; box-shadow: 0 8px 30px rgba(11,11,11,0.06); border: 1px solid rgba(11,11,11,0.03); }
+
+/* utility layout helpers */
+.grid{ display:grid; gap:18px; }
+.grid.cols-2{ grid-template-columns: 1fr 320px; }
+
+/* responsive */
+@media (max-width: 980px){
+    :root{ --sidebar-width: 80px; }
+    .dashboard-container{ grid-template-columns: var(--sidebar-width) 1fr; }
+    .logo span{ display:none; }
+    .sidebar-item span{ display:none; }
+    .sidebar-item{ justify-content:center; padding:14px; }
+    .user-content{ padding:18px; }
+}
+
+@media (max-width: 700px){
+    .dashboard-container{ grid-template-columns: 1fr; grid-template-rows: 64px auto; }
+    .sidebar{ order:2; display:flex; width:100%; }
+    .sidebar-nav{ flex-direction:row; overflow-x:auto; gap:0; }
+    .sidebar-item{ flex:0 0 auto; padding:12px 18px; border-radius:0; }
+}
+
+/* small accents */
+.sidebar-item .badge{ background:var(--phanda-orange); color:var(--phanda-white); padding:3px 8px; border-radius:999px; font-size:12px; font-weight:700; }
+
+/* subtle animated underline for header links (if any) */
+.header a.logo:hover .logo-icon{ transform: translateY(-3px) scale(1.02); transition: all .22s ease; }
+
+/* accessibility focus states */
+.sidebar-item:focus{ outline: 3px solid rgba(255,106,0,0.14); outline-offset: 2px; }
+
+/* Printing / print-friendly */
+@media print{ .sidebar, .header{ display:none; } .user-content{ padding:0; } }
+/* Base page links */
+.pagination .page-link {
+    color: #ff8c00; /* orange text for normal pages */
+}
+
+/* Hover state */
+.pagination .page-link:hover {
+    color: #fff;
+    background-color: #ff8c00;
+    border-color: #ff8c00;
+}
+
+/* Active page */
+.pagination .page-item.active .page-link {
+    color: #fff;
+    background-color: #ff8c00;
+    border-color: #ff8c00;
+}
+
+/* Disabled pages */
+.pagination .page-item.disabled .page-link {
+    color: #ccc;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #ddd;
+}
+
+/* end of users.css */
