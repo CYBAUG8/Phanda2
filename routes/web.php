@@ -18,6 +18,8 @@ use App\Http\Controllers\EmergencyContactController;
 use App\Http\Controllers\ProfileController;  
 use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
+use App\Http\Controllers\UserMessageController;
+use App\Http\Controllers\ProviderMessageController;
 
 
 
@@ -82,9 +84,7 @@ Route::get('/providers/earnings', function () {
     return view('providers.earnings');
 });
 
-Route::get('/providers/messages', function () {
-    return view('providers.messages');
-});
+
 
 Route::get('/providers/profile', function () {
     return view('providers.profile');
@@ -103,9 +103,7 @@ Route::get('/users/bookings', function () {
     return view('users.bookings');
 });
 
-Route::get('/users/messages', function () {
-    return view('users.messages');
-});
+
 
 Route::get('/users/profile', function () {
     return view('users.profile');
@@ -202,6 +200,26 @@ Route::middleware('auth')->group(function () {
     Route::post('/provider/calendar/{id}/status', [ProviderCalendarController::class, 'updateStatus'])
         ->name('provider.calendar.updateStatus');
 
+    //Messages routes
+    Route::get('/users/messages', [UserMessageController::class, 'index'])->name('user.messages');
+    Route::get('/users/messages/{conversation}', [UserMessageController::class, 'show'])->name('user.messages.show');
+    Route::post('/users/messages/send', [UserMessageController::class, 'send'])->name('user.messages.send');
+    Route::get('/users/messages/{conversation}/latest',[UserMessageController::class, 'latest']);
+
+    Route::get('/providers/messages', [ProviderMessageController::class, 'index'])
+    ->name('provider.messages');
+
+    Route::get('/providers/messages/{conversation}', [ProviderMessageController::class, 'show'])
+    ->name('provider.messages.show');
+
+    Route::post('/providers/messages/send', [ProviderMessageController::class, 'send'])
+    ->name('provider.messages.send');
+    
+    Route::get('/providers/messages/{conversation}/latest',[ProviderMessageController::class, 'latest']);
+
+
 });
+
+
 
 Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');

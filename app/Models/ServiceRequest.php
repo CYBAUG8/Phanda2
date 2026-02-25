@@ -11,6 +11,11 @@ class ServiceRequest extends Model
 {
     use HasFactory;
 
+
+    protected $primaryKey = 'booking_id'; 
+    public $incrementing = false;
+    protected $keyType = 'string'; 
+
     protected $fillable = [
         'booking_id',
         'user_id',

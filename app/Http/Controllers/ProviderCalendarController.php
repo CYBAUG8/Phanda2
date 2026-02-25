@@ -14,52 +14,59 @@ class ProviderCalendarController extends Controller
       return view('provider.schedule');
     }
 
-    public function events(){
-
-        $providerId=Auth::User()->ProviderProfile->provider_id;
-
-        $ServiceRequest=ServiceRequest::with(['service','customer'])
-           ->where('provider_id',$providerId)
-           ->get();
-
-        $events=$ServiceRequest->map(function($ServiceRequest){
-
-            $color =match($ServiceRequest->status){
-
-                'confirmed'=>'#f97316',
-                'completed' => '#10b981',
-                'cancelled' => '#ef4444',
-                 default => '#9ca3af',
 
 
 
-            };
-
-            return[
-
-                'id'=>$ServiceRequest->booking_id,
-                'title'=>$ServiceRequest->service->title,
-                'start'=>$ServiceRequest->start_time,
-                'end'=>$ServiceRequest->end_time,
-                'backgroundColor'=>$color,
-                'borderColor'=>$color,
-                'textColor'=>'#ffffff',
-                'extendedProps'=>[
-
-                    'customer_name'=>$ServiceRequest->customer->full_name,
-                    'phone'=>$ServiceRequest->customer->phone,
-                    'address'=>$ServiceRequest->customer->address,
-                    'notes'=>$ServiceRequest->notes,
-                    'status'=>$ServiceRequest->status,
-                    'price'=>$ServiceRequest->total_price,
-                ]
-
-
-            ];
-
-        });
-        return response()->json($events);
+    public function events()
+{
+    $user = Auth::user();
+    if (!$user || !$user->providerProfile) {
+        return response()->json([]); // or return error response
     }
+
+    $providerId = $user->providerProfile->provider_id;
+
+    $serviceRequests = ServiceRequest::with(['service', 'customer'])
+        ->where('provider_id', $providerId)
+        ->get();
+
+    $events = $serviceRequests->map(function ($request) {
+        $color = match ($request->status) {
+            'confirmed' => '#f97316',
+            'completed' => '#10b981',
+            'cancelled' => '#ef4444',
+            default     => '#9ca3af',
+        };
+
+       
+
+        
+
+        return [
+            'id'               => $request->booking_id,
+            'title'            => $request->service->title,
+            'start' => date('Y-m-d', strtotime($request->booking_date))
+                        . 'T' .
+                        date('H:i:s', strtotime($request->start_time)),
+
+            'end'   => date('Y-m-d', strtotime($request->booking_date))
+                        . 'T' .
+                        date('H:i:s', strtotime($request->end_time)),
+            'backgroundColor'  => $color,
+            'borderColor'      => $color,
+            'textColor'        => '#ffffff',
+            'extendedProps'    => [
+                'customer_name' => $request->customer->full_name ?? 'N/A',
+                'phone'         => $request->customer->phone ?? 'N/A',
+                'address'       => $request->customer->address ?? $request->address, 
+                'status'        => $request->status,
+                'price'         => $request->total_price,
+            ]
+        ];
+    });
+
+    return response()->json($events);
+}
 
 
 

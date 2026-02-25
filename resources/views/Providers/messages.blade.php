@@ -1,128 +1,249 @@
 @extends('providers.layout')
 
 @section('content')
-
 <div class="h-[calc(100vh-120px)] flex bg-white rounded-lg shadow overflow-hidden">
 
     <!-- LEFT: Conversations List -->
-    <div class="w-1/3 border-r bg-gray-50 flex flex-col">
+    <div class="w-1/3 border-r bg-gray-50 flex flex-col overflow-y-auto">
+        <h2 class="p-4 font-semibold text-gray-700 border-b">Messages</h2>
 
-        <!-- Header -->
-        <div class="p-4 border-b bg-white">
-            <h2 class="text-lg font-semibold text-orange-500">Messages</h2>
-        </div>
-
-        <!-- Search -->
-        <div class="p-3 border-b">
-            <input type="text"
-                   placeholder="Search conversations..."
-                   class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
-        </div>
-
-        <!-- Conversation List -->
-        <div class="flex-1 overflow-y-auto">
-
-            <!-- Conversation Item -->
-            <div class="p-4 border-b hover:bg-gray-100 cursor-pointer bg-orange-50">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">
-                        JM
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between">
-                            <h3 class="font-medium text-gray-900">John Mokoena</h3>
-                            <span class="text-xs text-gray-500">2:45 PM</span>
-                        </div>
-                        <p class="text-sm text-gray-600 truncate">
-                            Hi, are you available tomorrow?
-                        </p>
-                    </div>
+        @forelse($conversations as $conversation)
+            <a href="{{ route('provider.messages.show', $conversation->conversation_id) }}"
+               class="p-4 border-b hover:bg-gray-100 flex items-center gap-3
+                      {{ isset($selectedConversation) && $selectedConversation->conversation_id === $conversation->conversation_id ? 'bg-gray-200' : '' }}">
+                <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">
+                    {{ strtoupper(substr($conversation->user->full_name ?? 'U', 0, 2)) }}
                 </div>
-            </div>
-
-            <!-- Another Conversation -->
-            <div class="p-4 border-b hover:bg-gray-100 cursor-pointer">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold">
-                        TS
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between">
-                            <h3 class="font-medium text-gray-900">Thandi Sithole</h3>
-                            <span class="text-xs text-gray-500">Yesterday</span>
-                        </div>
-                        <p class="text-sm text-gray-600 truncate">
-                            Thank you for the great service!
-                        </p>
-                    </div>
+                <div class="flex-1">
+                    <h3 class="font-medium text-gray-900">{{ $conversation->user->full_name ?? 'Unknown' }}</h3>
+                    <p class="text-xs text-gray-500">
+                        @if($conversation->messages->last())
+                            {{ \Illuminate\Support\Str::limit($conversation->messages->last()->message, 25) }}
+                        @else
+                            <span class="text-gray-300">· · ·</span> {{-- subtle placeholder instead of "No messages yet" --}}
+                        @endif
+                    </p>
                 </div>
-            </div>
-
-        </div>
+            </a>
+        @empty
+            <p class="p-4 text-gray-400">No conversations yet.</p>
+        @endforelse
     </div>
 
     <!-- RIGHT: Chat Area -->
     <div class="flex-1 flex flex-col">
 
-        <!-- Chat Header -->
-        <div class="p-4 border-b bg-white flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">
-                    JM
-                </div>
-                <div>
-                    <h3 class="font-medium text-gray-900">John Mokoena</h3>
-                    <p class="text-xs text-green-500">Online</p>
-                </div>
+        @if($selectedConversation ?? false)
+
+        <!-- Chat Header (shows the other user) -->
+        <div class="p-4 border-b bg-white flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">
+                {{ strtoupper(substr($selectedConversation->user->full_name ?? 'U', 0, 2)) }}
+            </div>
+            <div>
+                <h3 class="font-medium text-gray-900">
+                    {{ $selectedConversation->user->full_name }}
+                </h3>
+                <p class="text-xs text-green-500">Online</p>
             </div>
         </div>
 
         <!-- Messages Area -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+        <div id="messagesArea" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+            @foreach($selectedConversation->messages as $message)
+                @php $isProvider = $message->sender_type === 'provider'; @endphp
 
-            <!-- Incoming Message -->
-            <div class="flex items-start gap-2">
-                <div class="bg-white px-4 py-2 rounded-lg shadow max-w-xs">
-                    <p class="text-sm">Hi, are you available tomorrow at 10am?</p>
-                    <span class="text-xs text-gray-400 block mt-1">2:40 PM</span>
+                <div  data-id="{{ $message->id }}" class="{{ $isProvider ? 'flex justify-end' : 'flex items-start gap-2' }}">
+                    <div class="{{ $isProvider
+                        ? 'flex flex-col items-end bg-orange-500 text-white'
+                        : 'bg-white flex flex-col' }}
+                        px-4 py-2 rounded-lg shadow max-w-xs">
+
+                        <p class="text-sm">{{ $message->message }}</p>
+
+                        <span class="{{ $isProvider
+                            ? 'text-xs text-orange-100 mt-1'
+                            : 'text-xs text-gray-400 mt-1' }}"
+                              title="{{ $message->created_at }}">
+                            {{ $message->created_at->format('H:i') }}
+                        </span>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Outgoing Message -->
-            <div class="flex justify-end">
-                <div class="bg-orange-500 text-white px-4 py-2 rounded-lg shadow max-w-xs">
-                    <p class="text-sm">Yes, I am available. What service do you need?</p>
-                    <span class="text-xs text-orange-100 block mt-1">2:42 PM</span>
-                </div>
-            </div>
-
-            <!-- Incoming -->
-            <div class="flex items-start gap-2">
-                <div class="bg-white px-4 py-2 rounded-lg shadow max-w-xs">
-                    <p class="text-sm">Garden maintenance.</p>
-                    <span class="text-xs text-gray-400 block mt-1">2:44 PM</span>
-                </div>
-            </div>
-
+            @endforeach
         </div>
 
-        <!-- Message Input -->
-        <div class="p-4 border-t bg-white">
-            <div class="flex items-center gap-3">
+        <!-- Message Input Form -->
+        <form id="messageForm" class="p-4 border-t bg-white flex items-center gap-3">
+            @csrf
+            <input type="hidden" name="conversation_id"
+                   value="{{ $selectedConversation->conversation_id }}">
 
-                <input type="text"
-                       placeholder="Type your message..."
-                       class="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-orange-500 focus:outline-none">
+            <input id="messageInput" type="text" name="message"
+                   placeholder="Type your message..."
+                   class="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                   required>
 
-                <button class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-full transition">
-                    Send
-                </button>
+            <button type="submit" id="sendButton"
+                    class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-full transition flex items-center gap-2">
+                <span>Send</span>
+                <!-- Spinner (hidden by default) -->
+                <svg id="sendSpinner" class="hidden w-4 h-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </form>
 
-            </div>
-        </div>
+        @endif
 
     </div>
-
 </div>
 
+<!-- Toast notification container (hidden by default) -->
+<div id="toast" class="fixed bottom-4 right-4 z-50 hidden bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300"></div>
+
+<!-- Extra animation styles -->
+<style>
+    .fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const messagesArea = document.getElementById('messagesArea');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const spinner = document.getElementById('sendSpinner');
+    const toast = document.getElementById('toast');
+
+    if (!messageForm) return;
+
+    let loadedMessageIds = new Set();
+    document.querySelectorAll('#messagesArea [data-id]').forEach(el => {
+        loadedMessageIds.add(Number(el.dataset.id));
+    });
+
+    function scrollToBottom() {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>"]/g, m => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;'
+        }[m]));
+    }
+
+    function showToast(message, type = 'error') {
+        toast.textContent = message;
+        toast.className = `fixed bottom-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'} text-white`;
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+
+    async function fetchMessages() {
+        const conversationId = messageForm.conversation_id.value;
+        try {
+            const res = await fetch(`/providers/messages/${conversationId}/latest`);
+            if (!res.ok) return;
+            const data = await res.json();
+
+            data.messages.forEach(msg => {
+                const msgId = Number(msg.id);
+                if (loadedMessageIds.has(msgId)) return;
+
+                loadedMessageIds.add(msgId);
+                const isMine = msg.sender_type === 'provider'; // false => from user
+
+                const div = document.createElement('div');
+                div.setAttribute('data-id', msgId);
+                div.className = `flex ${isMine ? 'justify-end' : 'items-start'} fade-in`;
+
+                div.innerHTML = `
+                    <div class="${isMine
+                        ? 'flex flex-col items-end bg-orange-500 text-white'
+                        : 'bg-white flex flex-col'}
+                        px-4 py-2 rounded-lg shadow max-w-xs">
+                        <p class="text-sm">${escapeHTML(msg.message)}</p>
+                        <span class="text-xs mt-1">${msg.time}</span>
+                    </div>
+                `;
+                messagesArea.appendChild(div);
+            });
+            scrollToBottom();
+        } catch (err) {
+            console.error('Polling error:', err);
+        }
+    }
+
+    setInterval(fetchMessages, 3000);
+
+    messageForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        spinner.classList.remove('hidden');
+
+        try {
+            const res = await fetch("{{ route('provider.messages.send') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': messageForm._token.value,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    conversation_id: messageForm.conversation_id.value,
+                    message: message
+                })
+            });
+
+            if (!res.ok) throw new Error('Send failed');
+
+            const data = await res.json();
+            const newMsg = data.message;
+
+            const newId = Number(newMsg.id);
+            loadedMessageIds.add(newId);
+
+            // Append sent message immediately
+            const div = document.createElement('div');
+            div.setAttribute('data-id', newId);
+            div.className = 'flex justify-end fade-in';
+            div.innerHTML = `
+                <div class="flex flex-col items-end bg-orange-500 text-white px-4 py-2 rounded-lg shadow max-w-xs">
+                    <p class="text-sm">${escapeHTML(newMsg.message)}</p>
+                    <span class="text-xs text-orange-100 mt-1">${newMsg.time}</span>
+                </div>
+            `;
+            messagesArea.appendChild(div);
+            scrollToBottom();
+
+            messageInput.value = '';
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to send message. Please try again.');
+        } finally {
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            spinner.classList.add('hidden');
+        }
+    });
+});
+</script>
+@endpush
