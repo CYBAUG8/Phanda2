@@ -10,10 +10,10 @@ class UserDashboardSummarySeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('email', 'test@example.com')->first();
+        $user = User::where('role', 'customer')->first();
 
         if (!$user) {
-            $this->command->warn('No users found. Run UserSeeder first.');
+            $this->command->warn('No customer found. Run UserSeeder first.');
             return;
         }
 

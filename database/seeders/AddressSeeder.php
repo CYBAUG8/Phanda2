@@ -11,16 +11,16 @@ class AddressSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::where('email', 'test@example.com')->first();
+        $user = User::where('role', 'customer')->first();
 
         if (!$user) {
-            $this->command->warn('User not found. Run UserSeeder first.');
+            $this->command->warn('No customer found. Run UserSeeder first.');
             return;
         }
 
         DB::table('addresses')->insert([
             'address_id' => Str::uuid(),
-            'user_id' => $user->user_id, // ✅ dynamic UUID
+            'user_id' => $user->user_id,
 
             'type' => 'home',
             'street' => '123 Main Street',

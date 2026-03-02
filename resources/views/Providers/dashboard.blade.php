@@ -11,21 +11,21 @@
         <div class="col-md-3">
             <div class="card shadow-sm p-3">
                 <h6>Total Bookings</h6>
-                <h3 class="fw-bold">{{ $totalBookings }}</h3>
+                <h3 class="fw-bold">0</h3>
             </div>
         </div>
 
         <div class="col-md-3">
             <div class="card shadow-sm p-3">
                 <h6>Completed</h6>
-                <h3 class="fw-bold text-success">{{ $completedBookings }}</h3>
+                <h3 class="fw-bold text-success">0</h3>
             </div>
         </div>
 
         <div class="col-md-3">
             <div class="card shadow-sm p-3">
                 <h6>Pending</h6>
-                <h3 class="fw-bold text-warning">{{ $pendingBookings }}</h3>
+                <h3 class="fw-bold text-warning">0</h3>
             </div>
         </div>
 
@@ -33,7 +33,7 @@
             <div class="card shadow-sm p-3">
                 <h6>Available Balance</h6>
                 <h3 class="fw-bold text-primary">
-                    R {{ number_format($availableBalance, 2) }}
+                    R0
                 </h3>
             </div>
         </div>
@@ -48,27 +48,27 @@
             <div class="row">
                 <div class="col-md-3">
                     <p>Total Revenue</p>
-                    <h5>R {{ number_format($totalRevenue, 2) }}</h5>
+                    <h5>R 0</h5>
                 </div>
 
                 <div class="col-md-3">
                     <p>Platform Commission (10%)</p>
                     <h5 class="text-danger">
-                        - R {{ number_format($commission, 2) }}
+                        - R 0
                     </h5>
                 </div>
 
                 <div class="col-md-3">
                     <p>Net Earnings</p>
                     <h5 class="text-success">
-                        R {{ number_format($netEarnings, 2) }}
+                        R 0
                     </h5>
                 </div>
 
                 <div class="col-md-3">
                     <p>Total Paid Out</p>
                     <h5>
-                        R {{ number_format($totalPaidOut, 2) }}
+                        R 0
                     </h5>
                 </div>
             </div>
@@ -80,7 +80,8 @@
         <div class="card-body">
             <h5 class="mb-3 fw-bold">Recent Bookings</h5>
 
-            @if($recentBookings->count() > 0)
+            //$recentBookings->count()
+            @if(0 > 0)
                 <table class="table align-middle">
                     <thead>
                         <tr>
@@ -94,7 +95,7 @@
                     <tbody>
                         @foreach($recentBookings as $booking)
                         <tr>
-                            <td>{{ $booking->id }}</td>
+                            <td>0</td>
                             <td>{{ $booking->service->title ?? 'N/A' }}</td>
                             <td>
                                 <span class="badge 

@@ -66,13 +66,16 @@ class AuthController extends Controller
         'status' => 'success',
     ]);
 
-     if (strtoupper($user->role) === 'PROVIDER') {
+     if ($user->role === 'provider') {
+            return redirect()->route('providers.dashboard');
+        }
 
-            return redirect()->intended('/providers/dashboard');
-            
-        }else{
+        if ($user->role === 'customer') {
+            return redirect()->route('users.dashboard');
+        }
 
-            return redirect()->intended('users/profile');
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
         }
    
     
@@ -104,6 +107,6 @@ private function parseDevice($ua)
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Logged out']);
+        return redirect()->route('login');
     }
 }
