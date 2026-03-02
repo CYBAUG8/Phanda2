@@ -12,6 +12,9 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
+    {{-- FontAwesome CDN --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     {{-- Load Vite JS and users CSS (reuses firstpage entry) --}}
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/js/firstpage.js', 'resources/css/users.css','resources/css/dashboard.css'])
@@ -73,6 +76,7 @@
                     <span>Settings</span>
                 </a>
             </nav>
+
         </aside>
 
         <main class="user-content">

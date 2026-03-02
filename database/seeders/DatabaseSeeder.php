@@ -12,7 +12,10 @@ class DatabaseSeeder extends Seeder
             ReviewSeeder::class,
             UserSeeder::class,
             UserDashboardSummarySeeder::class,
+            AddressSeeder::class,
+            //CategorySeeder::class,
+            //ServiceSeeder::class,
+            //InitiateConversationSeeder::class 
         ]);
-            $this->call(CategorySeeder::class);
     }
 }

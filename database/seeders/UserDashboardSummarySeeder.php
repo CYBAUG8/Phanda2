@@ -18,9 +18,9 @@ class UserDashboardSummarySeeder extends Seeder
         }
 
         UserDashboardSummary::updateOrCreate(
-            ['user_id' => $user->id],
+            ['user_id' => $user->user_id],
             [
-                'name' => $user->name,
+                'name' => $user->full_name,
                 'bookings_requested' => 2,
                 'bookings_offered' => 1,
                 'bookings_accepted' => 3,

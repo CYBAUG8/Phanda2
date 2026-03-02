@@ -8,18 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('services', function (Blueprint $table)
-         {
+        Schema::create('services', function (Blueprint $table) {
             $table->uuid('service_id')->primary();
-            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            // Category relationship
+            $table->uuid('category_id');
+            $table->foreign('category_id')
+                ->references('id')
+                ->on('categories')
+                ->cascadeOnDelete();
 
-            
-           $table->uuid('provider_id');
-           $table->foreign('provider_id')
-                 ->references('provider_id')
-                 ->on('provider_profiles')
-                 ->cascadeOnDelete();
-      
+            // Provider relationship
+            $table->uuid('provider_id');
+            $table->foreign('provider_id')
+                ->references('provider_id')
+                ->on('provider_profiles')
+                ->cascadeOnDelete();
 
             $table->string('provider_name');
             $table->string('title');

@@ -82,7 +82,7 @@ class ReviewController extends Controller
     public function apiIndex($provider_id)
     {
         $reviews = Review::where('provider_id', $provider_id)
-            ->with('user:id,name')
+            ->with('user:id,full_name')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($r) {

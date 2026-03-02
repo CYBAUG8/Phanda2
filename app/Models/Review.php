@@ -35,15 +35,15 @@ class Review extends Model
         });
     }
 
-    // reviewer
+   // reviewer
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     // person being reviewed
     public function provider()
     {
-        return $this->belongsTo(User::class, 'provider_id');
+        return $this->belongsTo(User::class, 'provider_id', 'user_id');
     }
 }
