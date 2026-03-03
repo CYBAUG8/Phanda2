@@ -101,7 +101,7 @@ class UserSeeder extends Seeder
             User::updateOrCreate(
                 ['email' => $provider['email']],
                 [
-                    'user_id'   => Str::uuid(),
+                    'user_id'   => $provider['user_id'] ?? Str::uuid(),
                     'full_name' => $provider['full_name'],
                     'phone'     => $provider['phone'],
                     'password'  => Hash::make('password@123'),

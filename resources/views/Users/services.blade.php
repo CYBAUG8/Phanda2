@@ -120,7 +120,7 @@
 
                     <div class="service-card__footer">
                         <div class="service-card__meta">
-                            <span class="service-card__price">{{ $service->formatted_price }}</span>
+                            <span class="service-card__price">R{{ $service->base_price }}</span>
                             <span class="service-card__duration">
                                 <i class="far fa-clock"></i> {{ $service->formatted_duration }}
                             </span>
