@@ -13,9 +13,9 @@
             {{-- REQUIRED hidden fields --}}
             <input type="hidden" name="provider_id" value="{{ $selectedProviderId }}">
             
-            <input type="hidden" name="service_id" value="{{ $selectedProvider['name']}}">
+            <input type="hidden" name="service_id" value="{{ $selectedProvider['full_name']}}">
 
-            <input type="hidden" name="user_id" value="{{ $currentUser->id }}">
+            <input type="hidden" name="user_id" value="{{ $currentUser->user_id }}">
 
             {{-- Rating --}}
             <label style="font-weight:bold;margin-top:12px;display:block">Rating</label>

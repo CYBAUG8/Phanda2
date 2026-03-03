@@ -16,33 +16,24 @@ class ReviewController extends Controller
      */
     public function index(Request $request)
     {
-        // Simulated logged-in user for testing
-        $currentUser = (object)[
-            'id' => '1',
-            'name' => 'Test User',
-        ];
+        $currentUser = Auth::user();
 
+        // Get providers from DB
+        $providers = User::where('role', 'provider')->get();
 
-        // Defined available providers (could later come from DB)
-        $providers = [
-            ['id' => 'cleaner-001', 'name' => 'General Cleaning'],
-            ['id' => 'plumber-001', 'name' => 'Plumbing Repair'],
-            ['id' => 'garden-001', 'name' => 'Garden Maintenance'],
-            ['id' => 'electrical-001', 'name' => 'Electrical Repair'],
-            ['id' => 'construction-001', 'name' => 'Bantu Construction'],
-            ['id' => 'catering-001', 'name' => 'Catering Service'],
-        ];
+        $selectedProviderId = $request->get('provider')
+            ?? optional($providers->first())->user_id;
 
-        $selectedProviderId = $request->get('provider', $providers[0]['id']);
+        $selectedProvider = $providers
+            ->firstWhere('user_id', $selectedProviderId);
 
-        // Fetch reviews with user info
-        $reviews = Review::with('user')
-        ->where('provider_id', $selectedProviderId)
-        ->orderByDesc('created_at')
-        ->paginate(2);
+        // Fetch reviews for provider
+        $reviews = Review::with('customer')
+            ->where('to_user_id', $selectedProviderId)
+            ->orderByDesc('created_at')
+            ->paginate(5);
 
-        // Stats calculated from ALL reviews
-        $allReviews = Review::where('provider_id', $selectedProviderId)->get();
+        $allReviews = Review::where('to_user_id', $selectedProviderId)->get();
 
         $totalReviews = $allReviews->count();
         $averageRating = $totalReviews
@@ -55,11 +46,8 @@ class ReviewController extends Controller
         ]);
 
         $userReviewForSelected = $currentUser
-            ? $allReviews->firstWhere('user_id', $currentUser->id)
+            ? $allReviews->firstWhere('from_user_id', $currentUser->user_id)
             : null;
-
-        $selectedProvider = collect($providers)
-        ->firstWhere('id', $selectedProviderId);
 
         return view('Users.reviews.reviews', compact(
             'providers',
@@ -72,7 +60,6 @@ class ReviewController extends Controller
             'ratingCounts',
             'userReviewForSelected'
         ));
-
     }
 
 
@@ -81,16 +68,16 @@ class ReviewController extends Controller
      */
     public function apiIndex($provider_id)
     {
-        $reviews = Review::where('provider_id', $provider_id)
-            ->with('user:id,full_name')
+        $reviews = Review::where('to_user_id', $provider_id)
+            ->with('customer:id,full_name')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($r) {
                 return [
                     'id' => $r->id,
                     'service_id' => $r->service_id,
-                    'provider_id' => $r->provider_id,
-                    'user_id' => $r->user_id,
+                    'provider_id' => $r->to_user_id,
+                    'user_id' => $r->from_user_id,
                     'rating' => $r->rating,
                     'comment' => $r->comment,
                     'created_at' => $r->created_at,
@@ -98,7 +85,7 @@ class ReviewController extends Controller
                 ];
             });
 
-        $averageRating = Review::where('provider_id', $provider_id)->avg('rating') ?? 0;
+        $averageRating = Review::where('to_user_id', $provider_id)->avg('rating') ?? 0;
 
         return response()->json([
             'average_rating' => round($averageRating, 1),
@@ -111,8 +98,8 @@ class ReviewController extends Controller
      */
     public function userReviews($user_id)
     {
-        $reviews = Review::where('user_id', $user_id)
-            ->with('provider:id,name')
+        $reviews = Review::where('from_user_id', $user_id)
+            ->with('provider:id,full_name')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -124,30 +111,28 @@ class ReviewController extends Controller
     /**
      * ================= API: Store or update a review =================
      */
-    public function store(Request $request)
+   public function store(Request $request)
     {
-        $validated = $request->validate([
-            'service_id'  => 'required|string',
-            'user_id'     => 'required|string',
-            'provider_id' => 'required|string',
-            'rating'      => 'required|integer|min:1|max:5',
-            'comment'     => 'required|string',
+        $request->validate([
+            'service_id' => 'required|string',
+            'provider_id' => 'required|uuid|exists:users,user_id',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'required|string',
         ]);
 
-        $review = Review::updateOrCreate(
+        Review::updateOrCreate(
             [
-                'user_id'     => $validated['user_id'],
-                'provider_id' => $validated['provider_id'],
+                'from_user_id' => Auth::user()->user_id,
+                'to_user_id'   => $request->provider_id,
             ],
             [
-                'service_id' => $validated['service_id'],
-                'rating'     => $validated['rating'],
-                'comment'    => $validated['comment'],
+                'service_id' => $request->service_id,
+                'rating'     => $request->rating,
+                'comment'    => $request->comment,
             ]
         );
 
-        return redirect()->route('reviews.reviews', ['provider' => $validated['provider_id']])
-                        ->with('success', 'Review submitted successfully.');
+        return back()->with('success', 'Review submitted successfully.');
     }
 
 
@@ -156,7 +141,7 @@ class ReviewController extends Controller
      */
     public function destroy($id)
     {
-        Review::where('id', $id)->delete();
+        Review::where('review_id', $id)->delete();
 
         return redirect()->back()->with('success', 'Review deleted successfully.');
     }

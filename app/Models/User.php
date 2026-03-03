@@ -66,13 +66,22 @@ class User extends Authenticatable
     {
     return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
     }
-      protected static function booted()
+    protected static function booted()
     {
         static::creating(function ($model) {
             if (!$model->user_id) {
                 $model->user_id = (string) Str::uuid();
             }
         });
+    }
+    public function reviewsGiven()
+    {
+        return $this->hasMany(Review::class, 'from_user_id', 'user_id');
+    }
+
+    public function reviewsReceived()
+    {
+        return $this->hasMany(Review::class, 'to_user_id', 'user_id');
     }
     
 }
