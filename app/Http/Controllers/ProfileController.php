@@ -32,12 +32,12 @@ class ProfileController extends Controller
             'member_id' => $user->member_id ?? 'PAN-' . str_pad($user->id, 6, '0', STR_PAD_LEFT),
             'account_status' => $user->account_status ?? 'active',
             
-            // Mock service request stats (you would replace with actual queries)
-            'total_requests' => 0,
-            'active_requests' => 0,
-            'completed_requests' => 0,
+
+            'total_requests' => $user->bookings()->count(),
+            'active_requests' => $user->bookings()->whereIn('status', ['pending', 'accepted'])->count(),
+            'completed_requests' => $user->bookings()->where('status', 'completed')->count(),
             
-            // Addresses
+          
             'addresses' => $user->addresses()->get()->map(function ($address) {
                 return [
                     'address_id' => $address->address_id,

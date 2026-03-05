@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('locations', function (Blueprint $table) {
             $table->uuid('location_id')->primary();
 
-            $table->uuid('user_id')->unique();
+            $table->uuid('user_id');
             $table->foreign('user_id')
             ->references('user_id')
-            ->on('users_profile')
+            ->on('users')
             ->onDelete('cascade');
 
            

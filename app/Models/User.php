@@ -60,11 +60,30 @@ class User extends Authenticatable
      */
     public function bookings(): HasMany
     {
-        return $this->hasMany(Booking::class);
+        return $this->hasMany(ServiceRequest::class, 'user_id', 'user_id');
     }
+    
     public function providerProfile()
     {
-    return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
+       return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
+    }
+
+    public function addresses()
+    {
+       return $this->hasMany(Address::class, 'user_id', 'user_id');
+    }
+    public function locations(): HasMany
+    {
+        return $this->hasMany(Location::class, 'user_id', 'user_id');
+    }
+
+    public function loginHistories(): HasMany
+    {
+        return $this->hasMany(LoginHistory::class, 'user_id', 'user_id');
+    }
+    public function settings(): HasOne
+    {
+       return $this->hasOne(Setting::class, 'user_id', 'user_id');
     }
     protected static function booted()
     {

@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->uuid('to_user_id');   // provider
             $table->uuid('from_user_id'); // customer
             $table->tinyInteger('rating')->unsigned();
-            $table->text('comment');
+            $table->text('comment')->nullable();
             $table->timestamps();
 
             // Foreign keys

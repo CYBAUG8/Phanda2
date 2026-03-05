@@ -77,7 +77,7 @@
                 </a>
             </nav>
             <div class="sidebar-item mt-auto">
-                <a href="/provider/logout" class="logout-link">
+                <a href="/logout" class="logout-link">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
                 </a>

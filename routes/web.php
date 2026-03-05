@@ -16,7 +16,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\RecoveryContactController;
 use App\Http\Controllers\EmergencyContactController;
- use App\Http\Controllers\ProviderDashboardController;
+use App\Http\Controllers\ProviderDashboardController;
 use App\Http\Controllers\ProviderServiceController;
 use App\Http\Controllers\ProviderBookingController;
 use App\Http\Controllers\ProfileController;  
@@ -67,10 +67,8 @@ Route::get('/login', function () {
 })->name('login'); 
 
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::get('/provider/logout', function (Request $request) {
-    $request->session()->forget('provider_authenticated');
-    return redirect('/login');
-});
+Route::get('/logout',[AuthController::class, 'logout']);
+
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {

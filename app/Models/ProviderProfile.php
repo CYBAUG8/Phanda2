@@ -37,4 +37,8 @@ class ProviderProfile extends Model
     {
       return $this->hasMany(Service::class, 'provider_id', 'provider_id');
     }
+    public function bookings()
+   {
+    return $this->hasMany(ServiceRequest::class, 'provider_id', 'provider_id');
+   }
 }
