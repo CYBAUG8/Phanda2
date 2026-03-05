@@ -6,63 +6,84 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Payout;
+use App\Models\Review;
+use App\Models\ProviderProfile;
 use Illuminate\Support\Facades\Auth;
 
 class ProviderDashboardController extends Controller
 {
     public function index()
     {
-        if (app()->environment('local') && !auth()->check()) {
-            $user = User::first();
-
-            if ($user) {
-                auth()->login($user);
-            }
-        }
-
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (!$user) {
             abort(403, 'Not authenticated');
         }
-        // Total Bookings
-        $totalBookings = Booking::where('user_id', $provider->user_id)->count();
 
-        // Completed Bookings
-        $completedBookings = Booking::where('user_id', $provider->user_id)
+        $providerId = $user->user_id;
+
+        // -----------------------------
+        // BOOKINGS
+        // -----------------------------
+
+        $totalBookings = Booking::where('user_id', $providerId)->count();
+
+        $completedBookings = Booking::where('user_id', $providerId)
             ->where('status', 'completed')
             ->count();
 
-        // Pending Bookings
-        $pendingBookings = Booking::where('user_id', $provider->user_id)
+        $pendingBookings = Booking::where('user_id', $providerId)
             ->where('status', 'pending')
             ->count();
 
-        // Total Revenue (Only completed bookings)
-        $totalRevenue = Booking::where('user_id', $provider->user_id)
+        // -----------------------------
+        // REVENUE
+        // -----------------------------
+
+        $totalRevenue = Booking::where('user_id', $providerId)
             ->where('status', 'completed')
             ->sum('total_price');
 
-        // Commission (10%)
         $commissionRate = 0.10;
         $commission = $totalRevenue * $commissionRate;
 
-        // Net Earnings
         $netEarnings = $totalRevenue - $commission;
 
-        // Total Paid Out
-        $totalPaidOut = Payout::where('provider_id', $provider->user_id)
+        // -----------------------------
+        // PAYOUTS
+        // -----------------------------
+
+        $totalPaidOut = Payout::where('provider_id', $providerId)
             ->where('status', 'paid')
             ->sum('amount');
 
-        // Available Balance
         $availableBalance = $netEarnings - $totalPaidOut;
 
-        // Recent Bookings
-        $recentBookings = Booking::where('user_id', $provider->user_id)
+        // -----------------------------
+        // REVIEWS
+        // -----------------------------
+
+        $averageRating = Review::where('to_user_id', $providerId)
+            ->avg('rating');
+
+        $totalReviews = Review::where('to_user_id', $providerId)
+            ->count();
+
+        // -----------------------------
+        // RECENT BOOKINGS
+        // -----------------------------
+
+        $recentBookings = Booking::where('user_id', $providerId)
             ->latest()
             ->take(5)
             ->get();
+        
+        // -----------------------------
+        // Is Online
+        // -----------------------------
+        $profile = ProviderProfile::where('user_id', $providerId)->first();
+
+        $isOnline = $profile ? $profile->is_online : false;
 
         return view('providers.dashboard', compact(
             'totalBookings',
@@ -73,7 +94,29 @@ class ProviderDashboardController extends Controller
             'netEarnings',
             'totalPaidOut',
             'availableBalance',
-            'recentBookings'
+            'recentBookings',
+            'averageRating',
+            'totalReviews',
+            'isOnline'
         ));
+    }
+
+    public function toggleOnline(Request $request)
+    {
+        $user = Auth::user();
+
+        $profile = ProviderProfile::where('user_id', $user->user_id)->first();
+
+        if (!$profile) {
+            return response()->json(['success' => false]);
+        }
+
+        $profile->is_online = $request->is_online;
+        $profile->save();
+
+        return response()->json([
+            'success' => true,
+            'is_online' => $profile->is_online
+        ]);
     }
 }

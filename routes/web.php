@@ -16,6 +16,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\RecoveryContactController;
 use App\Http\Controllers\EmergencyContactController;
+ use App\Http\Controllers\ProviderDashboardController;
 use App\Http\Controllers\ProviderServiceController;
 use App\Http\Controllers\ProviderBookingController;
 use App\Http\Controllers\ProfileController;  
@@ -74,10 +75,10 @@ Route::get('/provider/logout', function (Request $request) {
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     // Provider area sample routes
-    Route::get('/providers/dashboard', function () {
-        return view('providers.dashboard');
-    })->name('providers.dashboard');
-
+    Route::get('/providers/dashboard', [ProviderDashboardController::class, 'index'])
+        ->name('providers.dashboard');
+    Route::post('/provider/toggle-online', [ProviderDashboardController::class, 'toggleOnline'])
+        ->name('provider.toggleOnline');
     Route::get('/providers/bookings', [ProviderBookingController::class, 'index'])
         ->name('provider.bookings');
     Route::patch('/providers/bookings/{id}/confirm', [ProviderBookingController::class, 'confirm'])

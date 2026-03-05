@@ -83,5 +83,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Review::class, 'to_user_id', 'user_id');
     }
-    
+    public function payouts()
+    {
+        return $this->hasMany(Payout::class, 'provider_id', 'user_id');
+    }
 }

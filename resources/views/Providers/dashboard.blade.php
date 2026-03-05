@@ -13,25 +13,43 @@
 
         <!-- Active Toggle -->
         <div 
-            x-data="{ active: true }"
+            x-data="{
+                active: {{ $isOnline ? 'true' : 'false' }},
+                toggle(){
+                    this.active = !this.active
+
+                    fetch('{{ route('provider.toggleOnline') }}', {
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/json',
+                            'X-CSRF-TOKEN':'{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            is_online:this.active
+                        })
+                    })
+                }
+            }"
             class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm"
         >
-            <span 
-                class="text-sm font-semibold"
-                :class="active ? 'text-green-600' : 'text-gray-400'"
-                x-text="active ? 'Active' : 'Offline'">
-            </span>
 
-            <button 
-                @click="active = !active"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                :class="active ? 'bg-green-500' : 'bg-gray-300'"
-            >
-                <span 
-                    class="inline-block h-4 w-4 transform rounded-full bg-white transition"
-                    :class="active ? 'translate-x-6' : 'translate-x-1'">
-                </span>
-            </button>
+        <span 
+            class="text-sm font-semibold"
+            :class="active ? 'text-green-600' : 'text-gray-400'"
+            x-text="active ? 'Active' : 'Offline'">
+        </span>
+
+        <button 
+            @click="toggle()"
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition"
+            :class="active ? 'bg-green-500' : 'bg-gray-300'"
+        >
+        <span 
+            class="inline-block h-4 w-4 transform rounded-full bg-white transition"
+            :class="active ? 'translate-x-6' : 'translate-x-1'">
+        </span>
+        </button>
+
         </div>
 
     </div>
@@ -41,13 +59,17 @@
     <!-- ===================== -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
 
-        <!-- Service Rating -->
+       <!-- Service Rating -->
         <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
             <p class="text-sm text-gray-500">Service Rating</p>
 
             <div class="flex items-center mt-2">
                 <span class="text-2xl font-bold text-yellow-500 mr-2">
-                    4.8
+                    {{ number_format($averageRating, 1) }}
+                </span>
+
+                <span class="text-sm text-gray-400">
+                    ({{ $totalReviews ?? 0}} reviews)
                 </span>
             </div>
         </div>
