@@ -52,10 +52,10 @@ class Service extends Model
     /**
      * Get all bookings for this service.
      */
-    public function bookings(): HasMany
+    /*public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
-    }
+    }*/
 
     /**
      * Format the price in South African Rands.
@@ -92,4 +92,13 @@ class Service extends Model
             }
         });
     }
-}
+     public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'service_id', 'service_id');
+    }
+
+    public function provider()
+    {
+        return $this->belongsTo(User::class, 'provider_id', 'user_id');
+    }
+    }

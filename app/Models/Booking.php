@@ -32,18 +32,18 @@ class Booking extends Model
     /**
      * Get the user who made this booking.
      */
-    public function user(): BelongsTo
+    /*public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
+    }*/
 
     /**
      * Get the service that was booked.
      */
-    public function service(): BelongsTo
+    /*public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
-    }
+    }*/
 
     /**
      * Format the price in South African Rands.
@@ -89,5 +89,15 @@ class Booking extends Model
     public function getCanCancelAttribute(): bool
     {
         return in_array($this->status, ['pending', 'confirmed']);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'service_id', 'service_id');
     }
 }

@@ -16,6 +16,8 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\RecoveryContactController;
 use App\Http\Controllers\EmergencyContactController;
+use App\Http\Controllers\ProviderServiceController;
+use App\Http\Controllers\ProviderBookingController;
 use App\Http\Controllers\ProfileController;  
 use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
@@ -76,9 +78,19 @@ Route::middleware('auth')->group(function () {
         return view('providers.dashboard');
     })->name('providers.dashboard');
 
-    Route::get('/providers/bookings', function () {
-        return view('providers.bookings');
-    });
+    Route::get('/providers/bookings', [ProviderBookingController::class, 'index'])
+        ->name('provider.bookings');
+    Route::patch('/providers/bookings/{id}/confirm', [ProviderBookingController::class, 'confirm'])
+        ->name('provider.bookings.confirm');
+
+    Route::patch('/providers/bookings/{id}/start', [ProviderBookingController::class, 'start'])
+        ->name('provider.bookings.start');
+
+    Route::patch('/providers/bookings/{id}/complete', [ProviderBookingController::class, 'complete'])
+        ->name('provider.bookings.complete');
+
+    Route::patch('/providers/bookings/{id}/cancel', [ProviderBookingController::class, 'cancel'])
+        ->name('provider.bookings.cancel');
 
     Route::get('/providers/services', function () {
         return view('providers.services');
@@ -204,9 +216,21 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/providers/messages/{conversation}/latest',[ProviderMessageController::class, 'latest']);
 
+    Route::post('/providers/messages', [ProviderMessageController::class, 'store'])
+    ->name('provider.messages.store');
+    
+    Route::get('providers/messages/', [ProviderMessageController::class, 'index'])->name('provider.messages');
+    Route::post('providers/messages/send', [ProviderMessageController::class, 'send'])->name('provider.messages.send');
+    Route::get('providers/messages/latest/{user}', [ProviderMessageController::class, 'latestByUser'])->name('provider.messages.latest');
 
 });
-
+Route::prefix('providers')->middleware(['auth'])->group(function() {
+    Route::get('services', [ProviderServiceController::class, 'index'])->name('provider.services.index');
+    Route::post('services', [ProviderServiceController::class, 'store'])->name('provider.services.store');
+    Route::patch('services/{service}/toggle', [ProviderServiceController::class, 'toggle'])->name('provider.services.toggle');
+    Route::delete('services/{service}', [ProviderServiceController::class, 'destroy'])->name('provider.services.destroy');
+    Route::patch('services/{service}', [ProviderServiceController::class, 'update'])->name('provider.services.update');
+});
 
 
 Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');
