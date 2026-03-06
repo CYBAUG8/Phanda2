@@ -44,7 +44,7 @@ class ProviderProfileController extends Controller
             'total_earnings' => (float) (clone $bookingQuery)->where('status', 'completed')->sum('total_price'),
         ];
 
-        return view('providers.profile', ['provider' => $data]);
+        return view('Providers.profile', ['provider' => $data]);
     }
 
     public function update(Request $request)

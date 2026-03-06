@@ -1,4 +1,4 @@
-@extends('users.layout')
+@extends('Users.layout')
 
 @section('content')
     <div class="page-header">
@@ -155,9 +155,3 @@
         </div>
     @endif
 @endsection
-
-
-
-
-
-

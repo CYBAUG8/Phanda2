@@ -1,4 +1,4 @@
-@extends('providers.layout')
+@extends('Providers.layout')
 
 @section('content')
 <div x-data="{

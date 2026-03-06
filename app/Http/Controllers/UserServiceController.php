@@ -122,7 +122,7 @@ class UserServiceController extends Controller
             'lng' => $coordinates['lng'] ?? null,
         ];
 
-        return view('users.services', compact('services', 'categories', 'filters', 'showProximityWarning'));
+        return view('Users.services', compact('services', 'categories', 'filters', 'showProximityWarning'));
     }
 
     private function resolveUserCoordinates(Request $request): ?array

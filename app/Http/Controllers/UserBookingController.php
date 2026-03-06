@@ -33,7 +33,7 @@ class UserBookingController extends Controller
 
         $activeStatus = $request->input('status', 'all');
 
-        return view('users.bookings', compact('bookings', 'stats', 'activeStatus'));
+        return view('Users.bookings', compact('bookings', 'stats', 'activeStatus'));
     }
 
     public function store(Request $request)

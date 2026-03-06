@@ -103,10 +103,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/providers/bookings/{id}/cancel', [ProviderBookingController::class, 'cancel'])
         ->name('provider.bookings.cancel');
 
-    Route::get('/providers/services', function () {
-        return view('providers.services');
-    });
-
     Route::get('/providers/schedule', function () {
         return view('providers.schedule');
     });
@@ -118,14 +114,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/users/dashboard', [DashboardController::class, 'index'])
         ->name('users.dashboard');
-
-    Route::get('/users/services', function () {
-        return view('users.services');
-    });
-
-    Route::get('/users/bookings', function () {
-        return view('users.bookings');
-    });
 
     Route::get('/users/profile', function () {
         return view('users.profile');
@@ -249,6 +237,3 @@ Route::prefix('providers')->middleware(['auth'])->group(function() {
 
 
 Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');
-
-
-
