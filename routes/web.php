@@ -24,12 +24,11 @@ use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
 use App\Http\Controllers\UserMessageController;
 use App\Http\Controllers\ProviderMessageController;
+use App\Http\Controllers\ProviderEarningsController;
 
 
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::redirect('/', '/login');
 
 // Provider page is public (no security required). Keep login page available if needed.
 /*Route::get('/provider', function () {
@@ -103,13 +102,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/providers/bookings/{id}/cancel', [ProviderBookingController::class, 'cancel'])
         ->name('provider.bookings.cancel');
 
-    Route::get('/providers/schedule', function () {
-        return view('providers.schedule');
-    });
+    Route::get('/providers/schedule', [ProviderCalendarController::class, 'index'])
+        ->name('provider.schedule');
 
-    Route::get('/providers/earnings', function () {
-        return view('providers.earnings');
-    });
+    Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
+        ->name('provider.earnings');
+    Route::post('/providers/earnings/withdraw', [ProviderEarningsController::class, 'withdraw'])
+        ->name('provider.earnings.withdraw');
         // User area sample routes
 
     Route::get('/users/dashboard', [DashboardController::class, 'index'])
@@ -237,3 +236,7 @@ Route::prefix('providers')->middleware(['auth'])->group(function() {
 
 
 Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');
+
+
+
+

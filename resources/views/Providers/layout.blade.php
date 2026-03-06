@@ -39,7 +39,9 @@
             <a href="{{ route('providers.dashboard') }}" class="sidebar-item @if(request()->is('providers/dashboard')) active @endif"><i class="fas fa-home"></i><span>Dashboard</span></a>
             <a href="{{ route('provider.services.index') }}" class="sidebar-item @if(request()->is('providers/services')) active @endif"><i class="fas fa-concierge-bell"></i><span>Services</span></a>
             <a href="{{ route('provider.bookings') }}" class="sidebar-item @if(request()->is('providers/bookings')) active @endif"><i class="fas fa-clipboard-list"></i><span>Bookings</span></a>
+            <a href="{{ route('provider.schedule') }}" class="sidebar-item @if(request()->is('providers/schedule') || request()->is('provider/calendar*')) active @endif"><i class="fas fa-calendar-alt"></i><span>Schedule</span></a>
             <a href="{{ route('provider.messages') }}" class="sidebar-item @if(request()->is('providers/messages*')) active @endif"><i class="fas fa-comments"></i><span>Messages</span></a>
+            <a href="{{ route('provider.earnings') }}" class="sidebar-item @if(request()->is('providers/earnings')) active @endif"><i class="fas fa-wallet"></i><span>Earnings</span></a>
             <a href="{{ route('provider.profile') }}" class="sidebar-item @if(request()->is('providers/profile')) active @endif"><i class="fas fa-user"></i><span>Profile</span></a>
         </nav>
 
