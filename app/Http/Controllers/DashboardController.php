@@ -1,41 +1,53 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\User;
-use App\Models\UserDashboardSummary;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+
+use App\Models\Booking;
+use App\Models\Message;
+use App\Models\Review;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // DEV AUTO-LOGIN (LOCAL ONLY)
-        if (app()->environment('local') && !auth()->check()) {
-            $user = User::first();
-
-            if ($user) {
-                auth()->login($user);
-            }
-        }
-
         $user = auth()->user();
+        abort_if(!$user, 403, 'Not authenticated');
 
-        if (!$user) {
-            abort(403, 'Not authenticated');
-        }
+        $bookings = Booking::where('user_id', $user->user_id);
+        $bookingsInProgress = (clone $bookings)->whereIn('status', ['pending', 'confirmed', 'in_progress'])->count();
 
-        $summary = UserDashboardSummary::where('user_id', $user->user_id)->firstOrFail();
+        $conversationIds = $user->conversations()->pluck('conversation_id');
+        $unreadMessages = Message::whereIn('conversation_id', $conversationIds)
+            ->where('sender_type', 'provider')
+            ->where('is_read', false)
+            ->count();
 
-        $activities = [
-            ['type' => 'booking', 'text' => 'Booked cleaning', 'ts' => now()->subMinutes(10)],
-            ['type' => 'message', 'text' => 'Message from Alice', 'ts' => now()->subMinutes(5)],
-            ['type' => 'payment', 'text' => 'Payment received R120', 'ts' => now()->subHours(1)],
+        $averageRating = Review::where('from_user_id', $user->user_id)->avg('rating') ?? 0;
+
+        $summary = (object) [
+            'name' => $user->full_name,
+            'bookings_in_progress' => $bookingsInProgress,
+            'unread_messages' => $unreadMessages,
+            'average_rating' => $averageRating,
         ];
-        $summary = UserDashboardSummary::where('user_id', $user->user_id)->firstOrFail();
-            $activities = $summary->recentActivities();
 
-            return view('users.dashboard', compact('summary', 'activities'));
-        }
+        $activities = collect();
+
+        $activities = $activities
+            ->merge(
+                Booking::where('user_id', $user->user_id)
+                    ->latest()
+                    ->take(5)
+                    ->get()
+                    ->map(fn ($booking) => [
+                        'type' => 'booking',
+                        'text' => 'Booking ' . strtoupper($booking->status) . ' for ' . optional($booking->service)->title,
+                        'ts' => $booking->updated_at,
+                    ])
+            )
+            ->sortByDesc('ts')
+            ->values();
+
+        return view('users.dashboard', compact('summary', 'activities'));
+    }
 }
-

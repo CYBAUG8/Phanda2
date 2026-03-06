@@ -2,42 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\UserProfile;
 use App\Models\Address;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Booking;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
-   
     public function getProfile(Request $request)
     {
         $user = $request->user();
-        
-        // Format user data for profile page
+
+        $totalRequests = Booking::where('user_id', $user->user_id)->count();
+        $activeRequests = Booking::where('user_id', $user->user_id)
+            ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
+            ->count();
+        $completedRequests = Booking::where('user_id', $user->user_id)
+            ->where('status', 'completed')
+            ->count();
+
         $profileData = [
-            'first_name' => $user->first_name ?? $this->extractFirstName($user->full_name),
-            'last_name' => $user->last_name ?? $this->extractLastName($user->full_name),
+            'full_name' => $user->full_name,
+            'first_name' => $this->extractFirstName($user->full_name),
+            'last_name' => $this->extractLastName($user->full_name),
             'email' => $user->email,
             'email_verified' => $user->email_verified_at !== null,
             'phone' => $user->phone,
-            'phone_verified' => $user->phone_verified_at !== null,
-            'gender' => $user->gender,
-            'role' => $user->role ?? 'Customer',
+            'phone_verified' => !empty($user->phone_verified_at),
+            'gender' => $user->gender ?? null,
+            'role' => $user->role ?? 'customer',
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
-            'member_id' => $user->member_id ?? 'PAN-' . str_pad($user->id, 6, '0', STR_PAD_LEFT),
+            'member_id' => $user->member_id ?? ('PAN-' . strtoupper(substr(str_replace('-', '', $user->user_id), 0, 6))),
             'account_status' => $user->account_status ?? 'active',
-            
-            // Mock service request stats (you would replace with actual queries)
-            'total_requests' => 0,
-            'active_requests' => 0,
-            'completed_requests' => 0,
-            
-            // Addresses
+            'total_requests' => $totalRequests,
+            'active_requests' => $activeRequests,
+            'completed_requests' => $completedRequests,
             'addresses' => $user->addresses()->get()->map(function ($address) {
                 return [
                     'address_id' => $address->address_id,
@@ -47,231 +50,183 @@ class ProfileController extends Controller
                     'province' => $address->province,
                     'postal_code' => $address->postal_code,
                     'country' => $address->country,
-                    'is_default' => $address->is_default,
+                    'latitude' => $address->latitude,
+                    'longitude' => $address->longitude,
+                    'is_default' => (bool) $address->is_default,
                 ];
             })->toArray(),
         ];
-        
+
         return response()->json([
             'success' => true,
-            'profile' => $profileData
+            'profile' => $profileData,
         ]);
     }
-    
-    /**
-     * Helper method to extract first name from full_name
-     */
-    private function extractFirstName($fullName)
+
+    private function extractFirstName(?string $fullName): string
     {
-        if (!$fullName) return '';
-        $parts = explode(' ', $fullName);
+        if (!$fullName) {
+            return '';
+        }
+
+        $parts = explode(' ', trim($fullName));
         return $parts[0] ?? '';
     }
-    
-    /**
-     * Helper method to extract last name from full_name
-     */
-    private function extractLastName($fullName)
+
+    private function extractLastName(?string $fullName): string
     {
-        if (!$fullName) return '';
-        $parts = explode(' ', $fullName);
+        if (!$fullName) {
+            return '';
+        }
+
+        $parts = explode(' ', trim($fullName));
         return count($parts) > 1 ? $parts[count($parts) - 1] : '';
     }
 
-    /**
-     * Update profile information
-     */
     public function updateProfile(Request $request)
     {
         $user = $request->user();
-        
+
         $validator = Validator::make($request->all(), [
             'field' => 'required|string',
             'value' => 'required',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
-        
+
         $field = $request->input('field');
         $value = $request->input('value');
-        
-        // Map field names if needed
-        $dbField = $field;
-        if ($field === 'first_name' || $field === 'last_name') {
-            // Handle updating first_name/last_name
-            if ($field === 'first_name') {
-                $user->first_name = $value;
-            } else {
-                $user->last_name = $value;
-            }
-            // Also update full_name
-            $fullName = ($user->first_name ?? '') . ' ' . ($user->last_name ?? '');
-            $user->full_name = trim($fullName);
+
+        if ($field === 'full_name') {
+            $user->full_name = (string) $value;
         } elseif ($field === 'gender') {
-            $user->gender = $value;
-        } else {
-            // For other fields, check if they exist on the user model
-            if (in_array($field, ['email', 'phone'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Email and phone require OTP verification'
-                ], 400);
-            }
-            
-            // Only update if the field exists
-            if (in_array($field, $user->getFillable())) {
-                $user->$field = $value;
-            }
+            $user->gender = (string) $value;
+        } elseif (in_array($field, ['email', 'phone'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email and phone require OTP verification',
+            ], 400);
         }
-        
+
         try {
             $user->save();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Profile updated successfully',
-                'profile' => $this->getProfileData($user)
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update profile: ' . $e->getMessage()
+                'message' => 'Failed to update profile: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-   
-
     public function sendOtp(Request $request)
     {
         $user = $request->user();
-        
+
         $validator = Validator::make($request->all(), [
             'field' => 'required|in:email,phone',
             'value' => 'required',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
-        
-        $field = $request->input('field');
-        $value = $request->input('value');
-  
 
         $otp = rand(100000, 999999);
-        
-        
-        $cacheKey = "profile_otp_{$user->user_id}_{$field}";
+
+        $cacheKey = "profile_otp_{$user->user_id}_{$request->field}";
         Cache::put($cacheKey, [
             'otp' => $otp,
-            'value' => $value
+            'value' => $request->value,
         ], now()->addMinutes(10));
-        
-       
+
         return response()->json([
             'success' => true,
             'message' => 'OTP sent successfully',
-            'otp' => $otp 
+            'otp' => $otp,
         ]);
     }
 
-    
     public function updateWithOtp(Request $request)
     {
         $user = $request->user();
-        
+
         $validator = Validator::make($request->all(), [
             'field' => 'required|in:email,phone',
             'value' => 'required',
             'otp' => 'required|digits:6',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
-        
-        $field = $request->input('field');
-        $value = $request->input('value');
-        $otp = $request->input('otp');
-       
 
-        $cacheKey = "profile_otp_{$user->user_id}_{$field}";
+        $cacheKey = "profile_otp_{$user->user_id}_{$request->field}";
         $cachedData = Cache::get($cacheKey);
-        
-        if (!$cachedData || $cachedData['otp'] != $otp) {
+
+        if (!$cachedData || $cachedData['otp'] != $request->otp || $cachedData['value'] != $request->value) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid or expired OTP'
+                'message' => 'Invalid or expired OTP',
             ], 400);
         }
-        
 
-        if ($cachedData['value'] != $value) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Value does not match OTP request'
-            ], 400);
-        }
-        
-
-        if ($field === 'email') {
-            $user->email = $value;
+        if ($request->field === 'email') {
+            $user->email = $request->value;
             $user->email_verified_at = now();
-        } elseif ($field === 'phone') {
-            $user->phone = $value;
+        }
+
+        if ($request->field === 'phone') {
+            $user->phone = $request->value;
             $user->phone_verified_at = now();
         }
-        
+
         try {
             $user->save();
-           
-
             Cache::forget($cacheKey);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Profile updated and verified successfully',
-                'profile' => $this->getProfileData($user)
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update profile: ' . $e->getMessage()
+                'message' => 'Failed to update profile: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    
     public function getAddresses(Request $request)
     {
-        $user = $request->user();
-        $addresses = $user->addresses()->get();
-        
         return response()->json([
             'success' => true,
-            'addresses' => $addresses
+            'addresses' => $request->user()->addresses()->get(),
         ]);
     }
 
     public function storeAddress(Request $request)
     {
         $user = $request->user();
-        
+
         $validator = Validator::make($request->all(), [
             'type' => 'required|in:home,work,billing,shipping,other',
             'street' => 'required|string|max:255',
@@ -279,55 +234,44 @@ class ProfileController extends Controller
             'province' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
             'country' => 'required|string|max:100',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_default' => 'boolean',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
-        
-        // If setting as default, unset other defaults
-        if ($request->input('is_default', false)) {
+
+        if ($request->boolean('is_default')) {
             $user->addresses()->where('is_default', true)->update(['is_default' => false]);
         }
-        
-        $addressData = $request->only(['type', 'street', 'city', 'province', 'postal_code', 'country', 'is_default']);
-        $addressData['user_id'] = $user->user_id;
-        
-        try {
-            $address = Address::create($addressData);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Address added successfully',
-                'address' => $address
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to add address: ' . $e->getMessage()
-            ], 500);
-        }
+
+        $address = Address::create(array_merge(
+            $request->only(['type', 'street', 'city', 'province', 'postal_code', 'country', 'latitude', 'longitude', 'is_default']),
+            ['user_id' => $user->user_id]
+        ));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Address added successfully',
+            'address' => $address,
+        ]);
     }
 
-    
     public function updateAddress(Request $request, $id)
     {
         $user = $request->user();
-        
         $address = $user->addresses()->find($id);
-        
+
         if (!$address) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Address not found'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
         }
-        
+
         $validator = Validator::make($request->all(), [
             'type' => 'sometimes|required|in:home,work,billing,shipping,other',
             'street' => 'sometimes|required|string|max:255',
@@ -335,168 +279,80 @@ class ProfileController extends Controller
             'province' => 'sometimes|required|string|max:100',
             'postal_code' => 'sometimes|required|string|max:20',
             'country' => 'sometimes|required|string|max:100',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_default' => 'sometimes|boolean',
         ]);
-        
+
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
-        
-       
-        if ($request->has('is_default') && $request->input('is_default')) {
+
+        if ($request->boolean('is_default')) {
             $user->addresses()->where('is_default', true)->where('address_id', '!=', $id)->update(['is_default' => false]);
         }
-        
-        try {
-            $address->update($request->all());
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Address updated successfully',
-                'address' => $address
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update address: ' . $e->getMessage()
-            ], 500);
-        }
+
+        $address->update($request->only(['type', 'street', 'city', 'province', 'postal_code', 'country', 'latitude', 'longitude', 'is_default']));
+
+        return response()->json(['success' => true, 'message' => 'Address updated successfully', 'address' => $address]);
     }
 
-  
     public function destroyAddress(Request $request, $id)
     {
         $user = $request->user();
-        
         $address = $user->addresses()->find($id);
-        
+
         if (!$address) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Address not found'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
         }
-        
-        try {
-            $address->delete();
-            
-           
-            if ($address->is_default) {
-                $newDefault = $user->addresses()->first();
-                if ($newDefault) {
-                    $newDefault->update(['is_default' => true]);
-                }
+
+        $isDefault = (bool) $address->is_default;
+        $address->delete();
+
+        if ($isDefault) {
+            $newDefault = $user->addresses()->first();
+            if ($newDefault) {
+                $newDefault->update(['is_default' => true]);
             }
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Address deleted successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete address: ' . $e->getMessage()
-            ], 500);
         }
+
+        return response()->json(['success' => true, 'message' => 'Address deleted successfully']);
     }
 
-  
     public function setDefaultAddress(Request $request, $id)
     {
         $user = $request->user();
-        
         $address = $user->addresses()->find($id);
-        
-        if (!$address) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Address not found'
-            ], 404);
-        }
-        
-        try {
-        
 
-            $user->addresses()->where('is_default', true)->update(['is_default' => false]);
-            
-            
-            $address->update(['is_default' => true]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Default address updated successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to set default address: ' . $e->getMessage()
-            ], 500);
+        if (!$address) {
+            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
         }
+
+        $user->addresses()->where('is_default', true)->update(['is_default' => false]);
+        $address->update(['is_default' => true]);
+
+        return response()->json(['success' => true, 'message' => 'Default address updated successfully']);
     }
 
-    
     public function deleteAccount(Request $request)
     {
         $user = $request->user();
-        
+
         $validator = Validator::make($request->all(), [
             'password' => 'required|string',
         ]);
-        
+
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Password is required'
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Password is required'], 422);
         }
-        
 
-        if (!Hash::check($request->input('password'), $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Incorrect password'
-            ], 400);
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['success' => false, 'message' => 'Incorrect password'], 400);
         }
-        
-        try {
-          
-            $user->delete();
-            
-           
-            Auth::logout();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Account deleted successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete account: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
-   
-    private function getProfileData($user)
-    {
-        return [
-            'first_name' => $user->first_name ?? $this->extractFirstName($user->full_name),
-            'last_name' => $user->last_name ?? $this->extractLastName($user->full_name),
-            'email' => $user->email,
-            'email_verified' => $user->email_verified_at !== null,
-            'phone' => $user->phone,
-            'phone_verified' => $user->phone_verified_at !== null,
-            'gender' => $user->gender,
-            'role' => $user->role ?? 'Customer',
-            'created_at' => $user->created_at,
-            'updated_at' => $user->updated_at,
-            'member_id' => $user->member_id ?? 'PAN-' . str_pad($user->id, 6, '0', STR_PAD_LEFT),
-            'account_status' => $user->account_status ?? 'active',
-        ];
+        $user->delete();
+        Auth::logout();
+
+        return response()->json(['success' => true, 'message' => 'Account deleted successfully']);
     }
 }

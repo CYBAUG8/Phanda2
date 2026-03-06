@@ -2,71 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserProfile;
 use App\Models\LoginHistory;
+use App\Models\ProviderProfile;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Models\User;
-
 
 class AuthController extends Controller
 {
-    // REGISTER (testing only)
     public function register(Request $request)
     {
         $data = $request->validate([
+            'full_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'required|unique:users,phone',
-            'password' => 'required|min:6',
-            'full_name' => 'required|string'
+            'phone' => 'nullable|string|max:30|unique:users,phone',
+            'password' => 'required|min:6|confirmed',
+            'role' => 'required|in:customer,provider',
         ]);
 
         $user = User::create([
-            'user_id' => Str::uuid(),
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-            'password' => Hash::make($data['password']),
+            'user_id' => (string) Str::uuid(),
             'full_name' => $data['full_name'],
-            'role' => $request->input('role'),
-            'status' => 'ACTIVE',
-            'is_verified' => false,
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'password' => Hash::make($data['password']),
+            'role' => $data['role'],
         ]);
+
+        if ($data['role'] === 'provider') {
+            ProviderProfile::create([
+                'provider_id' => (string) Str::uuid(),
+                'user_id' => $user->user_id,
+                'business_name' => $user->full_name,
+                'bio' => null,
+                'years_experience' => 0,
+            ]);
+        }
 
         Auth::login($user);
 
-        return response()->json(['message' => 'User created'], 201);
+        return $data['role'] === 'provider'
+            ? redirect()->route('providers.dashboard')
+            : redirect()->route('users.dashboard');
     }
 
-    
- public function login(Request $request)
-{
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-    if (!Auth::attempt($credentials)) {
-        return back()->with('error', 'Invalid credentials');
-    }
+        if (!Auth::attempt($credentials)) {
+            return back()->with('error', 'Invalid credentials')->withInput();
+        }
 
-    $request->session()->regenerate();
+        $request->session()->regenerate();
 
-     $user = Auth::user();
+        $user = Auth::user();
 
-    LoginHistory::create([
-        'login_history_id' => Str::uuid(),   
-        'user_id' => $user->user_id,         
-        'login_at' => now(),
-        'ip_address' => $request->ip(),
-        'user_agent' => $request->userAgent(),
-        'device' => $this->parseDevice($request->userAgent()),
-        'location' => 'Unknown',
-        'status' => 'success',
-    ]);
+        LoginHistory::create([
+            'login_history_id' => (string) Str::uuid(),
+            'user_id' => $user->user_id,
+            'login_at' => now(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'device' => $this->parseDevice((string) $request->userAgent()),
+            'location' => 'Unknown',
+            'status' => 'success',
+        ]);
 
-     if ($user->role === 'provider') {
+        if ($user->role === 'provider') {
             return redirect()->route('providers.dashboard');
         }
 
@@ -74,36 +82,25 @@ class AuthController extends Controller
             return redirect()->route('users.dashboard');
         }
 
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-   
-    
-   
-}
+        return redirect()->route('users.dashboard');
+    }
 
-private function parseDevice($ua)
-{
-    if (!$ua) return 'Unknown device';
+    private function parseDevice(string $ua): string
+    {
+        if (str_contains($ua, 'Edg')) return 'Windows PC (Edge)';
+        if (str_contains($ua, 'Chrome')) return 'Windows PC (Chrome)';
+        if (str_contains($ua, 'Firefox')) return 'Windows PC (Firefox)';
+        if (str_contains($ua, 'Safari') && str_contains($ua, 'Mac')) return 'Mac (Safari)';
+        if (str_contains($ua, 'Mac')) return 'Mac';
+        if (str_contains($ua, 'Android')) return 'Android phone';
+        if (str_contains($ua, 'iPhone')) return 'iPhone';
 
-    if (str_contains($ua, 'Edg')) return 'Windows PC (Edge)';
-    if (str_contains($ua, 'Chrome')) return 'Windows PC (Chrome)';
-    if (str_contains($ua, 'Firefox')) return 'Windows PC (Firefox)';
-    if (str_contains($ua, 'Safari') && str_contains($ua, 'Mac')) return 'Mac (Safari)';
-    if (str_contains($ua, 'Mac')) return 'Mac';
-    if (str_contains($ua, 'Android')) return 'Android phone';
-    if (str_contains($ua, 'iPhone')) return 'iPhone';
+        return 'Unknown device';
+    }
 
-    return 'Unknown device';
-}
-
-
-
-    
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

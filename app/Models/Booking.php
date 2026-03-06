@@ -4,13 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Booking extends Model
 {
     use HasFactory;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
+        'id',
         'user_id',
         'service_id',
         'booking_date',
@@ -29,66 +33,52 @@ class Booking extends Model
         ];
     }
 
-    /**
-     * Get the user who made this booking.
-     */
-    /*public function user(): BelongsTo
+    protected static function booted()
     {
-        return $this->belongsTo(User::class);
-    }*/
-
-    /**
-     * Get the service that was booked.
-     */
-    /*public function service(): BelongsTo
-    {
-        return $this->belongsTo(Service::class);
-    }*/
-
-    /**
-     * Format the price in South African Rands.
-     */
-    public function getFormattedPriceAttribute(): string
-    {
-        return 'R' . number_format($this->total_price, 2);
+        static::creating(function ($model) {
+            if (!$model->id) {
+                $model->id = (string) Str::uuid();
+            }
+        });
     }
 
-    /**
-     * Get the status badge colour class.
-     */
+    public function getBookingCodeAttribute(): string
+    {
+        return 'BKG-' . strtoupper(substr((string) $this->id, 0, 8));
+    }
+
+    public function getFormattedPriceAttribute(): string
+    {
+        return 'R' . number_format((float) $this->total_price, 2);
+    }
+
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            'pending'     => 'badge--pending',
-            'confirmed'   => 'badge--confirmed',
+            'pending' => 'badge--pending',
+            'confirmed' => 'badge--confirmed',
             'in_progress' => 'badge--in-progress',
-            'completed'   => 'badge--completed',
-            'cancelled'   => 'badge--cancelled',
-            default       => 'badge--pending',
+            'completed' => 'badge--completed',
+            'cancelled' => 'badge--cancelled',
+            default => 'badge--pending',
         };
     }
 
-    /**
-     * Human-readable status label.
-     */
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'pending'     => 'Pending',
-            'confirmed'   => 'Confirmed',
+            'pending' => 'Pending',
+            'confirmed' => 'Confirmed',
             'in_progress' => 'In Progress',
-            'completed'   => 'Completed',
-            'cancelled'   => 'Cancelled',
-            default       => ucfirst($this->status),
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            default => ucfirst((string) $this->status),
         };
     }
 
-    /**
-     * Check if this booking can be cancelled.
-     */
     public function getCanCancelAttribute(): bool
     {
-        return in_array($this->status, ['pending', 'confirmed']);
+        return in_array($this->status, ['pending', 'confirmed'], true);
     }
 
     public function user()

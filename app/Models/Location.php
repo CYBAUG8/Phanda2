@@ -10,9 +10,9 @@ class Location extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'location_id'; 
-    public $incrementing = false;                    
-    protected $keyType = 'string';  
+    protected $primaryKey = 'location_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'location_id',
@@ -27,9 +27,18 @@ class Location extends Model
         'is_default' => 'boolean',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (!$model->location_id) {
+                $model->location_id = (string) Str::uuid();
+            }
+        });
+    }
+
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     public function scopeHome($query)
@@ -40,13 +49,5 @@ class Location extends Model
     public function scopeWork($query)
     {
         return $query->where('type', 'work');
-    }
-      protected static function booted()
-    {
-        static::creating(function ($model) {
-            if (!$model->location_id) {
-                $model->location_id = (string) Str::uuid();
-            }
-        });
     }
 }

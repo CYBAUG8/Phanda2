@@ -50,7 +50,7 @@
             ];
         @endphp
         @foreach($tabs as $key => $tab)
-            <a href="/users/bookings{{ $key !== 'all' ? '?status=' . $key : '' }}"
+            <a href="{{ route('users.bookings', $key !== 'all' ? ['status' => $key] : []) }}"
                class="status-tab {{ $activeStatus === $key ? 'status-tab--active' : '' }}">
                 <i class="fas {{ $tab['icon'] }}"></i>
                 <span>{{ $tab['label'] }}</span>
@@ -65,7 +65,7 @@
                 <div class="booking-card card">
                     <div class="booking-card__left">
                         <div class="booking-card__icon">
-                            <i class="fas {{ $booking->service->category->icon ?? 'fa-concierge-bell' }}"></i>
+                            <i class="fas {{ optional($booking->service->category)->icon ?? 'fa-concierge-bell' }}"></i>
                         </div>
                     </div>
 
@@ -108,7 +108,7 @@
 
                         <div class="booking-card__actions">
                             @if($booking->can_cancel)
-                                <form action="/users/bookings/{{ $booking->id }}/cancel" method="POST"
+                                <form action="{{ route('users.bookings.cancel', $booking->id) }}" method="POST"
                                       onsubmit="return confirm('Are you sure you want to cancel this booking?')">
                                     @csrf
                                     @method('PATCH')
@@ -119,13 +119,13 @@
                             @endif
 
                             @if($booking->status === 'completed')
-                                <a href="/users/reviews" class="btn-outline btn-sm">
+                                <a href="{{ route('reviews.reviews') }}" class="btn-outline btn-sm">
                                     <i class="fas fa-star"></i> Review
                                 </a>
                             @endif
 
                             @if(in_array($booking->status, ['completed', 'cancelled']))
-                                <a href="/users/services" class="btn-primary btn-sm">
+                                <a href="{{ route('users.services') }}" class="btn-primary btn-sm">
                                     <i class="fas fa-redo"></i> Rebook
                                 </a>
                             @endif
@@ -148,10 +148,16 @@
                     Try viewing all bookings or a different status filter.
                 @endif
             </p>
-            <a href="{{ $activeStatus === 'all' ? '/users/services' : '/users/bookings' }}" class="btn-primary">
+            <a href="{{ $activeStatus === 'all' ? route('users.services') : route('users.bookings') }}" class="btn-primary">
                 <i class="fas {{ $activeStatus === 'all' ? 'fa-search' : 'fa-list' }}"></i>
                 {{ $activeStatus === 'all' ? 'Find Services' : 'View All Bookings' }}
             </a>
         </div>
     @endif
 @endsection
+
+
+
+
+
+

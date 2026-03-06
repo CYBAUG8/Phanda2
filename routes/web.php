@@ -66,7 +66,17 @@ Route::get('/login', function () {
     return view('login');
 })->name('login'); 
 
+// Landing page shortcuts used by welcome buttons.
+Route::get('/user', function () {
+    return redirect()->route('login');
+});
+
+Route::get('/provider', function () {
+    return redirect()->route('login');
+});
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/provider/logout', function (Request $request) {
     $request->session()->forget('provider_authenticated');
     return redirect('/login');
@@ -119,7 +129,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/users/profile', function () {
         return view('users.profile');
-    });
+    })->name('users.profile');
 
     Route::get('/users/settings', function () {
         return view('users.settings');
@@ -132,11 +142,15 @@ Route::middleware('auth')->group(function () {
     Route::delete('/users/reviews/{id}', [ReviewController::class, 'destroy'])
         ->name('reviews.destroy');
 
-    Route::get('/users/services', [UserServiceController::class, 'index']);
+    Route::get('/users/services', [UserServiceController::class, 'index'])
+        ->name('users.services');
 
-    Route::get('/users/bookings', [UserBookingController::class, 'index']);
-    Route::post('/users/bookings', [UserBookingController::class, 'store']);
-    Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel']);
+    Route::get('/users/bookings', [UserBookingController::class, 'index'])
+        ->name('users.bookings');
+    Route::post('/users/bookings', [UserBookingController::class, 'store'])
+        ->name('users.bookings.store');
+    Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel'])
+        ->name('users.bookings.cancel');
 
     // User info routes
     Route::get('/userInfo', [UserController::class, 'getUserInfo']);
@@ -235,3 +249,6 @@ Route::prefix('providers')->middleware(['auth'])->group(function() {
 
 
 Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');
+
+
+

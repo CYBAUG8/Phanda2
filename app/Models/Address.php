@@ -7,9 +7,9 @@ use Illuminate\Support\Str;
 
 class Address extends Model
 {
-    protected $primaryKey = 'address_id'; 
-    public $incrementing = false;                    
-    protected $keyType = 'string';     
+    protected $primaryKey = 'address_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'address_id',
@@ -20,7 +20,15 @@ class Address extends Model
         'province',
         'postal_code',
         'country',
+        'latitude',
+        'longitude',
         'is_default',
+    ];
+
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'is_default' => 'boolean',
     ];
 
     protected static function booted()
@@ -31,8 +39,9 @@ class Address extends Model
             }
         });
     }
+
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 }

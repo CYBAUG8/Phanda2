@@ -3,106 +3,102 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class ProviderBookingController extends Controller
 {
-    /**
-     * Display bookings belonging to logged-in provider
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $providerId = Auth::user()->user_id;
+        $providerProfile = $request->user()->providerProfile;
+        abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
-        $bookings = Booking::whereHas('service', function ($query) use ($providerId) {
-                $query->where('provider_id', $providerId);
+        $bookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+                $query->where('provider_id', $providerProfile->provider_id);
             })
             ->with(['user', 'service'])
-            ->latest()
+            ->orderByDesc('created_at')
             ->get();
 
-        return view('providers.bookings', compact('bookings'));
+        return view('Providers.bookings', compact('bookings'));
     }
 
-    /**
-     * Confirm booking (pending → confirmed)
-     */
-    public function confirm($id)
+    public function confirm(Request $request, string $id)
     {
-        $booking = $this->findProviderBooking($id);
+        $booking = $this->findProviderBooking($request, $id);
 
         if ($booking->status !== 'pending') {
-            return back()->with('error', 'Only pending bookings can be confirmed.');
+            return $this->statusResponse($request, $booking, false, 'Only pending bookings can be confirmed.');
         }
 
-        $booking->status = 'confirmed';
-        $booking->save();
+        $booking->update(['status' => 'confirmed']);
 
-        return back()->with('success', 'Booking confirmed.');
+        return $this->statusResponse($request, $booking, true, 'Booking confirmed.');
     }
 
-    /**
-     * Start booking (confirmed → in_progress)
-     */
-    public function start($id)
+    public function start(Request $request, string $id)
     {
-        $booking = $this->findProviderBooking($id);
+        $booking = $this->findProviderBooking($request, $id);
 
         if ($booking->status !== 'confirmed') {
-            return back()->with('error', 'Booking must be confirmed first.');
+            return $this->statusResponse($request, $booking, false, 'Booking must be confirmed first.');
         }
 
-        $booking->status = 'in_progress';
-        $booking->save();
+        $booking->update(['status' => 'in_progress']);
 
-        return back()->with('success', 'Booking is now in progress.');
+        return $this->statusResponse($request, $booking, true, 'Booking is now in progress.');
     }
 
-    /**
-     * Complete booking (in_progress → completed)
-     */
-    public function complete($id)
+    public function complete(Request $request, string $id)
     {
-        $booking = $this->findProviderBooking($id);
+        $booking = $this->findProviderBooking($request, $id);
 
         if ($booking->status !== 'in_progress') {
-            return back()->with('error', 'Only in-progress bookings can be completed.');
+            return $this->statusResponse($request, $booking, false, 'Only in-progress bookings can be completed.');
         }
 
-        $booking->status = 'completed';
-        $booking->save();
+        $booking->update(['status' => 'completed']);
 
-        return back()->with('success', 'Booking marked as completed.');
+        return $this->statusResponse($request, $booking, true, 'Booking marked as completed.');
     }
 
-    /**
-     * Cancel booking (pending or confirmed → cancelled)
-     */
-    public function cancel($id)
+    public function cancel(Request $request, string $id)
     {
-        $booking = $this->findProviderBooking($id);
+        $booking = $this->findProviderBooking($request, $id);
 
-        if (!in_array($booking->status, ['pending', 'confirmed'])) {
-            return back()->with('error', 'This booking cannot be cancelled.');
+        if (!in_array($booking->status, ['pending', 'confirmed'], true)) {
+            return $this->statusResponse($request, $booking, false, 'This booking cannot be cancelled.');
         }
 
-        $booking->status = 'cancelled';
-        $booking->save();
+        $booking->update(['status' => 'cancelled']);
 
-        return back()->with('success', 'Booking cancelled.');
+        return $this->statusResponse($request, $booking, true, 'Booking cancelled.');
     }
 
-    /**
-     * Ensure booking belongs to provider
-     */
-    private function findProviderBooking($id)
+    private function findProviderBooking(Request $request, string $id): Booking
     {
-        $providerId = Auth::user()->user_id;
+        $providerProfile = $request->user()->providerProfile;
+        abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
         return Booking::where('id', $id)
-            ->whereHas('service', function ($query) use ($providerId) {
-                $query->where('provider_id', $providerId);
+            ->whereHas('service', function ($query) use ($providerProfile) {
+                $query->where('provider_id', $providerProfile->provider_id);
             })
+            ->with(['user', 'service'])
             ->firstOrFail();
     }
+
+    private function statusResponse(Request $request, Booking $booking, bool $success, string $message)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => $success,
+                'status' => $booking->status,
+                'message' => $message,
+                'booking_id' => $booking->id,
+            ], $success ? 200 : 422);
+        }
+
+        return back()->with($success ? 'success' : 'error', $message);
+    }
 }
+
