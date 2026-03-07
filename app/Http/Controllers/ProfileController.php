@@ -33,9 +33,9 @@ class ProfileController extends Controller
             'account_status' => $user->account_status ?? 'active',
             
 
-            'total_requests' => 0,
-            'active_requests' => 0,
-            'completed_requests' => 0,
+            'total_requests' => $user->bookings()->count(),
+            'active_requests' => $user->bookings()->whereIn('status', ['pending', 'accepted'])->count(),
+            'completed_requests' => $user->bookings()->where('status', 'completed')->count(),
             
           
             'addresses' => $user->addresses()->get()->map(function ($address) {

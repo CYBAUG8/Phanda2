@@ -117,6 +117,8 @@ private function parseDevice($ua)
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Logged out']);
+        
+
+        return redirect('/login');
     }
 }

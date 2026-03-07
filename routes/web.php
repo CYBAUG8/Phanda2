@@ -67,10 +67,8 @@ Route::get('/login', function () {
 })->name('login'); 
 
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::get('/provider/logout', function (Request $request) {
-    $request->session()->forget('provider_authenticated');
-    return redirect('/login');
-});
+Route::get('/logout',[AuthController::class, 'logout']);
+
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
