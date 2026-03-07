@@ -16,7 +16,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\RecoveryContactController;
 use App\Http\Controllers\EmergencyContactController;
- use App\Http\Controllers\ProviderDashboardController;
+use App\Http\Controllers\ProviderDashboardController;
 use App\Http\Controllers\ProviderServiceController;
 use App\Http\Controllers\ProviderBookingController;
 use App\Http\Controllers\ProfileController;  

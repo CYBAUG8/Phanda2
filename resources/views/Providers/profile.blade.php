@@ -32,7 +32,7 @@
 
     <!-- ACTION BUTTONS -->
     <div class="flex justify-end">
-        <a href="provider/services" 
+        <a href="/providers/services" 
            class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition">
             Manage Services
         </a>

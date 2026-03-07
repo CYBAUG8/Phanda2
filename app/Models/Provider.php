@@ -29,5 +29,9 @@ class Provider extends Model
     {
         return $this->hasMany(Service::class);
     }
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(ServiceRequest::class);
+    }
 
 }

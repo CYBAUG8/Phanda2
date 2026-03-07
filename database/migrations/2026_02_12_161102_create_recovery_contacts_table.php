@@ -15,7 +15,7 @@ return new class extends Migration
              $table->uuid('user_id')->unique();
              $table->foreign('user_id')
              ->references('user_id')
-             ->on('users_profile')
+             ->on('users')
              ->onDelete('cascade');
 
             $table->string('name', 160);

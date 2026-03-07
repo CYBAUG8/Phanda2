@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ProviderProfile;
 use App\Models\User;
+use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class ProviderProfileController extends Controller
 {
-    /**
-     * Store a newly created provider profile.
-     */
+    
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -22,13 +21,13 @@ class ProviderProfileController extends Controller
             'years_experience' => 'nullable|integer|min:0',
         ]);
 
-        // Check if profile already exists for this user
+       
         if (ProviderProfile::where('user_id', $data['user_id'])->exists()) {
             return response()->json(['message' => 'Provider profile already exists'], 409);
         }
 
         $providerProfile = ProviderProfile::create([
-            'provider_id' => (string) \Illuminate\Support\Str::uuid(), // generate UUID
+            'provider_id' => (string) \Illuminate\Support\Str::uuid(), 
             'user_id' => $data['user_id'],
             'business_name' => $data['business_name'],
             'bio' => $data['bio'] ?? null,
@@ -38,14 +37,12 @@ class ProviderProfileController extends Controller
         return response()->json($providerProfile, 201);
     }
 
-    /**
-     * Display the specified provider profile.
-     */
-    public function profile()
+    
+public function profile()
 {
     $user = Auth::user();
     
-    // Ensure user is logged in and is a provider
+   
     if (!$user || $user->role !== 'provider') {
         abort(403, 'Unauthorized access.');
     }
@@ -66,24 +63,28 @@ class ProviderProfileController extends Controller
         'email' => $providerProfile->user->email,
         'full_name' => $providerProfile->user->full_name,
         'services' => $providerProfile->services,
-        'total_bookings' => 0,
-        'active_jobs' => 0,
-        'completed_jobs' => 0,
-        'total_earnings' => 0,
+        'total_bookings' => $providerProfile->bookings()->count(),
+        'active_jobs' => $providerProfile->bookings()
+             ->whereIn('status', ['confirmed', 'in_progress'])
+             ->count(),
+        'completed_jobs' => $providerProfile->bookings()
+             ->where('status', 'completed')
+             ->count(), 
+        'total_earnings' => $providerProfile->bookings()
+             ->where('status', 'completed')
+             ->sum('total_price'),
     ];
 
     return view('providers.profile', ['provider' => $data]);
 }
 
-    /**
-     * Update the authenticated provider's profile.
-     */
+ 
     public function update(Request $request)
     {
-        // Get the authenticated user
+       
         $user = Auth::user();
 
-        // Ensure the user is a provider and has a profile
+       
         if ($user->role !== 'provider') {
             return response()->json(['message' => 'User is not a provider'], 403);
         }
@@ -94,10 +95,10 @@ class ProviderProfileController extends Controller
             return response()->json(['message' => 'Provider profile not found'], 404);
         }
 
-        // Validate input: include fields from both users and provider_profiles
+
         $validator = Validator::make($request->all(), [
             'business_name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20', // phone belongs to users table
+            'phone' => 'sometimes|required|string|max:20',
             'service_area' => 'sometimes|nullable|string|max:255',
             'years_experience' => 'sometimes|nullable|integer|min:0',
             'bio' => 'sometimes|nullable|string',
@@ -107,13 +108,13 @@ class ProviderProfileController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Update user's phone if provided
+       
         if ($request->has('phone')) {
             $user->phone = $request->phone;
             $user->save();
         }
 
-        // Update provider profile fields
+    
         $providerProfile->fill($request->only([
             'business_name',
             'service_area',
@@ -123,7 +124,7 @@ class ProviderProfileController extends Controller
 
         $providerProfile->save();
 
-        // Return updated data
+       
         $response = [
             'provider_id' => $providerProfile->provider_id,
             'business_name' => $providerProfile->business_name,
@@ -137,9 +138,7 @@ class ProviderProfileController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * Remove the authenticated provider's profile.
-     */
+ 
     public function destroy()
     {
         $user = Auth::user();

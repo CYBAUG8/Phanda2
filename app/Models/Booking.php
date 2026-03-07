@@ -32,18 +32,15 @@ class Booking extends Model
     /**
      * Get the user who made this booking.
      */
-    /*public function user(): BelongsTo
+    public function user()
     {
-        return $this->belongsTo(User::class);
-    }*/
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
 
-    /**
-     * Get the service that was booked.
-     */
-    /*public function service(): BelongsTo
+    public function service()
     {
-        return $this->belongsTo(Service::class);
-    }*/
+        return $this->belongsTo(Service::class, 'service_id', 'service_id');
+    }
 
     /**
      * Format the price in South African Rands.
@@ -91,13 +88,5 @@ class Booking extends Model
         return in_array($this->status, ['pending', 'confirmed']);
     }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
-    }
 
-    public function service()
-    {
-        return $this->belongsTo(Service::class, 'service_id', 'service_id');
-    }
 }

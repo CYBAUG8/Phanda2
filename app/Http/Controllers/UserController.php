@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
+
 class UserController extends Controller
 {
     public function getUserInfo(Request $request)
@@ -34,7 +37,9 @@ class UserController extends Controller
 
         if ($request->field == 'full_name') {
             $user->full_name = $request->input('value');
-        } elseif ($request->field == 'email' || $request->field == 'phone') {
+        }
+         elseif ($request->field == 'email' || $request->field == 'phone') 
+            {
              
             $request->validate([
                 'otp' => 'required|digits:6',
@@ -70,6 +75,11 @@ class UserController extends Controller
     {
         $user = $request->user();
 
+        $request->validate([
+        'field' => 'required|in:email,phone',
+        'value' => 'required|string'
+        ]);
+
         $otp = rand(100000, 999999);
 
         Cache::put(
@@ -77,6 +87,12 @@ class UserController extends Controller
             $otp,
             now()->addMinutes(10)
         );
+
+   
+
+        if ($request->field === 'email') {
+           Mail::to($request->value)->send(new OtpMail($otp));
+        }
         
         return response()->json([
             'message' => 'OTP sent successfully',

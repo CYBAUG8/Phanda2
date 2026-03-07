@@ -9,35 +9,48 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Models\User;
-
+use App\Models\ProviderProfile;
 
 class AuthController extends Controller
 {
-    // REGISTER (testing only)
+    
     public function register(Request $request)
-    {
-        $data = $request->validate([
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'required|unique:users,phone',
-            'password' => 'required|min:6',
-            'full_name' => 'required|string'
+{
+    $data = $request->validate([
+        'email' => 'required|email|unique:users,email',
+        'phone' => 'required|unique:users,phone',
+        'password' => 'required|min:6',
+        'full_name' => 'required|string',
+        'role' => 'required|in:customer,provider,admin'
+    ]);
+
+    $user = User::create([
+        'user_id' => (string) Str::uuid(),
+        'email' => $data['email'],
+        'phone' => $data['phone'],
+        'password' => Hash::make($data['password']),
+        'full_name' => $data['full_name'],
+        'role' => $data['role'],
+        'status' => 'ACTIVE',
+        'is_verified' => false,
+    ]);
+
+    //provider profile
+    if (strtoupper($data['role']) === 'PROVIDER') {
+
+        ProviderProfile::create([
+            'provider_id' => (string) Str::uuid(),
+            'user_id' => $user->user_id,
+            'business_name' => $user->full_name . "'s Business",
+            'bio' => null,
+            'years_experience' => 0,
         ]);
-
-        $user = User::create([
-            'user_id' => Str::uuid(),
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-            'password' => Hash::make($data['password']),
-            'full_name' => $data['full_name'],
-            'role' => $request->input('role'),
-            'status' => 'ACTIVE',
-            'is_verified' => false,
-        ]);
-
-        Auth::login($user);
-
-        return response()->json(['message' => 'User created'], 201);
     }
+
+    Auth::login($user);
+
+    return response()->json(['message' => 'User created'], 201);
+}
 
     
  public function login(Request $request)
@@ -66,16 +79,13 @@ class AuthController extends Controller
         'status' => 'success',
     ]);
 
-     if ($user->role === 'provider') {
-            return redirect()->route('providers.dashboard');
-        }
+     if (strtoupper($user->role) === 'PROVIDER') {
 
-        if ($user->role === 'customer') {
-            return redirect()->route('users.dashboard');
-        }
+            return redirect()->route('provider.profile');
+            
+        }else{
 
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
+            return redirect()->intended('users/profile');
         }
    
     
@@ -107,6 +117,6 @@ private function parseDevice($ua)
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return response()->json(['message' => 'Logged out']);
     }
 }
