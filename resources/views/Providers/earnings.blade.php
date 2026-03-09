@@ -30,24 +30,28 @@
         <div class="bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-xl p-6">
             <p class="text-sm opacity-80">Available Balance</p>
             <h2 class="text-2xl font-bold mt-2">
-                R <span x-text="netEarnings.toFixed(2)"></span>
+                R {{ number_format($availableBalance ??0,2) }}
             </h2>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Total Revenue</p>
-            <h2 class="text-xl font-bold mt-2">R 0.00</h2>
+            <h2 class="text-xl font-bold mt-2">
+                R {{ number_format($totalRevenue ??0,2) }}
+            </h2>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Platform Commission (10%)</p>
-            <h2 class="text-xl font-bold text-red-500 mt-2">- R 0.00</h2>
+            <h2 class="text-xl font-bold text-red-500 mt-2">
+                - R {{ number_format($commission ??0,2) }}
+            </h2>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Net Earnings</p>
             <h2 class="text-xl font-bold text-green-600 mt-2">
-                R <span x-text="netEarnings.toFixed(2)"></span>
+                R {{ number_format($netEarnings ??0,2) }}
             </h2>
         </div>
 
@@ -208,7 +212,7 @@ function earningsPage() {
         loading: false,
         showToast: false,
 
-        netEarnings: 1000, // replace with {{ $netEarnings ?? 0 }}
+        netEarnings:1000, // replace with {{ number_format($availableBalance ?? 0, 2) }}
 
         bank: '',
         accountNumber: '',

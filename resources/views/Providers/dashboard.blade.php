@@ -77,25 +77,25 @@
         <!-- Total Bookings -->
         <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
             <p class="text-sm text-gray-500">Total Bookings</p>
-            <h2 class="text-2xl font-bold text-gray-800 mt-2">0</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ $totalBookings }}</h2>
         </div>
 
         <!-- Completed -->
         <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
             <p class="text-sm text-gray-500">Completed</p>
-            <h2 class="text-2xl font-bold text-green-600 mt-2">0</h2>
+            <h2 class="text-2xl font-bold text-green-600 mt-2">{{ $completedBookings }}</h2>
         </div>
 
         <!-- Pending -->
         <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
             <p class="text-sm text-gray-500">Pending</p>
-            <h2 class="text-2xl font-bold text-yellow-500 mt-2">0</h2>
+            <h2 class="text-2xl font-bold text-yellow-500 mt-2">{{ $pendingBookings }}</h2>
         </div>
 
-        <!-- Balance -->
+        <!-- Available Balance -->
         <div class="bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-xl shadow-sm p-5">
             <p class="text-sm opacity-80">Available Balance</p>
-            <h2 class="text-2xl font-bold mt-2">R0</h2>
+            <h2 class="text-2xl font-bold mt-2">R{{ number_format($availableBalance, 2) }}</h2>
         </div>
 
     </div>
@@ -107,7 +107,7 @@
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-6">Recent Bookings</h3>
 
-        @if(0 > 0)
+        @if($recentBookings->count() > 0)
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
                 <thead>

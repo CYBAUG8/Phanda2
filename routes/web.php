@@ -19,6 +19,7 @@ use App\Http\Controllers\EmergencyContactController;
 use App\Http\Controllers\ProviderDashboardController;
 use App\Http\Controllers\ProviderServiceController;
 use App\Http\Controllers\ProviderBookingController;
+use App\Http\Controllers\ProviderEarningsController;
 use App\Http\Controllers\ProfileController;  
 use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
@@ -99,9 +100,8 @@ Route::middleware('auth')->group(function () {
         return view('providers.schedule');
     });
 
-    Route::get('/providers/earnings', function () {
-        return view('providers.earnings');
-    });
+    Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
+    ->name('providers.earnings');
         // User area sample routes
 
     Route::get('/users/dashboard', [DashboardController::class, 'index'])

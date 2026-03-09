@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Review;
+use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -18,27 +20,63 @@ class ReviewController extends Controller
     {
         $currentUser = Auth::user();
 
-        // Get providers from DB
-        $providers = User::where('role', 'provider')->get();
+        //Get all completed bookings for the current user
+        $completedBookings = Booking::where('user_id', $currentUser->user_id)
+            ->where('status', 'completed')
+            ->get();
 
-        $selectedProviderId = $request->get('provider')
-            ?? optional($providers->first())->user_id;
+        // If no completed bookings, return empty view
+        if ($completedBookings->isEmpty()) {
+            return view('Users.reviews.reviews', [
+                'providers' => collect(),
+                'selectedProviderId' => null,
+                'selectedProvider' => null,
+                'reviews' => new LengthAwarePaginator([], 0, 5),
+                'currentUser' => $currentUser,
+                'totalReviews' => 0,
+                'averageRating' => 0,
+                'ratingCounts' => collect(),
+                'userReviewForSelected' => null
+            ]);
+        }
 
-        $selectedProvider = $providers
-            ->firstWhere('user_id', $selectedProviderId);
+        //Get all service IDs from bookings
+        $serviceIds = $completedBookings->pluck('service_id');
 
-        // Fetch reviews for provider
+        //Fetch services
+        $services = \App\Models\Service::whereIn('service_id', $serviceIds)->get();
+
+        //Extract provider_profile IDs
+        $providerProfileIds = $services->pluck('provider_id')->unique();
+
+        //Get user IDs from provider_profiles
+        $providerUserIds = \App\Models\ProviderProfile::whereIn('provider_id', $providerProfileIds)
+            ->pluck('user_id');
+
+        //Fetch actual users
+        $providers = User::whereIn('user_id', $providerUserIds)->get();
+
+        //Determine selected provider safely
+        $selectedProviderId = $request->get('provider');
+        $selectedProvider = null;
+
+        
+        if (!$selectedProviderId && $providers->isNotEmpty()) {
+            $selectedProvider = $providers->first();
+            $selectedProviderId = $selectedProvider->user_id;
+        } else {
+            $selectedProvider = $providers->firstWhere('user_id', $selectedProviderId);
+        }
+
+        //Fetch reviews for the selected provider
         $reviews = Review::with('customer')
             ->where('to_user_id', $selectedProviderId)
             ->orderByDesc('created_at')
             ->paginate(5);
 
         $allReviews = Review::where('to_user_id', $selectedProviderId)->get();
-
         $totalReviews = $allReviews->count();
-        $averageRating = $totalReviews
-            ? round($allReviews->avg('rating'), 1)
-            : 0;
+        $averageRating = $totalReviews ? round($allReviews->avg('rating'), 1) : 0;
 
         $ratingCounts = collect([5,4,3,2,1])->map(fn ($s) => [
             'star' => $s,

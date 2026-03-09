@@ -26,23 +26,31 @@ class ProviderDashboardController extends Controller
         // BOOKINGS
         // -----------------------------
 
-        $totalBookings = Booking::where('user_id', $providerId)->count();
+        $totalBookings = Booking::whereHas('service', function ($query) use ($providerId) {
+            $query->where('provider_id', $providerId);
+        })->count();
 
-        $completedBookings = Booking::where('user_id', $providerId)
-            ->where('status', 'completed')
-            ->count();
+        $completedBookings = Booking::whereHas('service', function ($query) use ($providerId) {
+            $query->where('provider_id', $providerId);
+        })
+        ->where('status', 'completed')
+        ->count();
 
-        $pendingBookings = Booking::where('user_id', $providerId)
-            ->where('status', 'pending')
-            ->count();
+        $pendingBookings = Booking::whereHas('service', function ($query) use ($providerId) {
+            $query->where('provider_id', $providerId);
+        })
+        ->where('status', 'in_progress')
+        ->count();
 
         // -----------------------------
         // REVENUE
         // -----------------------------
 
-        $totalRevenue = Booking::where('user_id', $providerId)
-            ->where('status', 'completed')
-            ->sum('total_price');
+        $totalRevenue = Booking::whereHas('service', function ($query) use ($providerId) {
+            $query->where('provider_id', $providerId);
+        })
+        ->where('status', 'completed')
+        ->sum('total_price');
 
         $commissionRate = 0.10;
         $commission = $totalRevenue * $commissionRate;
@@ -73,10 +81,12 @@ class ProviderDashboardController extends Controller
         // RECENT BOOKINGS
         // -----------------------------
 
-        $recentBookings = Booking::where('user_id', $providerId)
-            ->latest()
-            ->take(5)
-            ->get();
+        $recentBookings = Booking::whereHas('service', function ($query) use ($providerId) {
+            $query->where('provider_id', $providerId);
+        })
+        ->latest()
+        ->take(5)
+        ->get();
         
         // -----------------------------
         // Is Online

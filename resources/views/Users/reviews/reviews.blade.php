@@ -15,18 +15,26 @@
                     Reviews for {{ $selectedProvider['full_name'] ?? 'Provider' }}
                 </h2>
 
+                @if($providers->isEmpty())
+                    <p style="margin-top:10px;color:#888">
+                        No one to review yet.
+                    </p>
+                @else
                 <form method="GET">
                     <select name="provider"
-                            onchange="this.form.submit()"
-                            style="margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid #ddd">
+                        onchange="this.form.submit()"
+                        style="margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid #ddd">
+
                         @foreach($providers as $provider)
-                            <option value="{{ $provider['user_id'] }}"
-                                @selected($provider['user_id'] === $selectedProviderId)>
-                                {{ $provider['full_name'] }}
+                            <option value="{{ $provider->user_id }}"
+                                @selected($provider->user_id === $selectedProviderId)>
+                                {{ $provider->full_name }}
                             </option>
                         @endforeach
+
                     </select>
                 </form>
+                @endif
             </div>
 
             <div style="display:flex;gap:8px">
@@ -125,4 +133,20 @@
 </div>
 
 @include('users.reviews.partials.modal')
+
+<script>
+    function openModal() {
+        const modal = document.getElementById('reviewModal');
+        if(modal){
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('reviewModal');
+        if(modal){
+            modal.style.display = 'none';
+        }
+    }
+</script>
 @endsection

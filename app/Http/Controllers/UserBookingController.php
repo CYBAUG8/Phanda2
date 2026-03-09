@@ -82,7 +82,6 @@ class UserBookingController extends Controller
         if ($providerRadiusKm > 0 && $distanceKm > $providerRadiusKm) {
             return redirect()->back()->withInput()->with('error', 'You are outside this provider\'s service area.');
         }
-
         Booking::create([
             'user_id' => $request->user()->user_id,
             'service_id' => $service->service_id,
