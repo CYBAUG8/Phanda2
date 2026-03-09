@@ -21,23 +21,26 @@ class ProviderDashboardController extends Controller
         }
 
         $providerId = $user->user_id;
+        $providerProfile = ProviderProfile::where('user_id', $user->user_id)
+            ->with('services')
+            ->firstOrFail();
 
         // -----------------------------
         // BOOKINGS
         // -----------------------------
 
-        $totalBookings = Booking::whereHas('service', function ($query) use ($providerId) {
-            $query->where('provider_id', $providerId);
-        })->count();
+        $totalBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id', $providerProfile->provider_id);
+            })->count();
 
-        $completedBookings = Booking::whereHas('service', function ($query) use ($providerId) {
-            $query->where('provider_id', $providerId);
+        $completedBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id',$providerProfile->provider_id);
         })
         ->where('status', 'completed')
         ->count();
 
-        $pendingBookings = Booking::whereHas('service', function ($query) use ($providerId) {
-            $query->where('provider_id', $providerId);
+        $pendingBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id',$providerProfile->provider_id);
         })
         ->where('status', 'in_progress')
         ->count();

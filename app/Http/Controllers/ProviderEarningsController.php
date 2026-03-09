@@ -15,7 +15,7 @@ class ProviderEarningsController extends Controller
     {
         $user = $request->user();
 
-        // Ensure only providers access
+        // Ensure only providers can access
         abort_if(!$user || $user->role !== 'provider', 403);
 
         // Get provider profile
