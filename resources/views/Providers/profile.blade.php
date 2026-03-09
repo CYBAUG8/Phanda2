@@ -23,7 +23,7 @@
 
                 <div class="flex items-center gap-2 mt-2">
                     <span class="text-yellow-500">★</span>
-                    <span class="font-medium" x-text="profile.rating_avg || '0.0'"></span>
+                    <span class="font-medium" >{{ number_format($provider['averageRating'] ?? 0, 1) }}</span>
                     <span class="text-gray-500 text-sm">({{ count($provider['services'] ?? []) }} services)</span>
                 </div>
             </div>

@@ -7,19 +7,21 @@
 >
 
     <!-- ================= HEADER ================= -->
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Earnings</h1>
-            <p class="text-sm text-gray-500">Track your income and payout history</p>
-        </div>
+    <section class="bg-white border rounded-lg p-8 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Earnings</h1>
+                <p class="text-sm text-gray-500">Track your income and payout history</p>
+            </div>
 
-        <button 
-            @click="withdrawOpen = true"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm transition"
-        >
-            Withdraw Funds
-        </button>
-    </div>
+            <button 
+                @click="withdrawOpen = true"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm transition"
+            >
+                Withdraw Funds
+            </button>
+        </div>
+    </section>
 
 
     <!-- ================= SUMMARY ================= -->

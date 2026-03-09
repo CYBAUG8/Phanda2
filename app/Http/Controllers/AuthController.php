@@ -79,13 +79,13 @@ class AuthController extends Controller
         'status' => 'success',
     ]);
 
-     if (strtoupper($user->role) === 'PROVIDER') {
+     if ($user->role === 'provider') {
 
-            return redirect()->route('provider.profile');
+            return redirect()->route('providers.dashboard');
             
         }else{
 
-            return redirect()->intended('users/profile');
+            return redirect()->route('users.dashboard');
         }
    
     

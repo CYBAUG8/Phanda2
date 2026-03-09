@@ -4,56 +4,57 @@
 <div class="px-6 py-6">
 
     <!-- Page Header -->
-    <div class="flex items-center justify-between mb-6">
+    <section class="bg-white border rounded-lg p-8 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-6 ">
 
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
-            <p class="text-sm text-gray-500">Welcome back, Here's what's happening today.</p>
-        </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+                <p class="text-sm text-gray-500">Welcome back, Here's what's happening today.</p>
+            </div>
 
-        <!-- Active Toggle -->
-        <div 
-            x-data="{
-                active: {{ $isOnline ? 'true' : 'false' }},
-                toggle(){
-                    this.active = !this.active
+            <!-- Active Toggle -->
+            <div 
+                x-data="{
+                    active: {{ $isOnline ? 'true' : 'false' }},
+                    toggle(){
+                        this.active = !this.active
 
-                    fetch('{{ route('provider.toggleOnline') }}', {
-                        method:'POST',
-                        headers:{
-                            'Content-Type':'application/json',
-                            'X-CSRF-TOKEN':'{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            is_online:this.active
+                        fetch('{{ route('provider.toggleOnline') }}', {
+                            method:'POST',
+                            headers:{
+                                'Content-Type':'application/json',
+                                'X-CSRF-TOKEN':'{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                is_online:this.active
+                            })
                         })
-                    })
-                }
-            }"
-            class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm"
-        >
+                    }
+                }"
+                class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm"
+            >
 
-        <span 
-            class="text-sm font-semibold"
-            :class="active ? 'text-green-600' : 'text-gray-400'"
-            x-text="active ? 'Active' : 'Offline'">
-        </span>
+            <span 
+                class="text-sm font-semibold"
+                :class="active ? 'text-green-600' : 'text-gray-400'"
+                x-text="active ? 'Active' : 'Offline'">
+            </span>
 
-        <button 
-            @click="toggle()"
-            class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-            :class="active ? 'bg-green-500' : 'bg-gray-300'"
-        >
-        <span 
-            class="inline-block h-4 w-4 transform rounded-full bg-white transition"
-            :class="active ? 'translate-x-6' : 'translate-x-1'">
-        </span>
-        </button>
+            <button 
+                @click="toggle()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition"
+                :class="active ? 'bg-green-500' : 'bg-gray-300'"
+            >
+            <span 
+                class="inline-block h-4 w-4 transform rounded-full bg-white transition"
+                :class="active ? 'translate-x-6' : 'translate-x-1'">
+            </span>
+            </button>
+
+            </div>
 
         </div>
-
-    </div>
-
+    </section>
     <!-- ===================== -->
     <!-- SUMMARY CARDS -->
     <!-- ===================== -->
@@ -65,7 +66,7 @@
 
             <div class="flex items-center mt-2">
                 <span class="text-2xl font-bold text-yellow-500 mr-2">
-                    {{ number_format($averageRating, 1) }}
+                    {{ number_format($averageRating,1) }}
                 </span>
 
                 <span class="text-sm text-gray-400">
@@ -98,6 +99,7 @@
         </div>
 
     </div>
+    
 
     <!-- ===================== -->
     <!-- Recent Bookings -->
