@@ -36,14 +36,14 @@
 
             <span 
                 class="text-sm font-semibold"
-                :class="active ? 'text-green-600' : 'text-gray-400'"
+                :class="active ? 'text-orange-600' : 'text-gray-400'"
                 x-text="active ? 'Active' : 'Offline'">
             </span>
 
             <button 
                 @click="toggle()"
                 class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                :class="active ? 'bg-green-500' : 'bg-gray-300'"
+                :class="active ? 'bg-orange-500' : 'bg-gray-300'"
             >
             <span 
                 class="inline-block h-4 w-4 transform rounded-full bg-white transition"
@@ -93,7 +93,7 @@
         </div>
 
         <!-- Balance -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-sm p-5">
+        <div class="bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-xl shadow-sm p-5">
             <p class="text-sm opacity-80">Available Balance</p>
             <h2 class="text-2xl font-bold mt-2">R0</h2>
         </div>

@@ -16,7 +16,7 @@
 
             <button 
                 @click="withdrawOpen = true"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm transition"
+                class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-xl shadow-sm transition"
             >
                 Withdraw Funds
             </button>
@@ -27,7 +27,7 @@
     <!-- ================= SUMMARY ================= -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6">
+        <div class="bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-xl p-6">
             <p class="text-sm opacity-80">Available Balance</p>
             <h2 class="text-2xl font-bold mt-2">
                 R <span x-text="netEarnings.toFixed(2)"></span>
