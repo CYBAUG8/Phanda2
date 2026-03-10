@@ -4,12 +4,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReviewController;
 //profile
-use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Api\EmergencyContactController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\LoginHistoryController;
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProviderProfileController;
+use App\Http\Controllers\ServiceRequestController;
+use App\Http\Controllers\ServiceController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -48,12 +51,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // User Info & Settings
     Route::prefix('settings')->group(function () {
-        Route::get('/userInfo', [SettingController::class, 'getUserInfo']);
-        Route::post('/updateUserInfo', [SettingController::class, 'updateUserInfo']);
-        Route::post('/sendOtp', [SettingController::class, 'sendOtp']);
-        Route::get('/getSettings', [SettingController::class, 'getSettings']);
-        Route::post('/settings', [SettingController::class, 'updateSettings']);
-        Route::post('/notification-preferences', [SettingController::class, 'updateNotificationPreferences']);
+        Route::get('/userInfo', [SettingsController::class, 'getUserInfo']);
+        Route::post('/updateUserInfo', [SettingsController::class, 'updateUserInfo']);
+        Route::post('/sendOtp', [SettingsController::class, 'sendOtp']);
+        Route::get('/getSettings', [SettingsController::class, 'getSettings']);
+        Route::post('/settings', [SettingsController::class, 'updateSettings']);
+        Route::post('/notification-preferences', [SettingsController::class, 'updateNotificationPreferences']);
     });
 
     // Emergency Contact
@@ -98,3 +101,6 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('provider-profile', [ProviderProfileController::class, 'store']);
+Route::post('/service-request', [ServiceRequestController::class, 'store']);
+Route::post('/services', [ServiceController::class, 'store']);

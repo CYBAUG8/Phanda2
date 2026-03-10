@@ -8,10 +8,11 @@ return new class extends Migration {
     {
         Schema::create('login_histories', function (Blueprint $table) {
             $table->uuid('login_history_id')->primary();
+            
             $table->uuid('user_id');
             $table->foreign('user_id')
                 ->references('user_id')
-                ->on('users_profile')
+                ->on('users')
                 ->onDelete('cascade');
 
             $table->timestamp('login_at')->nullable();

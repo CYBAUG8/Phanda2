@@ -12,27 +12,35 @@
 
             <div>
                 <h2 >
-                    Reviews for {{ $selectedProvider['name'] ?? 'Provider' }}
+                    Reviews for {{ $selectedProvider['full_name'] ?? 'Provider' }}
                 </h2>
 
+                @if($providers->isEmpty())
+                    <p style="margin-top:10px;color:#888">
+                        No one to review yet.
+                    </p>
+                @else
                 <form method="GET">
                     <select name="provider"
-                            onchange="this.form.submit()"
-                            style="margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid #ddd">
+                        onchange="this.form.submit()"
+                        style="margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid #ddd">
+
                         @foreach($providers as $provider)
-                            <option value="{{ $provider['id'] }}"
-                                @selected($provider['id'] === $selectedProviderId)>
-                                {{ $provider['name'] }}
+                            <option value="{{ $provider->user_id }}"
+                                @selected($provider->user_id === $selectedProviderId)>
+                                {{ $provider->full_name }}
                             </option>
                         @endforeach
+
                     </select>
                 </form>
+                @endif
             </div>
 
             <div style="display:flex;gap:8px">
                 @if($userReviewForSelected)
                     <form method="POST"
-                          action="{{ route('reviews.destroy', $userReviewForSelected->id) }}">
+                          action="{{ route('reviews.destroy', $userReviewForSelected->review_id) }}">
                         @csrf
                         @method('DELETE')
                         <button style="padding:8px 16px;border-radius:25px;border:1px solid #ddd;background:#fff">
@@ -101,7 +109,7 @@
 
                             <div style="display:flex;justify-content:space-between">
                                 <strong style="color:#6b4f3b">
-                                    {{ $review->user_id === optional($currentUser)->id ? 'You' : ($review->user->name ?? 'Anonymous') }}
+                                    {{ $review->user_id === optional($currentUser)->user_id ? 'You' : ($review->customer->full_name ?? 'Anonymous') }}
                                 </strong>
                                 <small style="color:#666">
                                     {{ $review->created_at->format('d M Y') }}
@@ -125,4 +133,20 @@
 </div>
 
 @include('users.reviews.partials.modal')
+
+<script>
+    function openModal() {
+        const modal = document.getElementById('reviewModal');
+        if(modal){
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('reviewModal');
+        if(modal){
+            modal.style.display = 'none';
+        }
+    }
+</script>
 @endsection

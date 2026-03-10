@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
+
 class UserController extends Controller
 {
     public function getUserInfo(Request $request)
@@ -34,7 +37,9 @@ class UserController extends Controller
 
         if ($request->field == 'full_name') {
             $user->full_name = $request->input('value');
-        } elseif ($request->field == 'email' || $request->field == 'phone') {
+        }
+         elseif ($request->field == 'email' || $request->field == 'phone') 
+            {
              
             $request->validate([
                 'otp' => 'required|digits:6',
@@ -65,10 +70,15 @@ class UserController extends Controller
         ]);
     }
 
-    // Send OTP for verification
+ 
     public function sendOtp(Request $request)
     {
         $user = $request->user();
+
+        $request->validate([
+        'field' => 'required|in:email,phone',
+        'value' => 'required|string'
+        ]);
 
         $otp = rand(100000, 999999);
 
@@ -77,10 +87,16 @@ class UserController extends Controller
             $otp,
             now()->addMinutes(10)
         );
+
+   
+
+        if ($request->field === 'email') {
+           Mail::to($request->value)->send(new OtpMail($otp));
+        }
         
         return response()->json([
             'message' => 'OTP sent successfully',
-            'otp' => $otp // In production, send via SMS/Email instead
+            'otp' => $otp 
         ]);
     }
 
@@ -101,21 +117,20 @@ class UserController extends Controller
 
         $user = $request->user();
 
-        // Check if current password is correct
+       
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'Current password is incorrect'
             ], 400);
         }
 
-        // Check if new password is same as current password
         if (Hash::check($request->new_password, $user->password)) {
             return response()->json([
                 'message' => 'New password must be different from current password'
             ], 400);
         }
 
-        // Update password
+       
         $user->password = Hash::make($request->new_password);
         $user->save();
 
@@ -129,7 +144,7 @@ class UserController extends Controller
     {
         $user = $request->user();
         
-        // Optional: Validate password for extra security
+       
         $request->validate([
             'password' => 'required|string',
         ]);
@@ -140,7 +155,7 @@ class UserController extends Controller
             ], 400);
         }
         
-        // Soft delete if using soft deletes
+   
         $user->delete();
         
         Auth::logout();

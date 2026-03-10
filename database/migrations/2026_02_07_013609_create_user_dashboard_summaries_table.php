@@ -14,7 +14,12 @@ return new class extends Migration
        Schema::create('user_dashboard_summaries', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->uuid('user_id');
+
+            $table->foreign('user_id')
+                  ->references('user_id')
+                  ->on('users')
+                  ->onDelete('cascade');
 
             $table->string('name')->unique();
 

@@ -4,14 +4,30 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Phanda Provider</title>
+ 
+     
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <script src="https://unpkg.com/@heroicons/react@24/outline/index.js"></script>
+ 
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
     {{-- Load Vite JS and providers CSS (reuses firstpage entry) --}}
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/js/firstpage.js', 'resources/css/providers.css'])
+         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     @else
         <link rel="stylesheet" href="/build/assets/providers.css">
         <script src="/build/assets/firstpage.js"></script>
     @endif
+
+     @stack('styles')
+     <style>
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 <body>
     <div class="dashboard-container">
@@ -62,11 +78,20 @@
                     <span>Profile</span>
                 </a>
             </nav>
+
+            <div class="sidebar-item mt-auto">
+                <a href="/logout" class="logout-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
         </aside>
 
         <main class="provider-content">
             @yield('content')
         </main>
     </div>
+    
+    @stack('scripts')
 </body>
 </html>
