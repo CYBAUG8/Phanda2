@@ -41,12 +41,12 @@
             </h2>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <!--<div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Platform Commission (10%)</p>
             <h2 class="text-xl font-bold text-red-500 mt-2">
                 - R {{ number_format($commission ??0,2) }}
             </h2>
-        </div>
+        </div>-->
 
         <div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Net Earnings</p>

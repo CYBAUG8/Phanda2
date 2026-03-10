@@ -122,22 +122,34 @@
                 <tbody class="divide-y">
                     @foreach($recentBookings as $booking)
                     <tr class="hover:bg-gray-50">
-                        <td class="py-3">0</td>
-                        <td class="py-3">{{ $booking->service->title ?? 'N/A' }}</td>
+                        <td class="py-3">{{ $loop->iteration }}</td>
+
+                        <td class="py-3">
+                            {{ $booking->service->title ?? 'N/A' }}
+                        </td>
+
                         <td class="py-3">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold
                                 @if($booking->status == 'completed') bg-green-100 text-green-600
                                 @elseif($booking->status == 'pending') bg-yellow-100 text-yellow-600
+                                @elseif($booking->status == 'confirmed') bg-blue-100 text-blue-600
                                 @else bg-gray-100 text-gray-600
                                 @endif">
-                                {{ ucfirst($booking->status) }}
+
+                                {{ ucfirst(str_replace('_',' ',$booking->status)) }}
                             </span>
                         </td>
-                        <td class="py-3">R {{ number_format($booking->total_price, 2) }}</td>
-                        <td class="py-3">{{ $booking->created_at->format('d M Y') }}</td>
+
+                        <td class="py-3">
+                            R {{ number_format($booking->total_price, 2) }}
+                        </td>
+
+                        <td class="py-3">
+                            {{ $booking->created_at->format('d M Y') }}
+                        </td>
                     </tr>
                     @endforeach
-                </tbody>
+                    </tbody>
             </table>
         </div>
         @else

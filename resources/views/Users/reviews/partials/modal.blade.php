@@ -13,7 +13,7 @@
             {{-- REQUIRED hidden fields --}}
             <input type="hidden" name="provider_id" value="{{ $selectedProviderId }}">
 
-            <input type="hidden" name="service_id" value="{{  $selectedProvider['full_name'] }}">
+            <input type="hidden" name="service_id" value="{{  $selectedProvider['full_name'] ?? null}}">
 
             <input type="hidden" name="user_id" value="{{ $currentUser->user_id }}">
 

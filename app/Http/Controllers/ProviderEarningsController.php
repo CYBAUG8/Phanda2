@@ -57,7 +57,7 @@ class ProviderEarningsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $netEarnings = round($totalRevenue - $commission, 2);
+        $netEarnings = round($totalRevenue , 2);
 
         /*
         |--------------------------------------------------------------------------

@@ -42,15 +42,15 @@ class ProviderDashboardController extends Controller
         $pendingBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
             $query->where('provider_id',$providerProfile->provider_id);
         })
-        ->where('status', 'in_progress')
+        ->where('status', 'in_progress','pending')
         ->count();
 
         // -----------------------------
         // REVENUE
         // -----------------------------
 
-        $totalRevenue = Booking::whereHas('service', function ($query) use ($providerId) {
-            $query->where('provider_id', $providerId);
+        $totalRevenue = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id',$providerProfile->provider_id);
         })
         ->where('status', 'completed')
         ->sum('total_price');
@@ -58,7 +58,7 @@ class ProviderDashboardController extends Controller
         $commissionRate = 0.10;
         $commission = $totalRevenue * $commissionRate;
 
-        $netEarnings = $totalRevenue - $commission;
+        $netEarnings = $totalRevenue ;
 
         // -----------------------------
         // PAYOUTS
@@ -83,9 +83,9 @@ class ProviderDashboardController extends Controller
         // -----------------------------
         // RECENT BOOKINGS
         // -----------------------------
-
-        $recentBookings = Booking::whereHas('service', function ($query) use ($providerId) {
-            $query->where('provider_id', $providerId);
+        $recentBookings = Booking::with('service')
+        ->whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id', $providerProfile->provider_id);
         })
         ->latest()
         ->take(5)
