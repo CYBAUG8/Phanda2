@@ -75,11 +75,10 @@
             </div>
         </div>
         <!-- Total Bookings -->
-        <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
+        <a href="{{ url('/providers/bookings') }}" class="block bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
             <p class="text-sm text-gray-500">Total Bookings</p>
             <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ $totalBookings }}</h2>
-        </div>
-
+        </a>
         <!-- Completed -->
         <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
             <p class="text-sm text-gray-500">Completed</p>
@@ -101,63 +100,41 @@
     </div>
     
 
-    <!-- ===================== -->
-    <!-- Recent Bookings -->
-    <!-- ===================== -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-6">Recent Bookings</h3>
+    {{-- Recent Bookings --}}
+    <section class="card">
+        <div class="card-header">
+            <div class="card-title">Recent Bookings</div>
+        </div>
 
         @if($recentBookings->count() > 0)
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead>
-                    <tr class="text-left text-gray-500 border-b">
-                        <th class="py-3">#</th>
-                        <th class="py-3">Service</th>
-                        <th class="py-3">Status</th>
-                        <th class="py-3">Amount</th>
-                        <th class="py-3">Date</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    @foreach($recentBookings as $booking)
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-3">{{ $loop->iteration }}</td>
+            <div class="list">
+                @foreach($recentBookings as $booking)
+                    <div class="list-row">
+                        {{-- Booking Details --}}
+                        <div class="activity-body">
+                            <div class="row-title">
+                                {{ $booking->service->title ?? 'Service Booking' }}
+                            </div>
+                            
+                            <div class="row-note">
+                                R {{ number_format($booking->total_price, 2) }} • 
+                                {{ ucfirst(str_replace('_',' ',$booking->status)) }} • 
+                                {{ $booking->created_at->diffForHumans() }}
+                            </div>
+                            <br>
+                        </div>
 
-                        <td class="py-3">
-                            {{ $booking->service->title ?? 'N/A' }}
-                        </td>
-
-                        <td class="py-3">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                @if($booking->status == 'completed') bg-green-100 text-green-600
-                                @elseif($booking->status == 'pending') bg-yellow-100 text-yellow-600
-                                @elseif($booking->status == 'confirmed') bg-blue-100 text-blue-600
-                                @else bg-gray-100 text-gray-600
-                                @endif">
-
-                                {{ ucfirst(str_replace('_',' ',$booking->status)) }}
-                            </span>
-                        </td>
-
-                        <td class="py-3">
-                            R {{ number_format($booking->total_price, 2) }}
-                        </td>
-
-                        <td class="py-3">
-                            {{ $booking->created_at->format('d M Y') }}
-                        </td>
-                    </tr>
-                    @endforeach
-                    </tbody>
-            </table>
-        </div>
+                    </div>
+                @endforeach
+            </div>
         @else
-            <div class="text-center py-10">
-                <p class="text-gray-400">No bookings yet.</p>
+            <div class="empty">
+                <div class="empty-emoji">📅</div>
+                <div class="empty-title">No bookings yet</div>
+                <div class="empty-note">Your recent bookings will appear here.</div>
             </div>
         @endif
-    </div>
+    </section>
 
 </div>
 @endsection

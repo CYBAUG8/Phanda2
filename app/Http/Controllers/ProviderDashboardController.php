@@ -42,7 +42,7 @@ class ProviderDashboardController extends Controller
         $pendingBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
             $query->where('provider_id',$providerProfile->provider_id);
         })
-        ->where('status', 'in_progress','pending')
+        ->where('status', 'pending')
         ->count();
 
         // -----------------------------
@@ -88,7 +88,7 @@ class ProviderDashboardController extends Controller
             $query->where('provider_id', $providerProfile->provider_id);
         })
         ->latest()
-        ->take(5)
+        ->take(10)
         ->get();
         
         // -----------------------------

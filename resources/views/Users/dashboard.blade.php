@@ -6,18 +6,18 @@
 
     {{-- Stats Grid --}}
     <div class="stats-grid">
-        <div class="stat-card card">
+        <a href="{{ url('/users/bookings') }}" class="stat-card card">
             <div class="stat-label">Bookings in Progress</div>
             <div class="stat-value">{{ $totalBookings ?? 0 }}</div>
-        </div>
+        </a>
 
-        <div class="stat-card card">
+        <a href="{{ url('/users/messages') }}" class="stat-card card">
             <div class="stat-label">Unread Messages</div>
             <div class="stat-value">{{ $unreadMessages ?? 0 }}</div>
             @if(($unreadMessages ?? 0) > 0)
                 <div class="chip chip-attn">{{ $unreadMessages }} unread</div>
             @endif
-        </div>
+        </a>
 
         <div class="stat-card card">
             <div class="stat-label" style="display:flex;align-items:center;gap:4px">
