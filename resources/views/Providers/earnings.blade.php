@@ -32,9 +32,9 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6">
-            <p class="text-sm opacity-80">Available Balance</p>
+            <p class="text-sm opacity-80">Available Balance (48h hold applied)</p>
             <h2 class="text-2xl font-bold mt-2">
                 R <span x-text="money(availableBalance)"></span>
             </h2>
@@ -55,6 +55,11 @@
             <h2 class="text-xl font-bold text-green-600 mt-2">
                 R <span x-text="money(netEarnings)"></span>
             </h2>
+        </div>
+    
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <p class="text-sm text-gray-500">On Hold (48h)</p>
+            <h2 class="text-xl font-bold text-amber-600 mt-2">R <span x-text="money(onHoldNetEarnings)"></span></h2>
         </div>
     </div>
 
@@ -274,3 +279,7 @@ function earningsPage() {
 }
 </script>
 @endsection
+
+
+
+

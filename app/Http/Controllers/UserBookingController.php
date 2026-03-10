@@ -5,13 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Address;
 use App\Models\Booking;
 use App\Models\Service;
+use App\Services\BookingCreationService;
+use App\Services\BookingLifecycleService;
+use App\Services\BookingPaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UserBookingController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, BookingLifecycleService $bookingLifecycleService)
     {
         $user = $request->user();
+
+        $bookingLifecycleService->expireStaleBookings(
+            Booking::query()->where('user_id', $user->user_id)
+        );
 
         $query = Booking::with(['service.category'])
             ->where('user_id', $user->user_id)
@@ -36,10 +44,10 @@ class UserBookingController extends Controller
         return view('Users.bookings', compact('bookings', 'stats', 'activeStatus'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, BookingCreationService $bookingCreationService)
     {
         $validated = $request->validate([
-            'service_id' => 'required|exists:services,service_id',
+            'service_id' => ['required', Rule::exists('services', 'service_id')->whereNull('deleted_at')],
             'booking_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'address' => 'required|string|max:255',
@@ -83,31 +91,38 @@ class UserBookingController extends Controller
             return redirect()->back()->withInput()->with('error', 'You are outside this provider\'s service area.');
         }
 
-        Booking::create([
-            'user_id' => $request->user()->user_id,
-            'service_id' => $service->service_id,
-            'booking_date' => $validated['booking_date'],
-            'start_time' => $validated['start_time'],
-            'status' => 'pending',
-            'total_price' => $service->base_price,
-            'address' => $validated['address'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        $bookingCreationService->createFromService($request->user(), $service, $validated);
 
         return redirect()->route('users.bookings')->with('success', 'Service request sent to provider.');
     }
 
-    public function cancel(Request $request, Booking $booking)
-    {
+    public function cancel(
+        Request $request,
+        Booking $booking,
+        BookingLifecycleService $bookingLifecycleService,
+        BookingPaymentService $bookingPaymentService
+    ) {
         if ($booking->user_id !== $request->user()->user_id) {
             abort(403);
         }
+
+        $booking = $bookingLifecycleService->syncBooking($booking);
 
         if (!$booking->can_cancel) {
             return redirect()->route('users.bookings')->with('error', 'This booking cannot be cancelled.');
         }
 
-        $booking->update(['status' => 'cancelled']);
+        $refund = $bookingPaymentService->refundIfEligible($booking);
+
+        $booking->update([
+            'status' => Booking::STATUS_CANCELLED,
+            'cancellation_reason' => Booking::CANCELLATION_REASON_USER,
+            'cancelled_at' => now(),
+        ]);
+
+        if ($refund !== null) {
+            return redirect()->route('users.bookings')->with('success', 'Booking cancelled and full refund processed.');
+        }
 
         return redirect()->route('users.bookings')->with('success', 'Booking has been cancelled.');
     }
@@ -154,3 +169,5 @@ class UserBookingController extends Controller
         return $earthRadiusKm * $c;
     }
 }
+
+

@@ -907,6 +907,11 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
     color: #dc2626;
 }
 
+.badge--expired {
+    background: rgba(100, 116, 139, 0.16);
+    color: #475569;
+}
+
 /* ================================================================
    MODAL
    ================================================================ */
@@ -1401,6 +1406,175 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
 }
 /* end of users.css */
 
+/* ================================================================
+   LOCATION AUTOCOMPLETE
+   ================================================================ */
+.location-autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--phanda-white);
+    border: 2px solid var(--phanda-gray-100);
+    border-radius: 14px;
+    box-shadow: 0 12px 36px rgba(11, 11, 11, 0.1);
+    z-index: 50;
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px;
+    animation: autocompleteSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes autocompleteSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.location-autocomplete-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.location-autocomplete-dropdown::-webkit-scrollbar-thumb {
+    background: var(--phanda-gray-200);
+    border-radius: 10px;
+}
+
+.location-autocomplete-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--phanda-dark);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.location-autocomplete-item i {
+    color: var(--phanda-orange);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.location-autocomplete-text {
+    flex: 1;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.location-autocomplete-text > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.location-autocomplete-secondary {
+    display: block;
+    font-size: 12px;
+    color: var(--phanda-gray-400);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+.location-autocomplete-item mark {
+    background: rgba(255, 106, 0, 0.12);
+    color: var(--phanda-orange);
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+.location-autocomplete-item:hover,
+.location-autocomplete-item--active {
+    background: var(--phanda-gray-50);
+}
+
+.location-autocomplete-item--active {
+    border-left: 3px solid var(--phanda-orange);
+    padding-left: 11px;
+}
+
+.location-autocomplete-loading,
+.location-autocomplete-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--phanda-gray-400);
+}
+
+.location-autocomplete-loading i,
+.location-autocomplete-empty i {
+    color: var(--phanda-orange);
+}
+
+.search-input-wrap--location {
+    z-index: 10;
+}
+
+@media (max-width: 980px) {
+    .location-autocomplete-dropdown {
+        max-height: 220px;
+    }
+}
+
+@media (max-width: 700px) {
+    .location-autocomplete-dropdown {
+        max-height: 200px;
+        border-radius: 12px;
+    }
+
+    .location-autocomplete-item {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
 .services-grid--compact{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}.service-card--compact{border-radius:16px}.service-card--compact .service-card__title{font-size:16px}.service-card--compact .service-card__description{font-size:13px;line-height:1.5}.service-card--compact .service-card__footer{gap:10px}
 
 
+
+.payment-badge {
+    margin-left: 2px;
+}
+
+.payment-badge--unpaid {
+    background: rgba(100, 116, 139, 0.16);
+    color: #475569;
+}
+
+.payment-badge--required {
+    background: rgba(249, 115, 22, 0.16);
+    color: #c2410c;
+}
+
+.payment-badge--paid {
+    background: rgba(34, 197, 94, 0.14);
+    color: #15803d;
+}
+
+.payment-badge--refunded {
+    background: rgba(14, 165, 233, 0.14);
+    color: #0369a1;
+}
+
+.payment-badge--failed {
+    background: rgba(220, 38, 38, 0.14);
+    color: #b91c1c;
+}

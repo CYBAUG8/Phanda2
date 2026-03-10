@@ -112,12 +112,13 @@ button:disabled {
         document.getElementById('eventModal').classList.remove('invisible', 'opacity-0');
     }
 
-    function setBadge(status) {
+    function setBadge(status, label, isExpired) {
         const badge = document.getElementById('modalStatusBadge');
-        badge.innerText = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+        badge.innerText = label || status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
         badge.className = 'px-3 py-1 text-xs font-semibold rounded-full';
 
-        if (status === 'confirmed') badge.classList.add('bg-orange-100', 'text-orange-700');
+        if (isExpired) badge.classList.add('bg-slate-200', 'text-slate-700');
+        else if (status === 'confirmed') badge.classList.add('bg-orange-100', 'text-orange-700');
         else if (status === 'pending') badge.classList.add('bg-gray-200', 'text-gray-700');
         else if (status === 'in_progress') badge.classList.add('bg-indigo-100', 'text-indigo-700');
         else if (status === 'completed') badge.classList.add('bg-green-100', 'text-green-700');
@@ -168,6 +169,7 @@ button:disabled {
             const event = info.event;
             const ext = event.extendedProps || {};
             const currentStatus = ext.status || 'pending';
+            const statusLabel = ext.status_label || null;
 
             currentEventId = event.id;
 
@@ -201,7 +203,7 @@ button:disabled {
                 document.getElementById('modalDuration').innerText = '-';
             }
 
-            setBadge(currentStatus);
+            setBadge(currentStatus, statusLabel, !!ext.is_expired);
             setButtons(currentStatus);
             openEventModal();
         }

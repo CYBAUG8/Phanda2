@@ -125,6 +125,26 @@ class UserServiceController extends Controller
         return view('Users.services', compact('services', 'categories', 'filters', 'showProximityWarning'));
     }
 
+    public function locationSuggestions(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $term = trim((string) $request->input('q', ''));
+
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $locations = Service::query()
+            ->where('is_active', true)
+            ->whereRaw('LOWER(location) LIKE ?', ['%' . mb_strtolower($term) . '%'])
+            ->select('location')
+            ->distinct()
+            ->orderByRaw('LOWER(location)')
+            ->limit(10)
+            ->pluck('location');
+
+        return response()->json($locations);
+    }
+
     private function resolveUserCoordinates(Request $request): ?array
     {
         $requestLat = $request->input('lat');

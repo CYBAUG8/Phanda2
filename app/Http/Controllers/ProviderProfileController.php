@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\ProviderProfile;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProviderProfileController extends Controller
@@ -112,14 +114,23 @@ class ProviderProfileController extends Controller
             return response()->json(['message' => 'User is not a provider'], 403);
         }
 
-        $providerProfile = ProviderProfile::where('user_id', $user->user_id)->first();
+        $providerProfile = ProviderProfile::withTrashed()->where('user_id', $user->user_id)->first();
 
         if (!$providerProfile) {
             return response()->json(['message' => 'Provider profile not found'], 404);
         }
 
-        $providerProfile->delete();
+        DB::transaction(function () use ($providerProfile) {
+            Service::where('provider_id', $providerProfile->provider_id)
+                ->update(['is_active' => false]);
 
-        return response()->json(['message' => 'Provider profile deleted successfully']);
+            Service::where('provider_id', $providerProfile->provider_id)->delete();
+
+            if (!$providerProfile->trashed()) {
+                $providerProfile->delete();
+            }
+        });
+
+        return response()->json(['message' => 'Provider profile archived successfully']);
     }
 }

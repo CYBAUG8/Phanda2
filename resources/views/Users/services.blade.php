@@ -37,7 +37,7 @@
 
         <div class="search-input-wrap search-input-wrap--location">
             <i class="fas fa-map-marker-alt search-icon"></i>
-            <input type="text" name="location" id="filterLocation" class="search-input" placeholder="Location (city or suburb)" value="{{ $filters['location'] }}">
+            <input type="text" name="location" id="filterLocation" class="search-input" placeholder="Location (city or suburb)" value="{{ $filters['location'] }}" autocomplete="off">
         </div>
 
         <button type="submit" class="btn-primary">
@@ -417,6 +417,435 @@ document.addEventListener('DOMContentLoaded', function () {
             }, { enableHighAccuracy: true, timeout: 10000 });
         });
     }
+
+    // ── Location autocomplete (city/town only) ──────
+    (function initLocationAutocomplete() {
+        var input = document.getElementById('filterLocation');
+        if (!input) return;
+
+        var wrap = input.closest('.search-input-wrap--location');
+        if (!wrap) return;
+
+        var dropdown = document.createElement('div');
+        dropdown.className = 'location-autocomplete-dropdown';
+        dropdown.setAttribute('role', 'listbox');
+        dropdown.setAttribute('id', 'locationSuggestions');
+        dropdown.style.display = 'none';
+        wrap.appendChild(dropdown);
+
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-expanded', 'false');
+        input.setAttribute('aria-controls', 'locationSuggestions');
+
+        var debounceTimer = null;
+        var activeIndex = -1;
+        var currentAbortController = null;
+
+        var majorSouthAfricanPlaces = [
+            { name: 'Johannesburg', aliases: ['Joburg', 'Jozi'] },
+            { name: 'Pretoria', aliases: ['Tshwane'] },
+            { name: 'Cape Town' },
+            { name: 'Durban', aliases: ['eThekwini'] },
+            { name: 'Gqeberha', aliases: ['Port Elizabeth', 'PE'] },
+            { name: 'East London' },
+            { name: 'Bloemfontein' },
+            { name: 'Polokwane' },
+            { name: 'Mbombela', aliases: ['Nelspruit'] },
+            { name: 'Pietermaritzburg' },
+            { name: 'Kimberley' },
+            { name: 'Rustenburg' },
+            { name: 'Mahikeng', aliases: ['Mafikeng'] },
+            { name: 'Stellenbosch' },
+            { name: 'George' },
+            { name: 'Paarl' },
+            { name: 'Worcester' },
+            { name: 'Potchefstroom' },
+            { name: 'Klerksdorp' },
+            { name: 'Mthatha', aliases: ['Umtata'] },
+            { name: 'Welkom' },
+            { name: 'Soweto' },
+            { name: 'Benoni' },
+            { name: 'Boksburg' },
+            { name: 'Vanderbijlpark' }
+        ];
+
+        function showDropdown() {
+            dropdown.style.display = 'block';
+            input.setAttribute('aria-expanded', 'true');
+        }
+
+        function hideDropdown() {
+            dropdown.style.display = 'none';
+            input.setAttribute('aria-expanded', 'false');
+            activeIndex = -1;
+            clearHighlight();
+        }
+
+        function normalize(value) {
+            return String(value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function highlightQuery(text, regex) {
+            var safe = escapeHtml(text);
+            if (!regex) return safe;
+            return safe.replace(regex, '<mark>$1</mark>');
+        }
+
+        function clearHighlight() {
+            var items = dropdown.querySelectorAll('.location-autocomplete-item');
+            items.forEach(function (item) {
+                item.classList.remove('location-autocomplete-item--active');
+                item.setAttribute('aria-selected', 'false');
+            });
+        }
+
+        function highlightItem(index) {
+            var items = dropdown.querySelectorAll('.location-autocomplete-item');
+            if (items.length === 0) return;
+            clearHighlight();
+            if (index < 0) index = items.length - 1;
+            if (index >= items.length) index = 0;
+            activeIndex = index;
+            items[activeIndex].classList.add('location-autocomplete-item--active');
+            items[activeIndex].setAttribute('aria-selected', 'true');
+            items[activeIndex].scrollIntoView({ block: 'nearest' });
+        }
+
+        function selectItem(label) {
+            input.value = label;
+            hideDropdown();
+            input.focus();
+        }
+
+        function formatResult(result) {
+            if (result.__formattedLabel) {
+                return {
+                    primary: result.__formattedPrimary,
+                    label: result.__formattedLabel,
+                };
+            }
+
+            var addr = result.address || {};
+            var primary = addr.city || addr.town || result.name || '';
+
+            if (!primary && typeof result.display_name === 'string') {
+                primary = result.display_name.split(',')[0].trim();
+            }
+
+            return {
+                primary: primary,
+                label: primary,
+            };
+        }
+
+        function baseMatchScore(value, queryNorm) {
+            var target = normalize(value);
+            if (!target || !queryNorm) return 0;
+            if (target === queryNorm) return 1000;
+            if (target.startsWith(queryNorm)) return 800;
+            if (target.indexOf(' ' + queryNorm) !== -1) return 650;
+            if (target.indexOf(queryNorm) !== -1) return 500;
+            return 0;
+        }
+
+        function scoreSuggestion(result, query) {
+            var queryNorm = normalize(query);
+            var formatted = formatResult(result);
+            var score = 0;
+
+            score = Math.max(score, baseMatchScore(formatted.primary, queryNorm));
+
+            if (result.source === 'major') score += 180;
+
+            var type = normalize(result.type || result.addresstype);
+            if (type === 'city') score += 90;
+            if (type === 'town') score += 80;
+
+            var importance = Number(result.importance || 0);
+            if (Number.isFinite(importance)) {
+                score += Math.round(importance * 40);
+            }
+
+            return score;
+        }
+
+        function toMajorPlaceSuggestion(place) {
+            return {
+                source: 'major',
+                type: 'city',
+                importance: 1,
+                __formattedPrimary: place.name,
+                __formattedLabel: place.name,
+            };
+        }
+
+        function getMajorPlaceSuggestions(query) {
+            var queryNorm = normalize(query);
+            if (queryNorm.length < 2) return [];
+
+            return majorSouthAfricanPlaces
+                .map(function (place) {
+                    var aliasScores = (place.aliases || []).map(function (alias) {
+                        return baseMatchScore(alias, queryNorm);
+                    });
+                    var score = Math.max(baseMatchScore(place.name, queryNorm), ...aliasScores);
+                    return { place: place, score: score };
+                })
+                .filter(function (row) { return row.score > 0; })
+                .sort(function (a, b) {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return a.place.name.localeCompare(b.place.name);
+                })
+                .slice(0, 8)
+                .map(function (row) { return toMajorPlaceSuggestion(row.place); });
+        }
+
+        function isCityTownResult(result) {
+            var addr = result.address || {};
+            if (addr.city || addr.town) return true;
+
+            var type = normalize(result.type || result.addresstype);
+            return type === 'city' || type === 'town';
+        }
+
+        function dedupeAndRank(results, query, limit) {
+            var seen = {};
+
+            return results
+                .map(function (result) {
+                    var formatted = formatResult(result);
+                    return {
+                        result: result,
+                        formatted: formatted,
+                        score: scoreSuggestion(result, query),
+                    };
+                })
+                .filter(function (row) {
+                    return row.formatted.primary && row.score > 0;
+                })
+                .sort(function (a, b) {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return a.formatted.label.localeCompare(b.formatted.label);
+                })
+                .filter(function (row) {
+                    var key = normalize(row.formatted.label);
+                    if (seen[key]) return false;
+                    seen[key] = true;
+                    return true;
+                })
+                .slice(0, limit || 8)
+                .map(function (row) { return row.result; });
+        }
+
+        function renderDropdown(results, query) {
+            dropdown.innerHTML = '';
+
+            if (results.length === 0) {
+                dropdown.innerHTML =
+                    '<div class="location-autocomplete-empty">'
+                    + '<i class="fas fa-map-marker-alt"></i> No locations found'
+                    + '</div>';
+                showDropdown();
+                return;
+            }
+
+            var escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            var regex = escapedQuery ? new RegExp('(' + escapedQuery + ')', 'gi') : null;
+
+            var unique = dedupeAndRank(results, query, 8);
+
+            unique.forEach(function (result, i) {
+                var formatted = formatResult(result);
+                var item = document.createElement('div');
+                item.className = 'location-autocomplete-item';
+                item.setAttribute('role', 'option');
+                item.setAttribute('aria-selected', 'false');
+                item.setAttribute('data-index', i);
+                item.setAttribute('data-label', formatted.label);
+
+                var highlightedPrimary = highlightQuery(formatted.primary, regex);
+
+                item.innerHTML =
+                    '<i class="fas fa-map-marker-alt"></i>'
+                    + '<div class="location-autocomplete-text">'
+                    + '<span>' + highlightedPrimary + '</span>'
+                    + '</div>';
+
+                item.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectItem(formatted.label);
+                });
+
+                item.addEventListener('mouseenter', function () {
+                    activeIndex = i;
+                    clearHighlight();
+                    item.classList.add('location-autocomplete-item--active');
+                });
+
+                dropdown.appendChild(item);
+            });
+
+            activeIndex = -1;
+            showDropdown();
+        }
+
+        function renderLoading() {
+            dropdown.innerHTML =
+                '<div class="location-autocomplete-loading">'
+                + '<i class="fas fa-spinner fa-spin"></i> Searching...'
+                + '</div>';
+            showDropdown();
+        }
+
+        async function fetchNominatimSuggestions(query, signal) {
+            try {
+                var url = 'https://nominatim.openstreetmap.org/search'
+                    + '?q=' + encodeURIComponent(query)
+                    + '&countrycodes=za'
+                    + '&format=jsonv2'
+                    + '&addressdetails=1'
+                    + '&accept-language=en'
+                    + '&limit=12';
+
+                var response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    signal: signal,
+                });
+
+                if (!response.ok) return [];
+
+                var results = await response.json();
+                if (!Array.isArray(results)) return [];
+
+                return results.filter(isCityTownResult);
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+                return [];
+            }
+        }
+
+        async function fetchSuggestions(query) {
+            if (currentAbortController) {
+                currentAbortController.abort();
+            }
+            currentAbortController = new AbortController();
+
+            var localMajorSuggestions = getMajorPlaceSuggestions(query);
+            if (localMajorSuggestions.length > 0) {
+                renderDropdown(localMajorSuggestions, query);
+            } else {
+                renderLoading();
+            }
+
+            try {
+                var signal = currentAbortController.signal;
+                var nominatimSuggestions = await fetchNominatimSuggestions(query, signal);
+
+                var combined = dedupeAndRank(
+                    localMajorSuggestions.concat(nominatimSuggestions || []),
+                    query,
+                    8
+                );
+
+                if (combined.length === 0 && localMajorSuggestions.length > 0) {
+                    renderDropdown(localMajorSuggestions, query);
+                    return;
+                }
+
+                if (combined.length === 0) {
+                    hideDropdown();
+                    return;
+                }
+
+                renderDropdown(combined, query);
+            } catch (err) {
+                if (err && err.name === 'AbortError') return;
+                if (localMajorSuggestions.length > 0) {
+                    renderDropdown(localMajorSuggestions, query);
+                } else {
+                    hideDropdown();
+                }
+            }
+        }
+
+        input.addEventListener('input', function () {
+            var query = input.value.trim();
+
+            clearTimeout(debounceTimer);
+
+            if (query.length < 2) {
+                hideDropdown();
+                return;
+            }
+
+            debounceTimer = setTimeout(function () {
+                fetchSuggestions(query);
+            }, 250);
+        });
+
+        input.addEventListener('keydown', function (e) {
+            var items = dropdown.querySelectorAll('.location-autocomplete-item');
+            if (items.length === 0 && e.key !== 'Escape') return;
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    highlightItem(activeIndex + 1);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    highlightItem(activeIndex - 1);
+                    break;
+                case 'Enter':
+                    if (activeIndex >= 0 && items[activeIndex]) {
+                        e.preventDefault();
+                        selectItem(items[activeIndex].getAttribute('data-label'));
+                    }
+                    break;
+                case 'Escape':
+                    hideDropdown();
+                    break;
+                case 'Tab':
+                    hideDropdown();
+                    break;
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!wrap.contains(e.target)) {
+                hideDropdown();
+            }
+        });
+
+        var form = document.getElementById('serviceSearchForm');
+        if (form) {
+            form.addEventListener('submit', function () {
+                hideDropdown();
+            });
+        }
+
+        input.addEventListener('focus', function () {
+            if (dropdown.children.length > 0 && input.value.trim().length >= 2) {
+                showDropdown();
+            }
+        });
+    })();
 });
 </script>
 @endpush
+

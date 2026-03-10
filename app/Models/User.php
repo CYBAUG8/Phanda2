@@ -9,11 +9,12 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $primaryKey = 'user_id';
     public $incrementing = false;
@@ -89,4 +90,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Payout::class, 'provider_id', 'user_id');
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'user_id', 'user_id');
+    }
 }
+
+

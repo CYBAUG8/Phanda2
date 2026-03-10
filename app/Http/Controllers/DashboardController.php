@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Message;
 use App\Models\Review;
+use App\Services\BookingLifecycleService;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(BookingLifecycleService $bookingLifecycleService)
     {
         $user = auth()->user();
         abort_if(!$user, 403, 'Not authenticated');
+
+        $bookingLifecycleService->expireStaleBookings(
+            Booking::query()->where('user_id', $user->user_id)
+        );
 
         $bookings = Booking::where('user_id', $user->user_id);
         $bookingsInProgress = (clone $bookings)->whereIn('status', ['pending', 'confirmed', 'in_progress'])->count();
@@ -36,12 +41,13 @@ class DashboardController extends Controller
         $activities = $activities
             ->merge(
                 Booking::where('user_id', $user->user_id)
+                    ->with('service')
                     ->latest()
                     ->take(5)
                     ->get()
                     ->map(fn ($booking) => [
                         'type' => 'booking',
-                        'text' => 'Booking ' . strtoupper($booking->status) . ' for ' . optional($booking->service)->title,
+                        'text' => 'Booking ' . strtoupper($booking->status_label) . ' for ' . optional($booking->service)->title,
                         'ts' => $booking->updated_at,
                     ])
             )

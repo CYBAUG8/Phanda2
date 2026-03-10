@@ -3,38 +3,37 @@
             align-items:center;justify-content:center;z-index:1000">
 
     <div style="background:#fff;padding:24px;border-radius:12px;width:92%;max-width:520px">
-        <h2 >
-            {{ $userReviewForSelected ? 'Edit Your Review' : 'Add Review' }}
+        <h2>
+            {{ $reviewForBooking ? 'Edit Your Review' : 'Add Review' }}
         </h2>
+
+        @if($reviewableBooking)
+            <p style="margin-top:8px;color:#666;font-size:14px;">
+                Booking {{ $reviewableBooking->booking_code }} on {{ $reviewableBooking->booking_date->format('d M Y') }}
+            </p>
+        @endif
 
         <form method="POST" action="{{ route('reviews.store') }}">
             @csrf
 
-            {{-- REQUIRED hidden fields --}}
-            <input type="hidden" name="provider_id" value="{{ $selectedProviderId }}">
-            
-            <input type="hidden" name="service_id" value="{{ $selectedProvider['full_name']}}">
+            <input type="hidden" name="booking_id" value="{{ optional($reviewableBooking)->id }}">
 
-            <input type="hidden" name="user_id" value="{{ $currentUser->user_id }}">
-
-            {{-- Rating --}}
             <label style="font-weight:bold;margin-top:12px;display:block">Rating</label>
             <select name="rating" required style="width:100%;padding:8px">
                 <option value="">Select rating</option>
                 @for($i = 5; $i >= 1; $i--)
                     <option value="{{ $i }}"
-                        @selected(optional($userReviewForSelected)->rating == $i)>
+                        @selected(optional($reviewForBooking)->rating == $i)>
                         {{ $i }}★
                     </option>
                 @endfor
             </select>
 
-            {{-- Comment --}}
             <textarea name="comment"
                       rows="4"
                       required
                       style="width:100%;margin-top:12px;padding:8px"
-                      placeholder="Write your review...">{{ old('comment', optional($userReviewForSelected)->comment) }}</textarea>
+                      placeholder="Write your review...">{{ old('comment', optional($reviewForBooking)->comment) }}</textarea>
 
             <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
                 <button type="button" onclick="closeModal()">Cancel</button>
@@ -50,9 +49,16 @@
 
 <script>
 function openModal() {
-    document.getElementById('reviewModal').style.display = 'flex';
+    const modal = document.getElementById('reviewModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
+
 function closeModal() {
-    document.getElementById('reviewModal').style.display = 'none';
+    const modal = document.getElementById('reviewModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 </script>

@@ -33,7 +33,7 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="py-3">{{ $booking->booking_code }}</td>
                                 <td class="py-3">{{ $booking->service->title ?? 'N/A' }}</td>
-                                <td class="py-3"><span class="px-3 py-1 rounded-full text-xs font-semibold">{{ ucfirst(str_replace('_',' ', $booking->status)) }}</span></td>
+                                <td class="py-3"><span class="px-3 py-1 rounded-full text-xs font-semibold">{{ $booking->status_label }}</span></td>
                                 <td class="py-3">R {{ number_format((float)$booking->total_price, 2) }}</td>
                                 <td class="py-3">{{ $booking->created_at->format('d M Y') }}</td>
                             </tr>
@@ -47,4 +47,3 @@
     </div>
 </div>
 @endsection
-

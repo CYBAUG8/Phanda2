@@ -6,12 +6,13 @@ use App\Models\Booking;
 use App\Models\Payout;
 use App\Models\ProviderProfile;
 use App\Models\Review;
+use App\Services\BookingLifecycleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProviderDashboardController extends Controller
 {
-    public function index()
+    public function index(BookingLifecycleService $bookingLifecycleService)
     {
         $user = Auth::user();
         abort_if(!$user, 403, 'Not authenticated');
@@ -24,6 +25,8 @@ class ProviderDashboardController extends Controller
         $bookingQuery = Booking::whereHas('service', function ($q) use ($providerId) {
             $q->where('provider_id', $providerId);
         });
+
+        $bookingLifecycleService->expireStaleBookings($bookingQuery);
 
         $totalBookings = (clone $bookingQuery)->count();
         $completedBookings = (clone $bookingQuery)->where('status', 'completed')->count();

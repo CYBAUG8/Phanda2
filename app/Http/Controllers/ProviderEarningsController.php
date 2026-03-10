@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 class ProviderEarningsController extends Controller
 {
     private const COMMISSION_RATE = 0.10;
+    private const HOLD_HOURS = 48;
 
     public function index(Request $request)
     {
@@ -32,6 +33,7 @@ class ProviderEarningsController extends Controller
             'totalRevenue' => $summary['totalRevenue'],
             'commission' => $summary['commission'],
             'netEarnings' => $summary['netEarnings'],
+            'onHoldNetEarnings' => $summary['onHoldNetEarnings'],
             'processingRequests' => $processingRequests,
             'withdrawalSuccess' => (bool) $request->session()->get('withdrawal_success', false),
         ]);
@@ -85,29 +87,41 @@ class ProviderEarningsController extends Controller
 
     private function buildSummary(string $providerId, string $userId): array
     {
-        $bookingQuery = Booking::whereHas('service', function ($query) use ($providerId) {
+        $eligiblePaymentsQuery = Booking::whereHas('service', function ($query) use ($providerId) {
             $query->where('provider_id', $providerId);
-        });
+        })
+            ->where('status', Booking::STATUS_COMPLETED)
+            ->where('payment_status', Booking::PAYMENT_STATUS_PAID);
 
-        $totalRevenue = (float) (clone $bookingQuery)
-            ->where('status', 'completed')
+        $totalRevenue = (float) (clone $eligiblePaymentsQuery)
             ->sum('total_price');
 
         $commission = round($totalRevenue * self::COMMISSION_RATE, 2);
         $netEarnings = max(0, round($totalRevenue - $commission, 2));
+
+        $holdCutoff = now()->subHours(self::HOLD_HOURS);
+
+        $availableRevenue = (float) (clone $eligiblePaymentsQuery)
+            ->where('updated_at', '<=', $holdCutoff)
+            ->sum('total_price');
+
+        $availableCommission = round($availableRevenue * self::COMMISSION_RATE, 2);
+        $availableNet = max(0, round($availableRevenue - $availableCommission, 2));
+        $onHoldNetEarnings = max(0, round($netEarnings - $availableNet, 2));
 
         $totalPaidOut = (float) Payout::query()
             ->where('provider_id', $userId)
             ->whereIn('status', ['PAID', 'paid'])
             ->sum('amount');
 
-        $availableBalance = max(0, round($netEarnings - $totalPaidOut, 2));
+        $availableBalance = max(0, round($availableNet - $totalPaidOut, 2));
 
         return [
             'totalRevenue' => $totalRevenue,
             'commission' => $commission,
             'netEarnings' => $netEarnings,
             'availableBalance' => $availableBalance,
+            'onHoldNetEarnings' => $onHoldNetEarnings,
         ];
     }
 }

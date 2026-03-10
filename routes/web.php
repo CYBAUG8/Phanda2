@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 //Service and Booking imports
 use App\Http\Controllers\UserServiceController;
 use App\Http\Controllers\UserBookingController;
+use App\Http\Controllers\UserPaymentController;
 //profile
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -129,6 +130,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/users/reviews/{id}', [ReviewController::class, 'destroy'])
         ->name('reviews.destroy');
 
+    Route::get('/users/services/locations', [UserServiceController::class, 'locationSuggestions'])
+        ->name('users.services.locations');
     Route::get('/users/services', [UserServiceController::class, 'index'])
         ->name('users.services');
 
@@ -138,6 +141,15 @@ Route::middleware('auth')->group(function () {
         ->name('users.bookings.store');
     Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel'])
         ->name('users.bookings.cancel');
+
+    Route::post('/users/bookings/{booking}/payments/initiate', [UserPaymentController::class, 'initiate'])
+        ->name('users.payments.initiate');
+    Route::get('/users/bookings/{booking}/checkout', [UserPaymentController::class, 'showCheckout'])
+        ->name('users.payments.checkout');
+    Route::post('/users/bookings/{booking}/payments/simulate-success', [UserPaymentController::class, 'simulateSuccess'])
+        ->name('users.payments.simulate-success');
+    Route::post('/users/bookings/{booking}/payments/simulate-failure', [UserPaymentController::class, 'simulateFailure'])
+        ->name('users.payments.simulate-failure');
 
     // User info routes
     Route::get('/userInfo', [UserController::class, 'getUserInfo']);
@@ -236,6 +248,10 @@ Route::prefix('providers')->middleware(['auth'])->group(function() {
 
 
 Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');
+
+
+
+
 
 
 
