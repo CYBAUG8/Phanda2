@@ -14,14 +14,19 @@ class ProviderServiceController extends Controller
         $providerProfile = $request->user()->providerProfile;
         abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
-        $services = Service::with('category')
+        $showArchived = $request->boolean('archived');
+
+        $servicesQuery = Service::with('category')
             ->where('provider_id', $providerProfile->provider_id)
-            ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('created_at');
+
+        $services = $showArchived
+            ? $servicesQuery->onlyTrashed()->get()
+            : $servicesQuery->get();
 
         $categories = Category::orderBy('name')->get();
 
-        return view('Providers.services', compact('services', 'categories', 'providerProfile'));
+        return view('Providers.services', compact('services', 'categories', 'providerProfile', 'showArchived'));
     }
 
     public function store(Request $request)
@@ -139,13 +144,14 @@ class ProviderServiceController extends Controller
         abort_if(!$providerProfile, 403, 'Provider profile not found.');
         abort_if($service->provider_id !== $providerProfile->provider_id, 403, 'Unauthorized');
 
+        $service->update(['is_active' => false]);
         $service->delete();
 
         if ($request->expectsJson()) {
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'message' => 'Service archived.']);
         }
 
-        return back()->with('success', 'Service deleted.');
+        return back()->with('success', 'Service archived.');
     }
 
     private function normalizeServicePayload(Request $request, ?Service $existing = null): array
@@ -179,8 +185,3 @@ class ProviderServiceController extends Controller
         ];
     }
 }
-
-<<<<<<< HEAD
-=======
-
->>>>>>> services-bookings-feature

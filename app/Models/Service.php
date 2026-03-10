@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Service extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $primaryKey = 'service_id';
     public $incrementing = false;
@@ -85,8 +86,6 @@ class Service extends Model
 
         return "{$minutes}m";
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> services-bookings-feature
+
+

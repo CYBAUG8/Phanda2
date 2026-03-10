@@ -68,6 +68,11 @@
 
             <div x-show="activeTab === '{{ $statusKey }}'" class="space-y-4" style="display:none;">
                 @forelse($statusBookings as $booking)
+                    @php
+                        $badgeClass = $booking->isExpired()
+                            ? 'bg-slate-200 text-slate-700'
+                            : ($statusBadgeClasses[$booking->status] ?? 'bg-gray-100 text-gray-700');
+                    @endphp
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
@@ -78,9 +83,15 @@
                                     {{ optional($booking->booking_date)->format('Y-m-d') }}
                                     {{ $booking->start_time ? \Carbon\Carbon::parse($booking->start_time)->format('H:i') : '' }}
                                 </p>
-                                <span class="inline-flex mt-2 px-2 py-1 rounded-full text-xs font-semibold {{ $statusBadgeClasses[$booking->status] ?? 'bg-gray-100 text-gray-700' }}">
-                                    {{ ucfirst(str_replace('_', ' ', $booking->status)) }}
+                                <span class="inline-flex mt-2 px-2 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                                    {{ $booking->status_label }}
                                 </span>
+                                <span class="inline-flex mt-2 ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                                    {{ $booking->payment_status_label }}
+                                </span>
+                                @if($booking->isExpired())
+                                    <p class="text-xs text-slate-500 mt-2">This booking expired because the scheduled end time passed without completion.</p>
+                                @endif
                             </div>
 
                             <div class="flex flex-wrap gap-2">
@@ -91,7 +102,7 @@
                                             customer: @js($booking->user->full_name ?? 'Unknown User'),
                                             date: @js(optional($booking->booking_date)->format('Y-m-d') ?? 'N/A'),
                                             time: @js($booking->start_time ? \Carbon\Carbon::parse($booking->start_time)->format('H:i') : 'N/A'),
-                                            status: @js(ucfirst(str_replace('_', ' ', $booking->status))),
+                                            status: @js($booking->status_label),
                                             address: @js($booking->address ?? 'No address provided'),
                                             notes: @js($booking->notes ?: 'No notes provided'),
                                             price: @js('R' . number_format((float) $booking->total_price, 2))
@@ -112,11 +123,15 @@
                                         <button class="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold">Decline</button>
                                     </form>
                                 @elseif($booking->status === 'confirmed')
-                                    <form method="POST" action="{{ route('provider.bookings.start', $booking->id) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Start</button>
-                                    </form>
+                                    @if($booking->payment_status === \App\Models\Booking::PAYMENT_STATUS_PAID)
+                                        <form method="POST" action="{{ route('provider.bookings.start', $booking->id) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Start</button>
+                                        </form>
+                                    @else
+                                        <span class="px-3 py-2 rounded-lg bg-amber-100 text-amber-700 text-sm font-semibold">Awaiting User Payment</span>
+                                    @endif
                                     <form method="POST" action="{{ route('provider.bookings.cancel', $booking->id) }}">
                                         @csrf
                                         @method('PATCH')

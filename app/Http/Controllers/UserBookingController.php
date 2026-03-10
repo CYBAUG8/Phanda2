@@ -5,13 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Address;
 use App\Models\Booking;
 use App\Models\Service;
+use App\Services\BookingCreationService;
+use App\Services\BookingLifecycleService;
+use App\Services\BookingPaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UserBookingController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, BookingLifecycleService $bookingLifecycleService)
     {
         $user = $request->user();
+
+        $bookingLifecycleService->expireStaleBookings(
+            Booking::query()->where('user_id', $user->user_id)
+        );
 
         $query = Booking::with(['service.category'])
             ->where('user_id', $user->user_id)
@@ -36,10 +44,10 @@ class UserBookingController extends Controller
         return view('Users.bookings', compact('bookings', 'stats', 'activeStatus'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, BookingCreationService $bookingCreationService)
     {
         $validated = $request->validate([
-            'service_id' => 'required|exists:services,service_id',
+            'service_id' => ['required', Rule::exists('services', 'service_id')->whereNull('deleted_at')],
             'booking_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'address' => 'required|string|max:255',
@@ -54,8 +62,6 @@ class UserBookingController extends Controller
             ->where('service_id', $validated['service_id'])
             ->where('is_active', true)
             ->firstOrFail();
-<<<<<<< HEAD
-=======
 
         $coordinates = $this->resolveUserCoordinates($request, $validated);
 
@@ -84,107 +90,41 @@ class UserBookingController extends Controller
         if ($providerRadiusKm > 0 && $distanceKm > $providerRadiusKm) {
             return redirect()->back()->withInput()->with('error', 'You are outside this provider\'s service area.');
         }
->>>>>>> services-bookings-feature
 
-        $coordinates = $this->resolveUserCoordinates($request, $validated);
-
-        if ($coordinates === null) {
-            return redirect()->back()->withInput()->with('error', 'Set your current location before sending a service request.');
-        }
-
-        $provider = $service->providerProfile;
-        if ($provider === null || $provider->last_lat === null || $provider->last_lng === null) {
-            return redirect()->back()->withInput()->with('error', 'Provider location is unavailable. Please choose another service.');
-        }
-
-        $distanceKm = $this->distanceKm(
-            $coordinates['lat'],
-            $coordinates['lng'],
-            (float) $provider->last_lat,
-            (float) $provider->last_lng
-        );
-
-        $userRadiusKm = max(1.0, min((float) ($validated['radius_km'] ?? 25), 100.0));
-        if ($distanceKm > $userRadiusKm) {
-            return redirect()->back()->withInput()->with('error', 'This provider is outside your selected radius.');
-        }
-
-        $providerRadiusKm = (float) ($provider->service_radius_km ?? 0);
-        if ($providerRadiusKm > 0 && $distanceKm > $providerRadiusKm) {
-            return redirect()->back()->withInput()->with('error', 'You are outside this provider\'s service area.');
-        }
-        Booking::create([
-            'user_id' => $request->user()->user_id,
-            'service_id' => $service->service_id,
-            'booking_date' => $validated['booking_date'],
-            'start_time' => $validated['start_time'],
-            'status' => 'pending',
-            'total_price' => $service->base_price,
-            'address' => $validated['address'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        $bookingCreationService->createFromService($request->user(), $service, $validated);
 
         return redirect()->route('users.bookings')->with('success', 'Service request sent to provider.');
     }
 
-    public function cancel(Request $request, Booking $booking)
-    {
+    public function cancel(
+        Request $request,
+        Booking $booking,
+        BookingLifecycleService $bookingLifecycleService,
+        BookingPaymentService $bookingPaymentService
+    ) {
         if ($booking->user_id !== $request->user()->user_id) {
             abort(403);
         }
+
+        $booking = $bookingLifecycleService->syncBooking($booking);
 
         if (!$booking->can_cancel) {
             return redirect()->route('users.bookings')->with('error', 'This booking cannot be cancelled.');
         }
 
-        $booking->update(['status' => 'cancelled']);
+        $refund = $bookingPaymentService->refundIfEligible($booking);
+
+        $booking->update([
+            'status' => Booking::STATUS_CANCELLED,
+            'cancellation_reason' => Booking::CANCELLATION_REASON_USER,
+            'cancelled_at' => now(),
+        ]);
+
+        if ($refund !== null) {
+            return redirect()->route('users.bookings')->with('success', 'Booking cancelled and full refund processed.');
+        }
 
         return redirect()->route('users.bookings')->with('success', 'Booking has been cancelled.');
-<<<<<<< HEAD
-    }
-
-    private function resolveUserCoordinates(Request $request, array $validated): ?array
-    {
-        if (isset($validated['search_lat'], $validated['search_lng'])) {
-            return [
-                'lat' => (float) $validated['search_lat'],
-                'lng' => (float) $validated['search_lng'],
-            ];
-        }
-
-        $address = Address::query()
-            ->where('user_id', $request->user()->user_id)
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->orderByDesc('is_default')
-            ->orderByDesc('updated_at')
-            ->first();
-
-        if ($address === null) {
-            return null;
-        }
-
-        return [
-            'lat' => (float) $address->latitude,
-            'lng' => (float) $address->longitude,
-        ];
-    }
-
-    private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
-    {
-        $earthRadiusKm = 6371;
-
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-
-        $a = sin($dLat / 2) ** 2
-            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
-
-        $c = 2 * atan2(sqrt($a), sqrt(max(0, 1 - $a)));
-
-        return $earthRadiusKm * $c;
-=======
->>>>>>> services-bookings-feature
     }
 
     private function resolveUserCoordinates(Request $request, array $validated): ?array
@@ -229,3 +169,5 @@ class UserBookingController extends Controller
         return $earthRadiusKm * $c;
     }
 }
+
+

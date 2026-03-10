@@ -1,29 +1,6 @@
 @extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
-<div 
-    x-data="earningsPage()" 
-    class="px-6 py-6 relative"
->
-
-    <!-- ================= HEADER ================= -->
-    <section class="bg-white border rounded-lg p-8 shadow-sm mb-8">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Earnings</h1>
-                <p class="text-sm text-gray-500">Track your income and payout history</p>
-            </div>
-
-            <button 
-                @click="withdrawOpen = true"
-                class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-xl shadow-sm transition"
-            >
-                Withdraw Funds
-            </button>
-        </div>
-    </section>
-=======
 <div x-data="earningsPage()" x-init="init()" class="px-6 py-6 relative">
     <div class="flex items-center justify-between mb-6">
         <div>
@@ -38,7 +15,6 @@
             Withdraw Funds
         </button>
     </div>
->>>>>>> services-bookings-feature
 
     @if (session('success'))
         <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -56,28 +32,16 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-<<<<<<< HEAD
-
-        <div class="bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-xl p-6">
-            <p class="text-sm opacity-80">Available Balance</p>
-            <h2 class="text-2xl font-bold mt-2">
-                R {{ number_format($availableBalance ??0,2) }}
-=======
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6">
-            <p class="text-sm opacity-80">Available Balance</p>
+            <p class="text-sm opacity-80">Available Balance (48h hold applied)</p>
             <h2 class="text-2xl font-bold mt-2">
                 R <span x-text="money(availableBalance)"></span>
->>>>>>> services-bookings-feature
             </h2>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm p-6">
             <p class="text-sm text-gray-500">Total Revenue</p>
-<<<<<<< HEAD
-            <h2 class="text-xl font-bold mt-2">
-                R {{ number_format($totalRevenue ??0,2) }}
-=======
             <h2 class="text-xl font-bold mt-2">R <span x-text="money(totalRevenue)"></span></h2>
         </div>
 
@@ -90,8 +54,12 @@
             <p class="text-sm text-gray-500">Net Earnings</p>
             <h2 class="text-xl font-bold text-green-600 mt-2">
                 R <span x-text="money(netEarnings)"></span>
->>>>>>> services-bookings-feature
             </h2>
+        </div>
+    
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <p class="text-sm text-gray-500">On Hold (48h)</p>
+            <h2 class="text-xl font-bold text-amber-600 mt-2">R <span x-text="money(onHoldNetEarnings)"></span></h2>
         </div>
     </div>
 
@@ -246,14 +214,10 @@ function earningsPage() {
         loading: false,
         showToast: false,
 
-<<<<<<< HEAD
-        netEarnings:1000, // replace with {{ number_format($availableBalance ?? 0, 2) }}
-=======
         availableBalance: Number(@json($availableBalance ?? 0)),
         totalRevenue: Number(@json($totalRevenue ?? 0)),
         commission: Number(@json($commission ?? 0)),
         netEarnings: Number(@json($netEarnings ?? 0)),
->>>>>>> services-bookings-feature
 
         processingRequests: @json(collect($processingRequests ?? [])->map(fn($request) => [
             'id' => $request->payout_id,
@@ -315,3 +279,7 @@ function earningsPage() {
 }
 </script>
 @endsection
+
+
+
+

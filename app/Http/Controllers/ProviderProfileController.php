@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\ProviderProfile;
-<<<<<<< HEAD
-use App\Models\Review;
-=======
->>>>>>> services-bookings-feature
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProviderProfileController extends Controller
@@ -22,16 +20,6 @@ class ProviderProfileController extends Controller
         $providerProfile = ProviderProfile::where('user_id', $user->user_id)
             ->with('services')
             ->firstOrFail();
-<<<<<<< HEAD
-        
-        // -----------------------------
-        // REVIEWS
-        // -----------------------------
-
-        $averageRating = Review::where('to_user_id', $user->user_id)
-            ->avg('rating');
-=======
->>>>>>> services-bookings-feature
 
         $bookingQuery = Booking::whereHas('service', function ($query) use ($providerProfile) {
             $query->where('provider_id', $providerProfile->provider_id);
@@ -41,10 +29,6 @@ class ProviderProfileController extends Controller
             'provider_id' => $providerProfile->provider_id,
             'business_name' => $providerProfile->business_name,
             'bio' => $providerProfile->bio,
-<<<<<<< HEAD
-            'averageRating' => $averageRating,
-=======
->>>>>>> services-bookings-feature
             'years_experience' => $providerProfile->years_experience,
             'service_area' => $providerProfile->service_area,
             'service_radius_km' => $providerProfile->service_radius_km,
@@ -130,14 +114,23 @@ class ProviderProfileController extends Controller
             return response()->json(['message' => 'User is not a provider'], 403);
         }
 
-        $providerProfile = ProviderProfile::where('user_id', $user->user_id)->first();
+        $providerProfile = ProviderProfile::withTrashed()->where('user_id', $user->user_id)->first();
 
         if (!$providerProfile) {
             return response()->json(['message' => 'Provider profile not found'], 404);
         }
 
-        $providerProfile->delete();
+        DB::transaction(function () use ($providerProfile) {
+            Service::where('provider_id', $providerProfile->provider_id)
+                ->update(['is_active' => false]);
 
-        return response()->json(['message' => 'Provider profile deleted successfully']);
+            Service::where('provider_id', $providerProfile->provider_id)->delete();
+
+            if (!$providerProfile->trashed()) {
+                $providerProfile->delete();
+            }
+        });
+
+        return response()->json(['message' => 'Provider profile archived successfully']);
     }
 }

@@ -75,6 +75,9 @@
                             <span class="status-badge {{ $booking->status_color }}">
                                 {{ $booking->status_label }}
                             </span>
+                            <span class="status-badge payment-badge {{ $booking->payment_status_color }}">
+                                {{ $booking->payment_status_label }}
+                            </span>
                         </div>
 
                         <p class="booking-card__provider">
@@ -96,9 +99,34 @@
                             </span>
                         </div>
 
+                        @if($booking->payment_due_at && $booking->payment_status === \App\Models\Booking::PAYMENT_STATUS_REQUIRED)
+                            <p class="booking-card__notes">
+                                <i class="fas fa-hourglass-half"></i>
+                                Payment due by {{ $booking->payment_due_at->timezone('Africa/Johannesburg')->format('d M Y H:i') }}.
+                            </p>
+                        @endif
+
+                        @if($booking->payment_status === \App\Models\Booking::PAYMENT_STATUS_FAILED)
+                            <p class="booking-card__notes">
+                                <i class="fas fa-triangle-exclamation"></i> Payment failed. Retry to keep this booking active.
+                            </p>
+                        @endif
+
+                        @if($booking->payment_status === \App\Models\Booking::PAYMENT_STATUS_REFUNDED)
+                            <p class="booking-card__notes">
+                                <i class="fas fa-rotate-left"></i> Full refund processed.
+                            </p>
+                        @endif
+
                         @if($booking->notes)
                             <p class="booking-card__notes">
                                 <i class="fas fa-sticky-note"></i> {{ $booking->notes }}
+                            </p>
+                        @endif
+
+                        @if($booking->isExpired())
+                            <p class="booking-card__notes">
+                                <i class="fas fa-hourglass-end"></i> This booking expired because its scheduled time passed before it was completed.
                             </p>
                         @endif
                     </div>
@@ -107,6 +135,15 @@
                         <span class="booking-card__price">{{ $booking->formatted_price }}</span>
 
                         <div class="booking-card__actions">
+                            @if($booking->status === \App\Models\Booking::STATUS_CONFIRMED && in_array($booking->payment_status, [\App\Models\Booking::PAYMENT_STATUS_REQUIRED, \App\Models\Booking::PAYMENT_STATUS_FAILED, \App\Models\Booking::PAYMENT_STATUS_UNPAID], true))
+                                <form action="{{ route('users.payments.initiate', $booking->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn-primary btn-sm">
+                                        <i class="fas fa-credit-card"></i> Pay Now
+                                    </button>
+                                </form>
+                            @endif
+
                             @if($booking->can_cancel)
                                 <form action="{{ route('users.bookings.cancel', $booking->id) }}" method="POST"
                                       onsubmit="return confirm('Are you sure you want to cancel this booking?')">
@@ -119,12 +156,12 @@
                             @endif
 
                             @if($booking->status === 'completed')
-                                <a href="{{ route('reviews.reviews') }}" class="btn-outline btn-sm">
+                                <a href="{{ route('reviews.reviews', ['booking' => $booking->id]) }}" class="btn-outline btn-sm">
                                     <i class="fas fa-star"></i> Review
                                 </a>
                             @endif
 
-                            @if(in_array($booking->status, ['completed', 'cancelled']))
+                            @if($booking->status === 'completed' || $booking->isManuallyCancelled())
                                 <a href="{{ route('users.services') }}" class="btn-primary btn-sm">
                                     <i class="fas fa-redo"></i> Rebook
                                 </a>

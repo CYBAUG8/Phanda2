@@ -2,43 +2,20 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use Illuminate\Http\Request;
-use App\Models\Booking;
-use App\Models\Payout;
-use App\Models\ProviderProfile;
-=======
 use App\Models\Booking;
 use App\Models\Payout;
 use App\Models\ProviderProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
->>>>>>> services-bookings-feature
 
 class ProviderEarningsController extends Controller
 {
     private const COMMISSION_RATE = 0.10;
+    private const HOLD_HOURS = 48;
 
     public function index(Request $request)
     {
         $user = $request->user();
-<<<<<<< HEAD
-
-        // Ensure only providers can access
-        abort_if(!$user || $user->role !== 'provider', 403);
-
-        // Get provider profile
-        $providerProfile = ProviderProfile::where('user_id', $user->user_id)->firstOrFail();
-
-        $providerId = $providerProfile->provider_id;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Get Provider Bookings
-        |--------------------------------------------------------------------------
-        */
-
-=======
         abort_if(!$user || $user->role !== 'provider', 403, 'Unauthorized access.');
 
         $providerProfile = ProviderProfile::where('user_id', $user->user_id)->firstOrFail();
@@ -56,6 +33,7 @@ class ProviderEarningsController extends Controller
             'totalRevenue' => $summary['totalRevenue'],
             'commission' => $summary['commission'],
             'netEarnings' => $summary['netEarnings'],
+            'onHoldNetEarnings' => $summary['onHoldNetEarnings'],
             'processingRequests' => $processingRequests,
             'withdrawalSuccess' => (bool) $request->session()->get('withdrawal_success', false),
         ]);
@@ -109,95 +87,41 @@ class ProviderEarningsController extends Controller
 
     private function buildSummary(string $providerId, string $userId): array
     {
->>>>>>> services-bookings-feature
-        $bookingQuery = Booking::whereHas('service', function ($query) use ($providerId) {
+        $eligiblePaymentsQuery = Booking::whereHas('service', function ($query) use ($providerId) {
             $query->where('provider_id', $providerId);
-        });
+        })
+            ->where('status', Booking::STATUS_COMPLETED)
+            ->where('payment_status', Booking::PAYMENT_STATUS_PAID);
 
-<<<<<<< HEAD
-        /*
-        |--------------------------------------------------------------------------
-        | Total Revenue (completed bookings only)
-        |--------------------------------------------------------------------------
-        */
-
-=======
->>>>>>> services-bookings-feature
-        $totalRevenue = (float) (clone $bookingQuery)
-            ->where('status', 'completed')
+        $totalRevenue = (float) (clone $eligiblePaymentsQuery)
             ->sum('total_price');
 
-<<<<<<< HEAD
-        /*
-        |--------------------------------------------------------------------------
-        | Platform Commission
-        |--------------------------------------------------------------------------
-        */
-
-        $commission = round($totalRevenue * self::COMMISSION_RATE, 2);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Net Earnings
-        |--------------------------------------------------------------------------
-        */
-
-        $netEarnings = round($totalRevenue , 2);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Withdrawals
-        |--------------------------------------------------------------------------
-        */
-
-        $totalWithdrawn = (float) Payout::where('provider_id', $user->user_id)
-            ->whereIn('status', ['PAID', 'paid', 'SCHEDULED', 'scheduled'])
-            ->sum('amount');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Available Balance
-        |--------------------------------------------------------------------------
-        */
-
-        $availableBalance = max(0, $netEarnings - $totalWithdrawn);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Processing Requests
-        |--------------------------------------------------------------------------
-        */
-
-        $processingRequests = Payout::where('provider_id', $user->user_id)
-            ->whereIn('status', ['SCHEDULED', 'scheduled'])
-            ->get();
-
-        return view('providers.earnings', [
-            'availableBalance' => $availableBalance,
-            'totalRevenue' => $totalRevenue,
-            'commission' => $commission,
-            'netEarnings' => $netEarnings,
-            'processingRequests' => $processingRequests,
-        ]);
-    }
-}
-=======
         $commission = round($totalRevenue * self::COMMISSION_RATE, 2);
         $netEarnings = max(0, round($totalRevenue - $commission, 2));
+
+        $holdCutoff = now()->subHours(self::HOLD_HOURS);
+
+        $availableRevenue = (float) (clone $eligiblePaymentsQuery)
+            ->where('updated_at', '<=', $holdCutoff)
+            ->sum('total_price');
+
+        $availableCommission = round($availableRevenue * self::COMMISSION_RATE, 2);
+        $availableNet = max(0, round($availableRevenue - $availableCommission, 2));
+        $onHoldNetEarnings = max(0, round($netEarnings - $availableNet, 2));
 
         $totalPaidOut = (float) Payout::query()
             ->where('provider_id', $userId)
             ->whereIn('status', ['PAID', 'paid'])
             ->sum('amount');
 
-        $availableBalance = max(0, round($netEarnings - $totalPaidOut, 2));
+        $availableBalance = max(0, round($availableNet - $totalPaidOut, 2));
 
         return [
             'totalRevenue' => $totalRevenue,
             'commission' => $commission,
             'netEarnings' => $netEarnings,
             'availableBalance' => $availableBalance,
+            'onHoldNetEarnings' => $onHoldNetEarnings,
         ];
     }
 }
->>>>>>> services-bookings-feature
