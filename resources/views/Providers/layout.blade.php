@@ -20,6 +20,7 @@
    {{-- Load Vite JS and providers CSS (reuses firstpage entry) --}}
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/js/firstpage.js', 'resources/css/providers.css'])
+         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     @else
         <link rel="stylesheet" href="/build/assets/providers.css">
         <script src="/build/assets/firstpage.js"></script>

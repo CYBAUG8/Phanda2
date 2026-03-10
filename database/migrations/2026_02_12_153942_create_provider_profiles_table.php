@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('provider_profiles', function (Blueprint $table) {
             $table->uuid('provider_id')->primary();
             
-            $table->uuid('user_id');
+            $table->uuid('user_id')->unique();//stops multiple profiles per user
 
             $table->foreign('user_id')
                   ->references('user_id')

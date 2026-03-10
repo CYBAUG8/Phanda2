@@ -21,33 +21,44 @@ class ProviderDashboardController extends Controller
         }
 
         $providerId = $user->user_id;
+        $providerProfile = ProviderProfile::where('user_id', $user->user_id)
+            ->with('services')
+            ->firstOrFail();
 
         // -----------------------------
         // BOOKINGS
         // -----------------------------
 
-        $totalBookings = Booking::where('user_id', $providerId)->count();
+        $totalBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id', $providerProfile->provider_id);
+            })->count();
 
-        $completedBookings = Booking::where('user_id', $providerId)
-            ->where('status', 'completed')
-            ->count();
+        $completedBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id',$providerProfile->provider_id);
+        })
+        ->where('status', 'completed')
+        ->count();
 
-        $pendingBookings = Booking::where('user_id', $providerId)
-            ->where('status', 'pending')
-            ->count();
+        $pendingBookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id',$providerProfile->provider_id);
+        })
+        ->where('status', 'pending')
+        ->count();
 
         // -----------------------------
         // REVENUE
         // -----------------------------
 
-        $totalRevenue = Booking::where('user_id', $providerId)
-            ->where('status', 'completed')
-            ->sum('total_price');
+        $totalRevenue = Booking::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id',$providerProfile->provider_id);
+        })
+        ->where('status', 'completed')
+        ->sum('total_price');
 
         $commissionRate = 0.10;
         $commission = $totalRevenue * $commissionRate;
 
-        $netEarnings = $totalRevenue - $commission;
+        $netEarnings = $totalRevenue ;
 
         // -----------------------------
         // PAYOUTS
@@ -72,11 +83,13 @@ class ProviderDashboardController extends Controller
         // -----------------------------
         // RECENT BOOKINGS
         // -----------------------------
-
-        $recentBookings = Booking::where('user_id', $providerId)
-            ->latest()
-            ->take(5)
-            ->get();
+        $recentBookings = Booking::with('service')
+        ->whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id', $providerProfile->provider_id);
+        })
+        ->latest()
+        ->take(10)
+        ->get();
         
         // -----------------------------
         // Is Online

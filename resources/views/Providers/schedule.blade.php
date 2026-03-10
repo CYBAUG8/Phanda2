@@ -2,90 +2,147 @@
 
 @section('content')
 
-{{-- Add CSRF meta tag if not already in layout --}}
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 @push('styles')
 <style>
-/* Sidebar card */
-.sidebar-card {
-  background-color: white;
-  border-right: 1px solid #f3f4f6;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+
+.calendar-card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
 }
 
-/* Calendar card */
-.calendar-card {
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  transition: box-shadow 0.3s ease;
-}
-.calendar-card:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+.fc-theme-standard .fc-toolbar .fc-button{
+    background:#f97316 !important;
+    border-color:#f97316 !important;
 }
 
-/* Modal animation */
-.modal-transition {
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+.fc-theme-standard .fc-toolbar .fc-button:hover{
+    background:#ea580c !important;
 }
 
-.fc-theme-standard .fc-toolbar .fc-button {
-  background-color: #f97316 !important;
-  border-color: #f97316 !important;
-  color: white !important;
-  border-radius: 0.5rem !important;
+.modal-transition{
+    transition:opacity .2s ease,visibility .2s ease;
 }
 
-.fc-theme-standard .fc-toolbar .fc-button:hover {
-  background-color: #ea580c !important;
+button:disabled{
+    opacity:.5;
+    cursor:not-allowed;
 }
 
-/* Disabled button styling */
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 </style>
 @endpush
 
-<div class="flex min-h-screen">
-  <div class="flex-1 w-full">
-    <main class="p-4 sm:p-6 md:p-10 space-y-6 md:space-y-8">
-      <section class="calendar-card p-4 sm:p-6">
-        <div id="calendar" class="h-[700px] md:h-[800px]"></div>
-      </section>
-    </main>
-  </div>
-</div>
+<div class="space-y-8">
 
-<!-- MODAL: EVENT DETAILS -->
-<div id="eventModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 invisible opacity-0 modal-transition" style="background-color: rgba(0,0,0,0.4);">
-  <div class="modal-content bg-white rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
-    <div class="flex justify-between items-center p-5 border-b border-gray-100">
-      <h3 class="text-lg font-semibold text-orange-500">Booking details</h3>
-      <button id="closeEventModal" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    {{-- PAGE HEADER --}}
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Bookings Calendar</h1>
+            <p class="text-sm text-gray-500">View your upcoming jobs and availability</p>
+        </div>
     </div>
+
+    {{-- CALENDAR --}}
+    <section class="calendar-card p-6">
+
+      <div id="calendar" class="h-[750px]"></div>
+
+
+      {{-- LEGEND --}}
+      <div class="mt-6 border-t pt-4 flex flex-wrap gap-6 text-sm">
+
+        <div class="flex items-center gap-2">
+        <span class="w-4 h-4 bg-gray-400 rounded-full"></span>
+        <span>Pending</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+        <span class="w-4 h-4 bg-orange-500 rounded-full"></span>
+        <span>Confirmed</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+        <span class="w-4 h-4 bg-green-500 rounded-full"></span>
+        <span>Completed</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+        <span class="w-4 h-4 bg-red-500 rounded-full"></span>
+        <span>Cancelled</span>
+        </div>
+
+      </div>
+
+    </section>
+
+    </div>
+
+
+    {{-- EVENT DETAILS MODAL --}}
+    <div id="eventModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 invisible opacity-0 modal-transition" style="background:rgba(0,0,0,.4)">
+
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg">
+
+    <div class="flex justify-between items-center p-5 border-b">
+    <h3 class="text-lg font-semibold text-orange-500">Booking details</h3>
+    <button id="closeEventModal">&times;</button>
+    </div>
+
     <div class="p-5 space-y-4">
-      <div class="flex items-center justify-between">
-        <span id="modalService" class="text-lg font-bold text-gray-800">Deep Cleaning</span>
-        <span id="modalStatusBadge" class="px-3 py-1 text-xs font-semibold rounded-full">Confirmed</span>
-      </div>
-      <div class="grid grid-cols-2 gap-4 text-sm">
-        <div><span class="text-gray-400 block">Customer</span><span id="modalCustomer" class="font-medium">John Doe</span></div>
-        <div><span class="text-gray-400 block">Phone</span><span id="modalPhone" class="font-medium">0723456789</span></div>
-      </div>
-      <div><span class="text-gray-400 text-sm">Address</span><p id="modalAddress" class="font-medium bg-gray-50 p-2 rounded-lg">12 Main Road, Johannesburg</p></div>
-      <div class="grid grid-cols-2 gap-4 text-sm">
-        <div><span class="text-gray-400 block">Date</span><span id="modalDate" class="font-medium">17 Feb 2026</span></div>
-        <div><span class="text-gray-400 block">Time</span><span id="modalTime" class="font-medium">10:00 – 12:00</span></div>
-      </div>
-      <div class="grid grid-cols-2 gap-4 text-sm">
-        <div><span class="text-gray-400 block">Duration</span><span id="modalDuration" class="font-medium">2 hours</span></div>
-        <div><span class="text-gray-400 block">Total price</span><span id="modalPrice" class="font-bold text-orange-600">R 450</span></div>
-      </div>
-      <div><span class="text-gray-400 text-sm">Notes</span><p id="modalNotes" class="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">Please bring eco-friendly products.</p></div>
+
+    <div class="flex justify-between">
+    <span id="modalService" class="font-bold text-lg"></span>
+    <span id="modalStatusBadge" class="px-3 py-1 text-xs rounded-full"></span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 text-sm">
+
+    <div>
+    <span class="text-gray-400">Customer</span>
+    <p id="modalCustomer"></p>
+    </div>
+
+    <div>
+    <span class="text-gray-400">Phone</span>
+    <p id="modalPhone"></p>
+    </div>
+
+    </div>
+
+    <div>
+    <span class="text-gray-400 text-sm">Address</span>
+    <p id="modalAddress"></p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 text-sm">
+
+    <div>
+    <span class="text-gray-400">Date</span>
+    <p id="modalDate"></p>
+    </div>
+
+    <div>
+    <span class="text-gray-400">Time</span>
+    <p id="modalTime"></p>
+    </div>
+
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 text-sm">
+
+    <div>
+    <span class="text-gray-400">Duration</span>
+    <p id="modalDuration"></p>
+    </div>
+
+    <div>
+    <span class="text-gray-400">Price</span>
+    <p id="modalPrice"></p>
+    </div>
+
     </div>
     <div class="p-5 border-t border-gray-100 flex flex-wrap gap-3 justify-end">
       <button id="confirmBtn" class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition" onclick="updateStatus('confirmed')">Confirm</button>
@@ -99,48 +156,70 @@ button:disabled {
       <button id="cancelBtn" class="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition" onclick="updateStatus('cancelled')">Cancel</button>
       <button id="closeEventModal2" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">Close</button>
     </div>
-  </div>
-</div>
 
-<!-- MODAL: BLOCK TIME / MANUAL -->
-<div id="blockModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 invisible opacity-0 modal-transition" style="background-color: rgba(0,0,0,0.4);">
-  <div class="modal-content bg-white rounded-lg shadow-lg w-full max-w-md">
-    <div class="flex justify-between items-center p-5 border-b border-gray-100">
-      <h3 class="text-lg font-semibold text-orange-500">Block time / manual</h3>
-      <button id="closeBlockModal" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
     </div>
-    <div class="p-5 space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-        <input type="text" id="blockDate" readonly value="2026-02-17" class="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-700">
+
+
+    <div class="p-5 border-t flex justify-end gap-3">
+
+    <button id="confirmBtn"
+    class="px-4 py-2 border rounded"
+    onclick="updateStatus('confirmed')">Confirm</button>
+
+    <button id="completeBtn"
+    class="px-4 py-2 bg-green-600 text-white rounded"
+    onclick="updateStatus('completed')">Completed</button>
+
+    <button id="cancelBtn"
+    class="px-4 py-2 bg-red-500 text-white rounded"
+    onclick="updateStatus('cancelled')">Cancel</button>
+
+    </div>
+
+    </div>
+
+    </div>
+
+
+    {{-- BLOCK TIME MODAL --}}
+    <div id="blockModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 invisible opacity-0 modal-transition" style="background:rgba(0,0,0,.4)">
+
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md">
+
+      <div class="p-5 border-b flex justify-between">
+      <h3 class="font-semibold text-orange-500">Block Time</h3>
+      <button id="closeBlockModal">&times;</button>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Start time</label>
-        <input type="text" id="blockStartTime" readonly value="14:00" class="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-700">
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-        <select class="w-full border border-gray-300 rounded-lg p-3 text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-          <option>30 min</option>
-          <option>1 hour</option>
-          <option>2 hours</option>
-          <option>3 hours</option>
-          <option>4 hours</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Reason (optional)</label>
-        <textarea rows="2" class="w-full border border-gray-300 rounded-lg p-3 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="e.g. lunch break, offsite"></textarea>
-      </div>
+
+      <div class="p-5 space-y-4">
+
+      <input id="blockDate" readonly class="w-full border p-2 rounded">
+
+      <input id="blockStartTime" readonly class="w-full border p-2 rounded">
+
+      <select class="w-full border p-2 rounded">
+      <option>30 min</option>
+      <option>1 hour</option>
+      <option>2 hours</option>
+      <option>3 hours</option>
+      </select>
+
+      <textarea class="w-full border p-2 rounded" placeholder="Reason"></textarea>
+
     </div>
     <div class="p-5 border-t border-gray-100 flex gap-3 justify-end">
       <button class="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-sm">Save block</button>
       <button id="closeBlockModal2" class="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">Cancel</button>
       
     </div>
-  </div>
+
 </div>
 
+</div>
+
+
+
+{{-- CALENDAR SCRIPT --}}
 <script>
 (function() {
 
@@ -226,78 +305,20 @@ button:disabled {
             document.getElementById('modalNotes').innerText = ext.notes || '—';
             document.getElementById('modalPrice').innerText = ext.price ? 'R ' + ext.price : '—';
 
-            const start = e.start;
-            const end = e.end;
+document.getElementById('eventModal').classList.remove('invisible','opacity-0');
 
-            if (start) {
-                const dateStr = start.toLocaleDateString('en-ZA', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                });
-                document.getElementById('modalDate').innerText = dateStr;
+},
 
-                const timeStr = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
-                    ' – ' +
-                    (end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
-                document.getElementById('modalTime').innerText = timeStr;
-            }
+dateClick:function(info){
 
-            if (start && end) {
-                const diffMs = end - start;
-                const diffHrs = diffMs / (1000 * 60 * 60);
-                const hrs = Math.floor(diffHrs);
-                const mins = Math.round((diffHrs - hrs) * 60);
-                let durText = '';
-                if (hrs > 0) durText += hrs + 'h ';
-                if (mins > 0) durText += mins + 'm';
-                document.getElementById('modalDuration').innerText = durText || '—';
-            } else {
-                document.getElementById('modalDuration').innerText = '—';
-            }
+document.getElementById('blockDate').value=info.dateStr;
 
-            // Enable/disable action buttons based on current status
-            const confirmBtn = document.getElementById('confirmBtn');
-            const completeBtn = document.getElementById('completeBtn');
-            const cancelBtn = document.getElementById('cancelBtn');
+document.getElementById('blockModal')
+.classList.remove('invisible','opacity-0');
 
-            // Reset all to enabled first
-            confirmBtn.disabled = false;
-            completeBtn.disabled = false;
-            cancelBtn.disabled = false;
+}
 
-            // Apply logic:
-            // - Confirm button only enabled when status is 'pending'
-            // - Complete button only enabled when status is 'confirmed'
-            // - Cancel button always enabled (optional: disable if already cancelled/completed)
-            if (currentStatus !== 'pending') {
-                confirmBtn.disabled = true;
-            }
-            if (currentStatus !== 'confirmed') {
-                completeBtn.disabled = true;
-            }
-            if (currentStatus === 'cancelled' || currentStatus === 'completed') {
-                // Optionally disable cancel if already cancelled/completed
-                cancelBtn.disabled = true;
-            }
-
-            // Show the modal
-            document.getElementById('eventModal').classList.remove('invisible', 'opacity-0');
-        },
-        dateClick: function(info) {
-            const clickedDate = info.date;
-            const year = clickedDate.getFullYear();
-            const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
-            const day = String(clickedDate.getDate()).padStart(2, '0');
-            document.getElementById('blockDate').value = `${year}-${month}-${day}`;
-
-            const hours = String(clickedDate.getHours()).padStart(2, '0');
-            const mins = String(clickedDate.getMinutes()).padStart(2, '0');
-            document.getElementById('blockStartTime').value = `${hours}:${mins}`;
-
-            document.getElementById('blockModal').classList.remove('invisible', 'opacity-0');
-        }
-    });
+});
 
     calendar.render();
 
@@ -309,64 +330,54 @@ button:disabled {
     }
 });
 
-    // ---------- UPDATE STATUS FUNCTION ----------
-    window.updateStatus = function(status) {
-        if (!currentEventId) {
-            alert('No event selected.');
-            return;
-        }
+});
 
-        // Confirm action? Optional: add a confirmation dialog
-        // if (!confirm(`Are you sure you want to mark this booking as ${status}?`)) return;
 
-        fetch(`/provider/calendar/${currentEventId}/status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ status: status })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // Optionally update badge without waiting for refetch
-                const badge = document.getElementById('modalStatusBadge');
-                badge.innerText = status.charAt(0).toUpperCase() + status.slice(1);
-                badge.className = 'px-3 py-1 text-xs font-semibold rounded-full';
-                if (status === 'confirmed') badge.classList.add('bg-orange-100', 'text-orange-700');
-                else if (status === 'pending') badge.classList.add('bg-gray-200', 'text-gray-700');
-                else if (status === 'completed') badge.classList.add('bg-green-100', 'text-green-700');
-                else if (status === 'cancelled') badge.classList.add('bg-red-100', 'text-red-700');
+function updateStatus(status){
 
-                // Refresh calendar events
-                calendar.refetchEvents();
+fetch(`/provider/calendar/${currentEventId}/status`,{
 
-                // Close modal after successful update
-                closeEventModal();
-            } else {
-                alert('Failed to update status.');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Error updating status.');
-        });
-    };
-})();
+method:'POST',
+
+headers:{
+'Content-Type':'application/json',
+'X-CSRF-TOKEN':
+document.querySelector('meta[name="csrf-token"]').content
+},
+
+body:JSON.stringify({status:status})
+
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.success){
+
+location.reload();
+
+}
+
+});
+
+}
+
+
+document.getElementById('closeEventModal')
+.onclick=()=>{
+
+document.getElementById('eventModal')
+.classList.add('invisible','opacity-0');
+
+};
+
+document.getElementById('closeBlockModal')
+.onclick=()=>{
+
+document.getElementById('blockModal')
+.classList.add('invisible','opacity-0');
+
+};
+
 </script>
-
-<!-- additional responsive tweaks -->
-<style>
-.modal-transition {
-    transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-.invisible {
-    visibility: hidden;
-}
-.opacity-0 {
-    opacity: 0;
-}
-</style>
 
 @endsection

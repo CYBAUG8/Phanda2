@@ -930,7 +930,7 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
     visibility: visible;
 }
 
-.modal {
+.booking-modal {
     width: 100%;
     max-width: 560px;
     max-height: calc(100vh - 40px);
@@ -944,11 +944,11 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
     animation: modalSlide 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.modal::-webkit-scrollbar {
+.booking-modal::-webkit-scrollbar {
     width: 6px;
 }
 
-.modal::-webkit-scrollbar-thumb {
+.booking-modal::-webkit-scrollbar-thumb {
     background: var(--phanda-gray-200);
     border-radius: 10px;
 }
@@ -1389,7 +1389,7 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
         font-size: 13px;
     }
 
-    .modal {
+    .booking-modal {
         margin: 0;
         max-width: 100%;
         border-radius: 20px !important;
@@ -1400,3 +1400,6 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
     }
 }
 /* end of users.css */
+
+.services-grid--compact{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}.service-card--compact{border-radius:16px}.service-card--compact .service-card__title{font-size:16px}.service-card--compact .service-card__description{font-size:13px;line-height:1.5}.service-card--compact .service-card__footer{gap:10px}
+

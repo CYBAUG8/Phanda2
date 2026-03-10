@@ -24,7 +24,6 @@
         <link rel="stylesheet" href="/build/assets/users.css">
         <script src="/build/assets/firstpage.js"></script>
     @endif
-    
         
 </head>
 <body>

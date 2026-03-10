@@ -19,7 +19,8 @@ class ProviderProfileSeeder extends Seeder
             ProviderProfile::updateOrCreate(
                 ['user_id' => $provider->user_id], // prevent duplicates
                 [
-                    'provider_id' => Str::uuid(),
+                    'provider_id' => ProviderProfile::where('user_id', $provider->user_id)
+                        ->value('provider_id') ?? Str::uuid(),
                     'user_id' => $provider->user_id,
                     'business_name' => $provider->full_name,
                     'bio' => 'Professional ' . $provider->full_name . ' offering quality services.',
@@ -28,8 +29,8 @@ class ProviderProfileSeeder extends Seeder
                     'kyc_status' => 'APPROVED',
                     'is_online' => rand(0, 1),
                     'service_radius_km' => rand(5, 50),
-                    'last_lat' => -26.2041,   // Johannesburg sample coords
-                    'last_lng' => 28.0473,
+                    'last_lat' => -26.10 + (rand(-100,100) / 1000),
+                    'last_lng' => 28.04 + (rand(-100,100) / 1000),
                     'rating_avg' => rand(30, 50) / 10, // 3.0 - 5.0
                 ]
             );

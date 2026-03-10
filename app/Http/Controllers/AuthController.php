@@ -79,13 +79,13 @@ public function login(Request $request)
         'status' => 'success',
     ]);
 
-     if (strtoupper($user->role) === 'PROVIDER') {
+     if ($user->role === 'provider') {
 
-            return redirect()->route('providers.profile');
+            return redirect()->route('providers.dashboard');
             
         }else{
 
-            return redirect()->intended('users/profile');
+            return redirect()->route('users.dashboard');
         }
    
     

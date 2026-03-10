@@ -16,6 +16,10 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\RecoveryContactController;
 use App\Http\Controllers\EmergencyContactController;
+use App\Http\Controllers\ProviderDashboardController;
+use App\Http\Controllers\ProviderServiceController;
+use App\Http\Controllers\ProviderBookingController;
+use App\Http\Controllers\ProviderEarningsController;
 use App\Http\Controllers\ProfileController;  
 use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
@@ -82,12 +86,9 @@ Route::get('/providers/schedule', function () {
     return view('providers.schedule');
 });
 
-Route::get('/providers/earnings', function () {
-    return view('providers.earnings');
-});
-
-
-// User area sample routes
+    Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
+    ->name('providers.earnings');
+        // User area sample routes
 
 Route::get('/users/dashboard', [DashboardController::class, 'index'])
     ->name('users.dashboard');
@@ -117,11 +118,15 @@ Route::post('users/reviews', [ReviewController::class, 'store'])
 Route::delete('/users/reviews/{id}', [ReviewController::class, 'destroy'])
     ->name('reviews.destroy');
 
-Route::get('/users/services', [UserServiceController::class, 'index']);
+    Route::get('/users/services', [UserServiceController::class, 'index'])
+        ->name('users.services');
 
-Route::get('/users/bookings', [UserBookingController::class, 'index']);
-Route::post('/users/bookings', [UserBookingController::class, 'store']);
-Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel']);
+ Route::get('/users/bookings', [UserBookingController::class, 'index'])
+        ->name('users.bookings');
+Route::post('/users/bookings', [UserBookingController::class, 'store'])
+        ->name('users.bookings.store');
+Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel'])
+        ->name('users.bookings.cancel');
 
 Route::get('/login', function () {
     return view('login');
