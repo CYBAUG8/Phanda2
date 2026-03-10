@@ -54,6 +54,37 @@ class UserBookingController extends Controller
             ->where('service_id', $validated['service_id'])
             ->where('is_active', true)
             ->firstOrFail();
+<<<<<<< HEAD
+=======
+
+        $coordinates = $this->resolveUserCoordinates($request, $validated);
+
+        if ($coordinates === null) {
+            return redirect()->back()->withInput()->with('error', 'Set your current location before sending a service request.');
+        }
+
+        $provider = $service->providerProfile;
+        if ($provider === null || $provider->last_lat === null || $provider->last_lng === null) {
+            return redirect()->back()->withInput()->with('error', 'Provider location is unavailable. Please choose another service.');
+        }
+
+        $distanceKm = $this->distanceKm(
+            $coordinates['lat'],
+            $coordinates['lng'],
+            (float) $provider->last_lat,
+            (float) $provider->last_lng
+        );
+
+        $userRadiusKm = max(1.0, min((float) ($validated['radius_km'] ?? 25), 100.0));
+        if ($distanceKm > $userRadiusKm) {
+            return redirect()->back()->withInput()->with('error', 'This provider is outside your selected radius.');
+        }
+
+        $providerRadiusKm = (float) ($provider->service_radius_km ?? 0);
+        if ($providerRadiusKm > 0 && $distanceKm > $providerRadiusKm) {
+            return redirect()->back()->withInput()->with('error', 'You are outside this provider\'s service area.');
+        }
+>>>>>>> services-bookings-feature
 
         $coordinates = $this->resolveUserCoordinates($request, $validated);
 
@@ -109,6 +140,51 @@ class UserBookingController extends Controller
         $booking->update(['status' => 'cancelled']);
 
         return redirect()->route('users.bookings')->with('success', 'Booking has been cancelled.');
+<<<<<<< HEAD
+    }
+
+    private function resolveUserCoordinates(Request $request, array $validated): ?array
+    {
+        if (isset($validated['search_lat'], $validated['search_lng'])) {
+            return [
+                'lat' => (float) $validated['search_lat'],
+                'lng' => (float) $validated['search_lng'],
+            ];
+        }
+
+        $address = Address::query()
+            ->where('user_id', $request->user()->user_id)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->orderByDesc('is_default')
+            ->orderByDesc('updated_at')
+            ->first();
+
+        if ($address === null) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $address->latitude,
+            'lng' => (float) $address->longitude,
+        ];
+    }
+
+    private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadiusKm = 6371;
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        $c = 2 * atan2(sqrt($a), sqrt(max(0, 1 - $a)));
+
+        return $earthRadiusKm * $c;
+=======
+>>>>>>> services-bookings-feature
     }
 
     private function resolveUserCoordinates(Request $request, array $validated): ?array

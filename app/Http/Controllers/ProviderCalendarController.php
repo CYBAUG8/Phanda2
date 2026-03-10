@@ -111,4 +111,8 @@ class ProviderCalendarController extends Controller
             'status' => $booking->status,
         ]);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> services-bookings-feature

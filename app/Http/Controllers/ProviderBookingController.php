@@ -101,3 +101,7 @@ class ProviderBookingController extends Controller
         return back()->with($success ? 'success' : 'error', $message);
     }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> services-bookings-feature

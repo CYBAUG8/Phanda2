@@ -18,13 +18,26 @@ class Message extends Model
         'sender_id',
         'sender_type',
         'message',
+<<<<<<< HEAD
         'is_read'
     ];
 
     // Relationships
+=======
+        'is_read',
+    ];
+
+    protected $casts = [
+        'is_read' => 'boolean',
+    ];
+>>>>>>> services-bookings-feature
 
     public function conversation()
     {
         return $this->belongsTo(Conversation::class, 'conversation_id', 'conversation_id');
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> services-bookings-feature

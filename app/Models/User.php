@@ -7,21 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
     protected $primaryKey = 'user_id';
     public $incrementing = false;
     protected $keyType = 'string';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'user_id',
         'full_name',
@@ -29,25 +26,13 @@ class User extends Authenticatable
         'password',
         'phone',
         'role',
-
-        
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -55,11 +40,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    /**
-     * Get all bookings for this user.
-     */
+
     public function bookings(): HasMany
     {
+<<<<<<< HEAD
         return $this->hasMany(ServiceRequest::class, 'user_id', 'user_id');
     }
     
@@ -84,7 +68,31 @@ class User extends Authenticatable
     public function settings(): HasOne
     {
        return $this->hasOne(Setting::class, 'user_id', 'user_id');
+=======
+        return $this->hasMany(Booking::class, 'user_id', 'user_id');
     }
+
+    public function providerProfile(): HasOne
+    {
+        return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
+>>>>>>> services-bookings-feature
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class, 'user_id', 'user_id');
+    }
+
+    public function locations(): HasMany
+    {
+        return $this->hasMany(Location::class, 'user_id', 'user_id');
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class, 'user_id', 'user_id');
+    }
+
     protected static function booted()
     {
         static::creating(function ($model) {
@@ -93,6 +101,7 @@ class User extends Authenticatable
             }
         });
     }
+
     public function reviewsGiven()
     {
         return $this->hasMany(Review::class, 'from_user_id', 'user_id');
@@ -102,6 +111,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Review::class, 'to_user_id', 'user_id');
     }
+
     public function payouts()
     {
         return $this->hasMany(Payout::class, 'provider_id', 'user_id');

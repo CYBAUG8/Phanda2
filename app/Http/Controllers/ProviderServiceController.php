@@ -180,3 +180,7 @@ class ProviderServiceController extends Controller
     }
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> services-bookings-feature

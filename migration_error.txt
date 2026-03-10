@@ -1,0 +1,26 @@
+
+   INFO  Running migrations.  
+
+  2026_02_04_191858_create_reviews_table  9.90ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'service_reviews' already exists (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: phanda2, SQL: create table `service_reviews` (`review_id` char(36) not null, `service_id` varchar(255) not null, `to_user_id` char(36) not null, `from_user_id` char(36) not null, `rating` tinyint unsigned not null, `comment` text not null, `created_at` timestamp null, `updated_at` timestamp null, primary key (`review_id`)) default character set utf8mb4 collate 'utf8mb4_unicode_ci')
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:838
+    834Γûò             $exceptionType = $this->isUniqueConstraintError($e)
+    835Γûò                 ? UniqueConstraintViolationException::class
+    836Γûò                 : QueryException::class;
+    837Γûò 
+  Γ₧£ 838Γûò             throw new $exceptionType(
+    839Γûò                 $this->getNameWithReadWriteType(),
+    840Γûò                 $query,
+    841Γûò                 $this->prepareBindings($bindings),
+    842Γûò                 $e,
+
+  1   vendor\laravel\framework\src\Illuminate\Database\Connection.php:584
+      PDOException::("SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'service_reviews' already exists")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\Connection.php:584
+      PDOStatement::execute()
+

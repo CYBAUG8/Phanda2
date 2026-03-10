@@ -25,12 +25,11 @@ use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
 use App\Http\Controllers\UserMessageController;
 use App\Http\Controllers\ProviderMessageController;
+use App\Http\Controllers\ProviderEarningsController;
 
 
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::redirect('/', '/login');
 
 // Provider page is public (no security required). Keep login page available if needed.
 /*Route::get('/provider', function () {
@@ -67,9 +66,26 @@ Route::get('/login', function () {
     return view('login');
 })->name('login'); 
 
+// Landing page shortcuts used by welcome buttons.
+Route::get('/user', function () {
+    return redirect()->route('login');
+});
+
+Route::get('/provider', function () {
+    return redirect()->route('login');
+});
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+<<<<<<< HEAD
 Route::get('/logout',[AuthController::class, 'logout']);
 
+=======
+Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/provider/logout', function (Request $request) {
+    $request->session()->forget('provider_authenticated');
+    return redirect('/login');
+});
+>>>>>>> services-bookings-feature
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
@@ -92,32 +108,30 @@ Route::middleware('auth')->group(function () {
     Route::patch('/providers/bookings/{id}/cancel', [ProviderBookingController::class, 'cancel'])
         ->name('provider.bookings.cancel');
 
-    Route::get('/providers/services', function () {
-        return view('providers.services');
-    });
+    Route::get('/providers/schedule', [ProviderCalendarController::class, 'index'])
+        ->name('provider.schedule');
 
+<<<<<<< HEAD
     Route::get('/providers/schedule', function () {
         return view('providers.schedule');
     });
 
     Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
     ->name('providers.earnings');
+=======
+    Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
+        ->name('provider.earnings');
+    Route::post('/providers/earnings/withdraw', [ProviderEarningsController::class, 'withdraw'])
+        ->name('provider.earnings.withdraw');
+>>>>>>> services-bookings-feature
         // User area sample routes
 
     Route::get('/users/dashboard', [DashboardController::class, 'index'])
         ->name('users.dashboard');
 
-    Route::get('/users/services', function () {
-        return view('users.services');
-    });
-
-    Route::get('/users/bookings', function () {
-        return view('users.bookings');
-    });
-
     Route::get('/users/profile', function () {
         return view('users.profile');
-    });
+    })->name('users.profile');
 
     Route::get('/users/settings', function () {
         return view('users.settings');
@@ -133,7 +147,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/services', [UserServiceController::class, 'index'])
         ->name('users.services');
 
+<<<<<<< HEAD
      Route::get('/users/bookings', [UserBookingController::class, 'index'])
+=======
+    Route::get('/users/bookings', [UserBookingController::class, 'index'])
+>>>>>>> services-bookings-feature
         ->name('users.bookings');
     Route::post('/users/bookings', [UserBookingController::class, 'store'])
         ->name('users.bookings.store');
@@ -237,3 +255,7 @@ Route::prefix('providers')->middleware(['auth'])->group(function() {
 
 
 Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');
+
+
+
+

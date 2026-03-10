@@ -426,6 +426,11 @@
                             </div>
                         </div>
                         
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-xs text-gray-500" x-text="addressModal.data.latitude && addressModal.data.longitude ? `Location: ${addressModal.data.latitude}, ${addressModal.data.longitude}` : 'No GPS coordinates selected'"></p>
+                            <button type="button" @click="useCurrentLocationForAddress()" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Use Current Location</button>
+                        </div>
+
                         <div class="flex items-center gap-2">
                             <input type="checkbox" x-model="addressModal.data.is_default" id="default-address" class="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
                             <label for="default-address" class="text-sm text-gray-700">Set as default address</label>
@@ -625,6 +630,8 @@ function profileData() {
                 province: '',
                 postal_code: '',
                 country: 'south_africa',
+                latitude: null,
+                longitude: null,
                 is_default: false,
             }
         },
@@ -783,7 +790,9 @@ function profileData() {
                     province: '',
                     postal_code: '',
                     country: 'south_africa',
-                    is_default: false,
+                latitude: null,
+                longitude: null,
+                is_default: false,
                 }
             };
         },
@@ -804,6 +813,8 @@ function profileData() {
                     province: address.province || '',
                     postal_code: address.postal_code || '',
                     country: address.country || 'south_africa',
+                    latitude: address.latitude || null,
+                    longitude: address.longitude || null,
                     is_default: address.is_default || false,
                 }
             };
@@ -909,6 +920,47 @@ function profileData() {
                 console.error(e);
                 this.showToast('Failed to update default address', 'error');
             }
+        },
+
+        async reverseGeocode(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`);
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (_) {
+                return null;
+            }
+        },
+
+        useCurrentLocationForAddress() {
+            if (!navigator.geolocation) {
+                this.showToast('Geolocation is not supported on this device', 'error');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = Number(position.coords.latitude.toFixed(7));
+                const lng = Number(position.coords.longitude.toFixed(7));
+                this.addressModal.data.latitude = lat;
+                this.addressModal.data.longitude = lng;
+
+                const geo = await this.reverseGeocode(lat, lng);
+                if (!geo || !geo.address) {
+                    this.showToast('Location found, but address lookup failed', 'error');
+                    return;
+                }
+
+                const a = geo.address;
+                this.addressModal.data.street = a.road || a.neighbourhood || this.addressModal.data.street;
+                this.addressModal.data.city = a.city || a.town || a.village || a.county || this.addressModal.data.city;
+                this.addressModal.data.province = (a.state || '').toLowerCase().replace(/\s+/g, '_') || this.addressModal.data.province;
+                this.addressModal.data.postal_code = a.postcode || this.addressModal.data.postal_code;
+                this.addressModal.data.country = a.country ? a.country.toLowerCase().replace(/\s+/g, '_') : this.addressModal.data.country;
+
+                this.showToast('Address filled from current location');
+            }, () => {
+                this.showToast('Unable to get current location', 'error');
+            }, { enableHighAccuracy: true, timeout: 10000 });
         },
 
         // OTP Modal Functions
@@ -1153,3 +1205,5 @@ function profileData() {
 </body>
 </html>
 @endsection
+
+

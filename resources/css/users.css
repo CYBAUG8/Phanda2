@@ -1403,3 +1403,7 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
 
 .services-grid--compact{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}.service-card--compact{border-radius:16px}.service-card--compact .service-card__title{font-size:16px}.service-card--compact .service-card__description{font-size:13px;line-height:1.5}.service-card--compact .service-card__footer{gap:10px}
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> services-bookings-feature

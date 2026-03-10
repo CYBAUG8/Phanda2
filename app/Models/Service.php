@@ -85,4 +85,8 @@ class Service extends Model
 
         return "{$minutes}m";
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> services-bookings-feature
