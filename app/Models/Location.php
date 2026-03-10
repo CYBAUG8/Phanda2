@@ -41,6 +41,7 @@ class Location extends Model
     {
         return $query->where('type', 'work');
     }
+    
       protected static function booted()
     {
         static::creating(function ($model) {

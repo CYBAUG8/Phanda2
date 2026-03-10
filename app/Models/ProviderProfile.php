@@ -17,6 +17,7 @@ class ProviderProfile extends Model
         'user_id',
         'provider_id',
         'business_name',
+        'service_area',
         'bio',
         'years_experience',
         'kyc_status',
@@ -26,7 +27,7 @@ class ProviderProfile extends Model
         'last_lng',
         'rating_avg',
     ];
-
+   
     
     public function user()
     {

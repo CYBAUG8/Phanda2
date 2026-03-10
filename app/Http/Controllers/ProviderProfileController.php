@@ -100,6 +100,9 @@ public function profile()
             'business_name' => 'sometimes|required|string|max:255',
             'phone' => 'sometimes|required|string|max:20',
             'service_area' => 'sometimes|nullable|string|max:255',
+            'service_radius_km' => 'sometimes|nullable|numeric|min:1|max:100',
+            'last_lat' => 'sometimes|nullable|numeric',
+            'last_lng' => 'sometimes|nullable|numeric',
             'years_experience' => 'sometimes|nullable|integer|min:0',
             'bio' => 'sometimes|nullable|string',
         ]);
@@ -118,6 +121,9 @@ public function profile()
         $providerProfile->fill($request->only([
             'business_name',
             'service_area',
+            'service_radius_km',
+            'last_lat',
+            'last_lng',
             'years_experience',
             'bio'
         ]));

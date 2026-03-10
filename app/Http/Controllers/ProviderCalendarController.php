@@ -11,7 +11,7 @@ class ProviderCalendarController extends Controller
     //
     public function index(){
 
-      return view('provider.schedule');
+      return view('providers.schedule');
     }
 
 
@@ -57,6 +57,7 @@ class ProviderCalendarController extends Controller
             'textColor'        => '#ffffff',
             'extendedProps'    => [
                 'customer_name' => $request->customer->full_name ?? 'N/A',
+                'customer_id'   => $request->customer->user_id ?? null,
                 'phone'         => $request->customer->phone ?? 'N/A',
                 'address'       => $request->customer->address ?? $request->address, 
                 'status'        => $request->status,

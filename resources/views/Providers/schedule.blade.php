@@ -90,6 +90,12 @@ button:disabled {
     <div class="p-5 border-t border-gray-100 flex flex-wrap gap-3 justify-end">
       <button id="confirmBtn" class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition" onclick="updateStatus('confirmed')">Confirm</button>
       <button id="completeBtn" class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm" onclick="updateStatus('completed')">✓ Completed</button>
+      <button id="messageCustomerBtn"
+              class="px-4 py-2 text-sm border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+              data-customer-id=""
+              data-booking-id="">
+              💬 Message
+      </button>
       <button id="cancelBtn" class="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition" onclick="updateStatus('cancelled')">Cancel</button>
       <button id="closeEventModal2" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">Close</button>
     </div>
@@ -130,12 +136,17 @@ button:disabled {
     <div class="p-5 border-t border-gray-100 flex gap-3 justify-end">
       <button class="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-sm">Save block</button>
       <button id="closeBlockModal2" class="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">Cancel</button>
+      
     </div>
   </div>
 </div>
 
 <script>
 (function() {
+
+
+
+
     // ---------- MODAL CLOSE FUNCTIONS ----------
     function closeEventModal() {
         document.getElementById('eventModal').classList.add('invisible', 'opacity-0');
@@ -189,7 +200,15 @@ button:disabled {
             const currentStatus = ext.status || 'confirmed';
 
             currentEventId = e.id;
-
+            // Set message button data
+            const msgBtn = document.getElementById('messageCustomerBtn');
+            if (ext.customer_id) {
+                msgBtn.setAttribute('data-customer-id', ext.customer_id);
+                msgBtn.setAttribute('data-booking-id', e.id);
+                msgBtn.disabled = false;
+               } else {
+                       msgBtn.disabled = true;
+                  }
             // Populate modal fields
             document.getElementById('modalService').innerText = e.title;
 
@@ -281,6 +300,14 @@ button:disabled {
     });
 
     calendar.render();
+
+    document.getElementById('messageCustomerBtn').addEventListener('click', function() {
+    const customerId = this.getAttribute('data-customer-id');
+    if (customerId) {
+        
+        window.location.href = `/providers/messages/start/${customerId}`;
+    }
+});
 
     // ---------- UPDATE STATUS FUNCTION ----------
     window.updateStatus = function(status) {
