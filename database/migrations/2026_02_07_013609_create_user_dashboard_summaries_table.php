@@ -21,7 +21,7 @@ return new class extends Migration
                   ->on('users')
                   ->onDelete('cascade');
 
-            $table->string('name')->unique();
+            $table->string('name');
 
             // bookings
             $table->unsignedInteger('bookings_requested')->default(0);

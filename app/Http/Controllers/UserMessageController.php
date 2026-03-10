@@ -6,6 +6,8 @@ use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ProviderProfile;
+use App\Models\User;
 
 class UserMessageController extends Controller
 {
@@ -13,7 +15,9 @@ class UserMessageController extends Controller
     {
         $userId = Auth::user()->user_id;
 
-        $conversations = Conversation::with(['provider'])
+        $conversations = Conversation::with(['provider', 'messages' => function ($q) {
+                $q->latest()->limit(1);
+            }])
             ->where('user_id', $userId)
             ->orderByDesc('last_message_time')
             ->get();
@@ -31,12 +35,20 @@ class UserMessageController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $conversations = Conversation::with(['provider'])
+        // Mark all provider messages in this conversation as read
+        $conversation->messages()
+            ->where('sender_type', '!=', 'customer')
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        $conversations = Conversation::with(['provider', 'messages'])
             ->where('user_id', $userId)
             ->orderByDesc('last_message_time')
             ->get();
 
-        $conversation->load('messages');
+        $conversation->load(['messages' => function ($q) {
+            $q->orderBy('created_at', 'asc');
+        }]);
 
         return view('users.messages', compact('conversations'))
             ->with('selectedConversation', $conversation);
@@ -46,16 +58,17 @@ class UserMessageController extends Controller
     {
         $request->validate([
             'conversation_id' => 'required|exists:conversations,conversation_id',
-            'message' => 'required|string',
+            'message'         => 'required|string'
         ]);
 
-        $userId = Auth::user()->user_id;
+        $userId = Auth::id();
 
         $message = Message::create([
             'conversation_id' => $request->conversation_id,
-            'sender_id' => $userId,
-            'sender_type' => 'user',
-            'message' => $request->message,
+            'sender_id'       => $userId,
+            'sender_type'     => 'customer',
+            'message'         => $request->message,
+            'is_read'         => false,
         ]);
 
         Conversation::where('conversation_id', $request->conversation_id)
@@ -65,39 +78,114 @@ class UserMessageController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => [
-                    'id' => $message->message_id,
-                    'message' => $message->message,
-                    'created_at' => $message->created_at->toDateTimeString(),
-                    'time' => $message->created_at->format('H:i'),
-                ],
+                    'id'          => $message->message_id,
+                    'message'     => $message->message,
+                    'sender_type' => $message->sender_type,
+                    'is_read'     => false,
+                    'created_at'  => $message->created_at->toIso8601String(),
+                    'time'        => $message->created_at->format('H:i'),
+                    'human_time'  => $message->created_at->diffForHumans(),
+                ]
             ]);
         }
 
         return back();
     }
 
-    public function latest(Conversation $conversation)
+    /**
+     * Return all conversations as JSON for sidebar polling.
+     * GET /users/messages/list
+     */
+    public function conversationList()
     {
-        $userId = Auth::user()->user_id;
+        $userId = Auth::id();
+
+        $conversations = Conversation::with(['provider.user', 'messages' => function ($q) {
+                $q->latest()->limit(1);
+            }])
+            ->where('user_id', $userId)
+            ->orderByDesc('last_message_time')
+            ->get()
+            ->map(function ($conv) {
+                $lastMsg = $conv->messages->first();
+                $unread  = $conv->messages()
+                    ->where('sender_type', '!=', 'customer')
+                    ->where('is_read', false)
+                    ->count();
+
+                return [
+                    'id'          => $conv->conversation_id,
+                    'name'        => $conv->provider->user->full_name ?? 'Unknown',
+                    'last_message'=> $lastMsg?->message ?? '',
+                    'last_sender' => $lastMsg?->sender_type ?? '',
+                    'unread_count'=> $unread,
+                ];
+            });
+
+        return response()->json(['conversations' => $conversations]);
+    }
+
+
+    
+    
+    public function markRead(Conversation $conversation)
+    {
+        $userId = Auth::id();
 
         if ($conversation->user_id !== $userId) {
             abort(403);
         }
 
-        $messages = $conversation->messages()
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(function ($message) {
-                return [
-                    'id' => $message->message_id,
-                    'message' => $message->message,
-                    'sender_type' => $message->sender_type,
-                    'time' => $message->created_at->format('H:i'),
-                ];
-            });
+        $conversation->messages()
+            ->where('sender_type', '!=', 'customer')
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Poll for new messages after a given timestamp.
+     * Also returns IDs of the current user's sent messages that have been read.
+     */
+    public function latest(Conversation $conversation)
+    {
+        $userId = Auth::id();
+
+        if ($conversation->user_id !== $userId) {
+            abort(403);
+        }
+
+        $after = request('after');
+
+        $query = $conversation->messages()->orderBy('created_at', 'asc');
+
+        if ($after) {
+            $query->where('created_at', '>', $after);
+        }
+
+        $messages = $query->get()->map(function ($message) {
+            return [
+                'id'          => $message->message_id,
+                'message'     => $message->message,
+                'sender_type' => $message->sender_type,
+                'is_read'     => (bool) $message->is_read,
+                'created_at'  => $message->created_at->toIso8601String(),
+                'time'        => $message->created_at->format('H:i'),
+            ];
+        });
+
+        // Return IDs of the user's own sent messages that the provider has read
+        $readMessageIds = $conversation->messages()
+            ->where('sender_type', 'customer')
+            ->where('is_read', true)
+            ->pluck('message_id')
+            ->map(fn($id) => (string) $id)
+            ->values();
 
         return response()->json([
-            'messages' => $messages,
+            'messages'        => $messages,
+            'read_message_ids' => $readMessageIds,
         ]);
     }
 }

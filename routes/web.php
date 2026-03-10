@@ -8,7 +8,6 @@ use App\Http\Controllers\DashboardController;
 //Service and Booking imports
 use App\Http\Controllers\UserServiceController;
 use App\Http\Controllers\UserBookingController;
-use App\Http\Controllers\UserPaymentController;
 //profile
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -17,23 +16,21 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\RecoveryContactController;
 use App\Http\Controllers\EmergencyContactController;
-use App\Http\Controllers\ProviderDashboardController;
-use App\Http\Controllers\ProviderServiceController;
-use App\Http\Controllers\ProviderBookingController;
-use App\Http\Controllers\ProviderEarningsController;
 use App\Http\Controllers\ProfileController;  
 use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
 use App\Http\Controllers\UserMessageController;
 use App\Http\Controllers\ProviderMessageController;
-use App\Http\Controllers\ProviderEarningsController;
+use Illuminate\Support\Facades\Http;
 
 
 
-Route::redirect('/', '/login');
+Route::get('/', function () {
+    return view('welcome');
+});
 
 // Provider page is public (no security required). Keep login page available if needed.
-/*Route::get('/provider', function () {
+Route::get('/provider', function () {
     return view('provider');
 });
 
@@ -54,6 +51,11 @@ Route::post('/provider/login', function (Request $request) {
     return back()->with('error', 'Invalid credentials');
 });
 
+Route::get('/provider/logout', function (Request $request) {
+    $request->session()->forget('provider_authenticated');
+    return redirect('/');
+});
+
 // No-security demo entry point: accepts GET from simple form and redirects to provider home
 Route::get('/provider/enter', function (Request $request) {
     return redirect('/provider');
@@ -61,115 +63,106 @@ Route::get('/provider/enter', function (Request $request) {
 
 Route::get('/user', function () {
     return view('user');
-});*/
+});
+
+// Provider area sample routes
+Route::get('/providers/dashboard', function () {
+    return view('providers.dashboard');
+});
+
+Route::get('/providers/bookings', function () {
+    return view('providers.bookings');
+});
+
+Route::get('/providers/services', function () {
+    return view('providers.services');
+});
+
+Route::get('/providers/schedule', function () {
+    return view('providers.schedule');
+});
+
+Route::get('/providers/earnings', function () {
+    return view('providers.earnings');
+});
+
+
+// User area sample routes
+
+Route::get('/users/dashboard', [DashboardController::class, 'index'])
+    ->name('users.dashboard');
+
+Route::get('/users/services', function () {
+    return view('users.services');
+});
+
+Route::get('/users/bookings', function () {
+    return view('users.bookings');
+});
+
+
+
+Route::get('/users/profile', function () {
+    return view('users.profile');
+});
+
+Route::get('/users/settings', function () {
+    return view('users.settings');
+});
+
+Route::get('/users/reviews', [ReviewController::class, 'index'])
+    ->name('reviews.reviews');
+Route::post('users/reviews', [ReviewController::class, 'store'])
+    ->name('reviews.store');
+Route::delete('/users/reviews/{id}', [ReviewController::class, 'destroy'])
+    ->name('reviews.destroy');
+
+Route::get('/users/services', [UserServiceController::class, 'index']);
+
+Route::get('/users/bookings', [UserBookingController::class, 'index']);
+Route::post('/users/bookings', [UserBookingController::class, 'store']);
+Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel']);
 
 Route::get('/login', function () {
     return view('login');
 })->name('login'); 
 
-// Landing page shortcuts used by welcome buttons.
-Route::get('/user', function () {
-    return redirect()->route('login');
-});
 
-Route::get('/provider', function () {
-    return redirect()->route('login');
-});
+
+
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-<<<<<<< HEAD
-Route::get('/logout',[AuthController::class, 'logout']);
 
-=======
-Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-Route::get('/provider/logout', function (Request $request) {
-    $request->session()->forget('provider_authenticated');
-    return redirect('/login');
+Route::get('/api/places/search', function (Request $request) {
+    $query = $request->query('q');
+
+    if (!$query) {
+        return response()->json([]);
+    }
+
+    try {
+        $response = Http::withoutVerifying()  // ← fixes SSL on localhost
+            ->withHeaders([
+                'User-Agent' => 'PhandaApp/1.0'
+            ])->get('https://nominatim.openstreetmap.org/search', [
+                'q' => $query,
+                'countrycodes' => 'za',
+                'format' => 'json',
+                'limit' => 5
+            ]);
+
+        return response()->json($response->json());
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
 });
->>>>>>> services-bookings-feature
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
-    // Provider area sample routes
-    Route::get('/providers/dashboard', [ProviderDashboardController::class, 'index'])
-        ->name('providers.dashboard');
-    Route::post('/provider/toggle-online', [ProviderDashboardController::class, 'toggleOnline'])
-        ->name('provider.toggleOnline');
-    Route::get('/providers/bookings', [ProviderBookingController::class, 'index'])
-        ->name('provider.bookings');
-    Route::patch('/providers/bookings/{id}/confirm', [ProviderBookingController::class, 'confirm'])
-        ->name('provider.bookings.confirm');
 
-    Route::patch('/providers/bookings/{id}/start', [ProviderBookingController::class, 'start'])
-        ->name('provider.bookings.start');
-
-    Route::patch('/providers/bookings/{id}/complete', [ProviderBookingController::class, 'complete'])
-        ->name('provider.bookings.complete');
-
-    Route::patch('/providers/bookings/{id}/cancel', [ProviderBookingController::class, 'cancel'])
-        ->name('provider.bookings.cancel');
-
-    Route::get('/providers/schedule', [ProviderCalendarController::class, 'index'])
-        ->name('provider.schedule');
-
-<<<<<<< HEAD
-    Route::get('/providers/schedule', function () {
-        return view('providers.schedule');
-    });
-
-    Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
-    ->name('providers.earnings');
-=======
-    Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
-        ->name('provider.earnings');
-    Route::post('/providers/earnings/withdraw', [ProviderEarningsController::class, 'withdraw'])
-        ->name('provider.earnings.withdraw');
->>>>>>> services-bookings-feature
-        // User area sample routes
-
-    Route::get('/users/dashboard', [DashboardController::class, 'index'])
-        ->name('users.dashboard');
-
-    Route::get('/users/profile', function () {
-        return view('users.profile');
-    })->name('users.profile');
-
-    Route::get('/users/settings', function () {
-        return view('users.settings');
-    });
-
-    Route::get('/users/reviews', [ReviewController::class, 'index'])
-        ->name('reviews.reviews');
-    Route::post('users/reviews', [ReviewController::class, 'store'])
-        ->name('reviews.store');
-    Route::delete('/users/reviews/{id}', [ReviewController::class, 'destroy'])
-        ->name('reviews.destroy');
-
-    Route::get('/users/services/locations', [UserServiceController::class, 'locationSuggestions'])
-        ->name('users.services.locations');
-    Route::get('/users/services', [UserServiceController::class, 'index'])
-        ->name('users.services');
-
-<<<<<<< HEAD
-     Route::get('/users/bookings', [UserBookingController::class, 'index'])
-=======
-    Route::get('/users/bookings', [UserBookingController::class, 'index'])
->>>>>>> services-bookings-feature
-        ->name('users.bookings');
-    Route::post('/users/bookings', [UserBookingController::class, 'store'])
-        ->name('users.bookings.store');
-    Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel'])
-        ->name('users.bookings.cancel');
-
-    Route::post('/users/bookings/{booking}/payments/initiate', [UserPaymentController::class, 'initiate'])
-        ->name('users.payments.initiate');
-    Route::get('/users/bookings/{booking}/checkout', [UserPaymentController::class, 'showCheckout'])
-        ->name('users.payments.checkout');
-    Route::post('/users/bookings/{booking}/payments/simulate-success', [UserPaymentController::class, 'simulateSuccess'])
-        ->name('users.payments.simulate-success');
-    Route::post('/users/bookings/{booking}/payments/simulate-failure', [UserPaymentController::class, 'simulateFailure'])
-        ->name('users.payments.simulate-failure');
-
+    
+    Route::get('/logout', [AuthController::class, 'logout']);
+    
     // User info routes
     Route::get('/userInfo', [UserController::class, 'getUserInfo']);
     Route::post('/updateUserInfo', [UserController::class, 'updateUserInfo']);
@@ -234,10 +227,21 @@ Route::middleware('auth')->group(function () {
 
     //Messages routes
     Route::get('/users/messages', [UserMessageController::class, 'index'])->name('user.messages');
-    Route::get('/users/messages/{conversation}', [UserMessageController::class, 'show'])->name('user.messages.show');
     Route::post('/users/messages/send', [UserMessageController::class, 'send'])->name('user.messages.send');
+    Route::get('/users/messages/list', [UserMessageController::class, 'conversationList'])
+    ->name('user.messages.list');
     Route::get('/users/messages/{conversation}/latest',[UserMessageController::class, 'latest']);
-
+    Route::post('/users/messages/{conversation}/read', [UserMessageController::class, 'markRead'])
+    ->name('user.messages.read');
+    Route::get('/users/messages/{conversation}', [UserMessageController::class, 'show'])->name('user.messages.show');
+    
+    
+    Route::get('/providers/messages/start/{customer}', [ProviderMessageController::class, 'startConversation'])->name('providers.messages.start');
+    Route::get('/providers/messages/list', [ProviderMessageController::class, 'conversationList'])
+    ->name('provider.messages.list');
+    Route::post('/providers/messages/{conversation}/read', [ProviderMessageController::class, 'markRead'])
+    ->name('provider.messages.read');
+    
     Route::get('/providers/messages', [ProviderMessageController::class, 'index'])
     ->name('provider.messages');
 
@@ -249,26 +253,8 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/providers/messages/{conversation}/latest',[ProviderMessageController::class, 'latest']);
 
-    Route::post('/providers/messages', [ProviderMessageController::class, 'store'])
-    ->name('provider.messages.store');
-    
-    Route::get('providers/messages/', [ProviderMessageController::class, 'index'])->name('provider.messages');
-    Route::post('providers/messages/send', [ProviderMessageController::class, 'send'])->name('provider.messages.send');
-    Route::get('providers/messages/latest/{user}', [ProviderMessageController::class, 'latestByUser'])->name('provider.messages.latest');
-
+    Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('providers.profile');
 });
-Route::prefix('providers')->middleware(['auth'])->group(function() {
-    Route::get('services', [ProviderServiceController::class, 'index'])->name('provider.services.index');
-    Route::post('services', [ProviderServiceController::class, 'store'])->name('provider.services.store');
-    Route::patch('services/{service}/toggle', [ProviderServiceController::class, 'toggle'])->name('provider.services.toggle');
-    Route::delete('services/{service}', [ProviderServiceController::class, 'destroy'])->name('provider.services.destroy');
-    Route::patch('services/{service}', [ProviderServiceController::class, 'update'])->name('provider.services.update');
-});
-
-
-Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('provider.profile');
-
-
 
 
 

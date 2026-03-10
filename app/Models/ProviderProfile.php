@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProviderProfile extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $primaryKey = 'provider_id';
     public $incrementing = false;
@@ -18,9 +17,9 @@ class ProviderProfile extends Model
         'user_id',
         'provider_id',
         'business_name',
+        'service_area',
         'bio',
         'years_experience',
-        'service_area',
         'kyc_status',
         'is_online',
         'service_radius_km',
@@ -28,24 +27,19 @@ class ProviderProfile extends Model
         'last_lng',
         'rating_avg',
     ];
-
-    protected $casts = [
-        'is_online' => 'boolean',
-        'service_radius_km' => 'float',
-        'last_lat' => 'float',
-        'last_lng' => 'float',
-        'rating_avg' => 'float',
-    ];
-
+   
+    
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
+      return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     public function services()
     {
-        return $this->hasMany(Service::class, 'provider_id', 'provider_id');
+      return $this->hasMany(Service::class, 'provider_id', 'provider_id');
     }
+    public function bookings()
+   {
+    return $this->hasMany(ServiceRequest::class, 'provider_id', 'provider_id');
+   }
 }
-
-
