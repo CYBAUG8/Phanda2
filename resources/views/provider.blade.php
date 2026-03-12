@@ -1,4 +1,4 @@
-@extends('providers.layout')
+@extends('Providers.layout')
 
 @section('content')
     <div class="provider-hero">
@@ -24,3 +24,4 @@
         </div>
     </section>
 @endsection
+

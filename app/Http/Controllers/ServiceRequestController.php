@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Services\BookingCreationService;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ServiceRequestController extends Controller
 {
@@ -32,11 +32,14 @@ class ServiceRequestController extends Controller
             ->firstOrFail();
 
         $booking = $bookingCreationService->createFromService($user, $service, $validated);
+        $booking = $booking->fresh(['service']);
 
         return response()->json([
             'message' => 'Service request sent successfully',
-            'data' => $booking,
+            'data' => array_merge($booking->toArray(), [
+                'status_label' => $booking->status_label,
+                'display_status' => $booking->display_status,
+            ]),
         ]);
     }
 }
-

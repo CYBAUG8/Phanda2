@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Payout;
 use App\Models\ProviderProfile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProviderEarningsController extends Controller
@@ -16,9 +17,15 @@ class ProviderEarningsController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        abort_if(!$user || $user->role !== 'provider', 403, 'Unauthorized access.');
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
-        $providerProfile = ProviderProfile::where('user_id', $user->user_id)->firstOrFail();
+        $providerProfile = ProviderProfile::where('user_id', $user->user_id)->first();
+        if (!$providerProfile) {
+            return redirect()->route('providers.dashboard')
+                ->with('error', 'Provider profile not found.');
+        }
 
         $summary = $this->buildSummary($providerProfile->provider_id, $user->user_id);
 
@@ -42,9 +49,14 @@ class ProviderEarningsController extends Controller
     public function withdraw(Request $request)
     {
         $user = $request->user();
-        abort_if(!$user || $user->role !== 'provider', 403, 'Unauthorized access.');
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
-        $providerProfile = ProviderProfile::where('user_id', $user->user_id)->firstOrFail();
+        $providerProfile = ProviderProfile::where('user_id', $user->user_id)->first();
+        if (!$providerProfile) {
+            return back()->withErrors(['profile' => 'Provider profile not found.']);
+        }
 
         $validated = $request->validate([
             'bank' => 'required|string|in:FNB,Standard Bank,ABSA,Nedbank,Capitec',
@@ -53,31 +65,47 @@ class ProviderEarningsController extends Controller
             'amount' => 'required|numeric|min:1|max:99999999.99',
         ]);
 
-        $summary = $this->buildSummary($providerProfile->provider_id, $user->user_id);
         $amount = round((float) $validated['amount'], 2);
+        $accountDigits = preg_replace('/\D+/', '', (string) $validated['account_number']);
+        $last4 = substr((string) $accountDigits, -4);
 
-        if ($amount > $summary['availableBalance']) {
+        $created = false;
+
+        DB::transaction(function () use (&$created, $amount, $validated, $last4, $providerProfile, $user) {
+            // Serialize withdrawals per provider to avoid race conditions and overdraw.
+            Payout::query()
+                ->where('provider_id', $user->user_id)
+                ->lockForUpdate()
+                ->get(['payout_id']);
+
+            $summary = $this->buildSummary($providerProfile->provider_id, $user->user_id);
+
+            if ($amount > $summary['availableBalance']) {
+                return;
+            }
+
+            Payout::create([
+                'provider_id' => $user->user_id,
+                'amount' => $amount,
+                'currency' => 'ZAR',
+                'status' => 'SCHEDULED',
+                'scheduled_at' => now()->addDay(),
+                'reference' => sprintf(
+                    '%s-%s-%s',
+                    strtoupper(str_replace(' ', '', $validated['bank'])),
+                    $last4 ?: 'XXXX',
+                    strtoupper(Str::random(6))
+                ),
+            ]);
+
+            $created = true;
+        });
+
+        if (!$created) {
             return back()
                 ->withErrors(['amount' => 'Amount cannot exceed available balance.'])
                 ->withInput();
         }
-
-        $accountDigits = preg_replace('/\D+/', '', (string) $validated['account_number']);
-        $last4 = substr((string) $accountDigits, -4);
-
-        Payout::create([
-            'provider_id' => $user->user_id,
-            'amount' => $amount,
-            'currency' => 'ZAR',
-            'status' => 'SCHEDULED',
-            'scheduled_at' => now()->addDay(),
-            'reference' => sprintf(
-                '%s-%s-%s',
-                strtoupper(str_replace(' ', '', $validated['bank'])),
-                $last4 ?: 'XXXX',
-                strtoupper(Str::random(6))
-            ),
-        ]);
 
         return redirect()
             ->route('provider.earnings')
@@ -102,7 +130,11 @@ class ProviderEarningsController extends Controller
         $holdCutoff = now()->subHours(self::HOLD_HOURS);
 
         $availableRevenue = (float) (clone $eligiblePaymentsQuery)
-            ->where('updated_at', '<=', $holdCutoff)
+            ->whereHas('payments', function ($query) use ($holdCutoff) {
+                $query->where('status', 'paid')
+                    ->whereNotNull('paid_at')
+                    ->where('paid_at', '<=', $holdCutoff);
+            })
             ->sum('total_price');
 
         $availableCommission = round($availableRevenue * self::COMMISSION_RATE, 2);

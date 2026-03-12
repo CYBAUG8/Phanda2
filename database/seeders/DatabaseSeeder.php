@@ -137,7 +137,8 @@ class DatabaseSeeder extends Seeder
         $this->seedCategories();
         $this->seedUsers();
         $this->seedProviderProfiles();
-        $this->seedServices();
+        $this->call(ServiceSeeder::class);
+        $this->services = DB::table('services')->pluck('service_id')->all();
         $this->seedAddressesAndRelated();
         $this->seedServiceRequests();
         $this->seedSimpleBookings();

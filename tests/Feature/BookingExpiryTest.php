@@ -108,9 +108,9 @@ class BookingExpiryTest extends TestCase
         ]);
 
         $this->actingAs($fixture['providerUser'])
-            ->from(route('provider.bookings'))
+            ->from(route('provider.bookings.index'))
             ->patch(route('provider.bookings.confirm', $booking->id))
-            ->assertRedirect(route('provider.bookings'))
+            ->assertRedirect(route('provider.bookings.index'))
             ->assertSessionHas('error', 'Only pending bookings can be confirmed.');
 
         $this->assertDatabaseHas('bookings', [
@@ -176,6 +176,126 @@ class BookingExpiryTest extends TestCase
         ]);
     }
 
+
+    public function test_user_cancel_sets_user_cancellation_metadata(): void
+    {
+        $fixture = $this->createServiceFixture();
+
+        $booking = $this->createBooking($fixture['customer'], $fixture['service'], Booking::STATUS_PENDING, [
+            'booking_date' => now()->addDay()->toDateString(),
+            'start_time' => '11:00',
+        ]);
+
+        $this->actingAs($fixture['customer'])
+            ->patch(route('users.bookings.cancel', $booking->id))
+            ->assertRedirect(route('users.bookings'));
+
+        $booking->refresh();
+
+        $this->assertSame(Booking::STATUS_CANCELLED, $booking->status);
+        $this->assertSame(Booking::CANCELLATION_REASON_USER, $booking->cancellation_reason);
+        $this->assertNotNull($booking->cancelled_at);
+    }
+
+    public function test_provider_cancel_sets_provider_cancellation_metadata(): void
+    {
+        $fixture = $this->createServiceFixture();
+
+        $booking = $this->createBooking($fixture['customer'], $fixture['service'], Booking::STATUS_PENDING, [
+            'booking_date' => now()->addDay()->toDateString(),
+            'start_time' => '13:00',
+        ]);
+
+        $this->actingAs($fixture['providerUser'])
+            ->patch(route('provider.bookings.cancel', $booking->id))
+            ->assertRedirect();
+
+        $booking->refresh();
+
+        $this->assertSame(Booking::STATUS_CANCELLED, $booking->status);
+        $this->assertSame(Booking::CANCELLATION_REASON_PROVIDER, $booking->cancellation_reason);
+        $this->assertNotNull($booking->cancelled_at);
+    }
+
+    public function test_provider_calendar_events_normalize_and_return_expired_booking_state(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 3, 9, 10, 5, 0, 'UTC'));
+
+        $fixture = $this->createServiceFixture();
+
+        $booking = $this->createBooking($fixture['customer'], $fixture['service'], Booking::STATUS_PENDING, [
+            'booking_date' => '2026-03-09',
+            'start_time' => '11:00',
+        ]);
+
+        $response = $this->actingAs($fixture['providerUser'])
+            ->getJson(route('provider.calendar.events'))
+            ->assertOk();
+
+        $event = collect($response->json())->firstWhere('id', $booking->id);
+
+        $this->assertNotNull($event);
+        $this->assertSame(Booking::STATUS_CANCELLED, data_get($event, 'extendedProps.status'));
+        $this->assertSame('Expired', data_get($event, 'extendedProps.status_label'));
+        $this->assertSame(Booking::CANCELLATION_REASON_EXPIRED, data_get($event, 'extendedProps.cancellation_reason'));
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => Booking::STATUS_CANCELLED,
+            'cancellation_reason' => Booking::CANCELLATION_REASON_EXPIRED,
+        ]);
+    }
+
+    public function test_provider_calendar_rejects_updates_for_expired_bookings(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 3, 9, 10, 5, 0, 'UTC'));
+
+        $fixture = $this->createServiceFixture();
+
+        $booking = $this->createBooking($fixture['customer'], $fixture['service'], Booking::STATUS_PENDING, [
+            'booking_date' => '2026-03-09',
+            'start_time' => '11:00',
+        ]);
+
+        $this->actingAs($fixture['providerUser'])
+            ->postJson(route('provider.calendar.updateStatus', $booking->id), [
+                'status' => Booking::STATUS_CONFIRMED,
+            ])
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'message' => 'This booking has expired and can no longer be updated.',
+            ]);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => Booking::STATUS_CANCELLED,
+            'cancellation_reason' => Booking::CANCELLATION_REASON_EXPIRED,
+        ]);
+    }
+
+    public function test_payment_initiation_normalizes_expired_booking_before_processing(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 3, 9, 10, 5, 0, 'UTC'));
+
+        $fixture = $this->createServiceFixture();
+
+        $booking = $this->createBooking($fixture['customer'], $fixture['service'], Booking::STATUS_CONFIRMED, [
+            'booking_date' => '2026-03-09',
+            'start_time' => '11:00',
+        ]);
+
+        $this->actingAs($fixture['customer'])
+            ->post(route('users.payments.initiate', $booking->id))
+            ->assertRedirect(route('users.bookings'))
+            ->assertSessionHas('error', 'Payment can only be initiated for confirmed bookings.');
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => Booking::STATUS_CANCELLED,
+            'cancellation_reason' => Booking::CANCELLATION_REASON_EXPIRED,
+        ]);
+    }
     /**
      * @return array{customer: User, providerUser: User, providerProfile: ProviderProfile, category: Category, service: Service}
      */
@@ -244,3 +364,5 @@ class BookingExpiryTest extends TestCase
         ]);
     }
 }
+
+

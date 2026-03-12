@@ -1,65 +1,64 @@
-@extends('users.layout')
+@extends('Users.layout')
 
 @section('content')
-<div class="container">
-    <h2>Welcome back, {{ $user->full_name ?? 'User' }}</h2>
-
-    {{-- Stats Grid --}}
-    <div class="stats-grid">
-        <a href="{{ url('/users/bookings') }}" class="stat-card card">
-            <div class="stat-label">Bookings in Progress</div>
-            <div class="stat-value">{{ $totalBookings ?? 0 }}</div>
-        </a>
-
-        <a href="{{ url('/users/messages') }}" class="stat-card card">
-            <div class="stat-label">Unread Messages</div>
-            <div class="stat-value">{{ $unreadMessages ?? 0 }}</div>
-            @if(($unreadMessages ?? 0) > 0)
-                <div class="chip chip-attn">{{ $unreadMessages }} unread</div>
-            @endif
-        </a>
-
-        <div class="stat-card card">
-            <div class="stat-label" style="display:flex;align-items:center;gap:4px">
-                Average Rating
-            </div>
-            <span>{{ number_format($averageRating, 1) }}</span>
-        </div>
+    <div class="page-header dashboard-page-header">
+        <h2>Welcome back, {{ $userDisplay }}</h2>
+        <p>Track your bookings, messages, and latest account activity in one place.</p>
     </div>
 
-    {{-- Recent Activity --}}
-    <section class="card">
-        <div class="card-header">
-            <div class="card-title">Recent Activities</div>
+    <div class="stats-row dashboard-stats-row">
+        @foreach($dashboardStats as $stat)
+            <a href="{{ $stat['href'] }}" class="stat-card card dashboard-stat-card">
+                <div class="stat-card__icon dashboard-stat-card__icon {{ $stat['icon_class'] }}">
+                    <i class="fas {{ $stat['icon'] }}"></i>
+                </div>
+
+                <div class="stat-card__info">
+                    <span class="stat-card__number">{{ $stat['value'] }}</span>
+                    <span class="stat-card__label">{{ $stat['label'] }}</span>
+                </div>
+
+                @if(!empty($stat['badge']))
+                    <span class="dashboard-stat-badge">{{ $stat['badge'] }}</span>
+                @endif
+            </a>
+        @endforeach
+    </div>
+
+    <section class="card dashboard-activity-card">
+        <div class="dashboard-section-header">
+            <h3>Recent Activity</h3>
+            <a href="{{ route('users.bookings') }}" class="dashboard-section-link">View bookings</a>
         </div>
 
-        @if(!empty($activities))
-            <div class="list">
-                @foreach($activities as $a)
-                    <div class="list-row">
-                        <div class="activity-icon activity-{{ $a['type'] }}">
-                            @switch($a['type'])
-                                @case('booking') 📅 @break
-                                @case('message') ✉️ @break
-                                @case('payment') 💳 @break
-                                @default 🔔
-                            @endswitch
-                        </div>
+        @if($activityFeed->isNotEmpty())
+            <div class="dashboard-activity-list">
+                @foreach($activityFeed as $activity)
+                    <a href="{{ $activity['href'] }}" class="dashboard-activity-item">
+                        <span class="dashboard-activity__icon {{ $activity['icon_class'] }}">
+                            <i class="fas {{ $activity['icon'] }}"></i>
+                        </span>
 
-                        <div class="activity-body">
-                            <div class="row-title">{{ $a['text'] }}</div>
-                            <div class="row-note">{{ $a['ts']->diffForHumans() }}</div>
-                        </div>
-                    </div>
+                        <span class="dashboard-activity__body">
+                            <span class="dashboard-activity__title">{{ $activity['text'] }}</span>
+                            <span class="dashboard-activity__meta">{{ $activity['timestamp']->diffForHumans() }}</span>
+                        </span>
+
+                        <i class="fas fa-chevron-right dashboard-activity__chevron" aria-hidden="true"></i>
+                    </a>
                 @endforeach
             </div>
         @else
-            <div class="empty">
-                <div class="empty-emoji">🔔</div>
-                <div class="empty-title">No activity yet</div>
-                <div class="empty-note">Your bookings and messages will appear here.</div>
+            <div class="empty-state dashboard-empty-state">
+                <div class="empty-state__icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3>No activity yet</h3>
+                <p>Your bookings and messages will appear here once you start using the portal.</p>
+                <a href="{{ route('users.services') }}" class="btn-primary btn-sm">
+                    <i class="fas fa-search"></i> Find Services
+                </a>
             </div>
         @endif
     </section>
-</div>
 @endsection

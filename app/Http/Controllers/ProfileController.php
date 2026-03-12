@@ -4,25 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Address;
 use App\Models\Booking;
-use App\Models\ProviderProfile;
-use App\Models\Service;
-use App\Services\BookingLifecycleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
-    public function getProfile(Request $request, BookingLifecycleService $bookingLifecycleService)
+    public function getProfile(Request $request)
     {
         $user = $request->user();
-
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
 
         $totalRequests = Booking::where('user_id', $user->user_id)->count();
         $activeRequests = Booking::where('user_id', $user->user_id)
@@ -46,19 +38,9 @@ class ProfileController extends Controller
             'updated_at' => $user->updated_at,
             'member_id' => $user->member_id ?? ('PAN-' . strtoupper(substr(str_replace('-', '', $user->user_id), 0, 6))),
             'account_status' => $user->account_status ?? 'active',
-<<<<<<< HEAD
-            
-
-            'total_requests' => $user->bookings()->count(),
-            'active_requests' => $user->bookings()->whereIn('status', ['pending', 'accepted'])->count(),
-            'completed_requests' => $user->bookings()->where('status', 'completed')->count(),
-            
-          
-=======
             'total_requests' => $totalRequests,
             'active_requests' => $activeRequests,
             'completed_requests' => $completedRequests,
->>>>>>> services-bookings-feature
             'addresses' => $user->addresses()->get()->map(function ($address) {
                 return [
                     'address_id' => $address->address_id,
@@ -104,10 +86,6 @@ class ProfileController extends Controller
     public function updateProfile(Request $request)
     {
         $user = $request->user();
-
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
 
         $validator = Validator::make($request->all(), [
             'field' => 'required|string',
@@ -155,10 +133,6 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
-
         $validator = Validator::make($request->all(), [
             'field' => 'required|in:email,phone',
             'value' => 'required',
@@ -183,17 +157,12 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'OTP sent successfully',
-            'otp' => $otp,
         ]);
     }
 
     public function updateWithOtp(Request $request)
     {
         $user = $request->user();
-
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
 
         $validator = Validator::make($request->all(), [
             'field' => 'required|in:email,phone',
@@ -257,10 +226,6 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
-
         $validator = Validator::make($request->all(), [
             'type' => 'required|in:home,work,billing,shipping,other',
             'street' => 'required|string|max:255',
@@ -300,10 +265,6 @@ class ProfileController extends Controller
     public function updateAddress(Request $request, $id)
     {
         $user = $request->user();
-
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
         $address = $user->addresses()->find($id);
 
         if (!$address) {
@@ -338,10 +299,6 @@ class ProfileController extends Controller
     public function destroyAddress(Request $request, $id)
     {
         $user = $request->user();
-
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
         $address = $user->addresses()->find($id);
 
         if (!$address) {
@@ -364,10 +321,6 @@ class ProfileController extends Controller
     public function setDefaultAddress(Request $request, $id)
     {
         $user = $request->user();
-
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
         $address = $user->addresses()->find($id);
 
         if (!$address) {
@@ -396,27 +349,10 @@ class ProfileController extends Controller
             return response()->json(['success' => false, 'message' => 'Incorrect password'], 400);
         }
 
-        DB::transaction(function () use ($user) {
-            $providerProfile = ProviderProfile::withTrashed()->where('user_id', $user->user_id)->first();
-
-            if ($providerProfile !== null) {
-                Service::where('provider_id', $providerProfile->provider_id)
-                    ->update(['is_active' => false]);
-
-                Service::where('provider_id', $providerProfile->provider_id)->delete();
-
-                if (!$providerProfile->trashed()) {
-                    $providerProfile->delete();
-                }
-            }
-
-            $user->delete();
-        });
-
+        $user->delete();
         Auth::logout();
 
-        return response()->json(['success' => true, 'message' => 'Account archived successfully']);
+        return response()->json(['success' => true, 'message' => 'Account deleted successfully']);
     }
 }
-
 

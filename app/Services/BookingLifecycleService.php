@@ -45,7 +45,7 @@ class BookingLifecycleService
         return CarbonImmutable::now(self::BUSINESS_TIMEZONE);
     }
 
-    public function scheduledEndAt(Booking $booking): ?CarbonImmutable
+    public function scheduledStartAt(Booking $booking): ?CarbonImmutable
     {
         if (!$booking->booking_date || !$booking->start_time) {
             return null;
@@ -60,7 +60,14 @@ class BookingLifecycleService
             self::BUSINESS_TIMEZONE
         );
 
-        if ($start === false) {
+        return $start === false ? null : $start;
+    }
+
+    public function scheduledEndAt(Booking $booking): ?CarbonImmutable
+    {
+        $start = $this->scheduledStartAt($booking);
+
+        if ($start === null) {
             return null;
         }
 

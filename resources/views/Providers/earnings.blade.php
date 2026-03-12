@@ -1,4 +1,4 @@
-@extends('providers.layout')
+@extends('Providers.layout')
 
 @section('content')
 <div x-data="earningsPage()" x-init="init()" class="px-6 py-6 relative">
@@ -279,6 +279,7 @@ function earningsPage() {
 }
 </script>
 @endsection
+
 
 
 

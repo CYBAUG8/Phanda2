@@ -82,8 +82,7 @@ class UserController extends Controller
         );
 
         return response()->json([
-            'message' => 'OTP sent successfully',
-            'otp' => $otp
+            'message' => 'OTP sent successfully'
         ]);
     }
 
@@ -163,3 +162,4 @@ class UserController extends Controller
         ]);
     }
 }
+

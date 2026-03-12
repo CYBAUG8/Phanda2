@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\ProviderProfile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -98,7 +99,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($providers as $provider) {
-            User::updateOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $provider['email']],
                 [
                     'user_id'   => $provider['user_id'] ?? Str::uuid(),
@@ -106,6 +107,21 @@ class UserSeeder extends Seeder
                     'phone'     => $provider['phone'],
                     'password'  => Hash::make('password@123'),
                     'role'      => 'provider',
+                ]
+            );
+
+            ProviderProfile::updateOrCreate(
+                ['user_id' => $user->user_id],
+                [
+                    'provider_id' => ProviderProfile::where('user_id', $user->user_id)->value('provider_id') ?? Str::uuid(),
+                    'business_name' => $provider['full_name'],
+                    'bio' => 'Professional service provider.',
+                    'years_experience' => 3,
+                    'service_area' => 'Johannesburg',
+                    'kyc_status' => 'APPROVED',
+                    'is_online' => false,
+                    'service_radius_km' => 25,
+                    'rating_avg' => 0,
                 ]
             );
         }

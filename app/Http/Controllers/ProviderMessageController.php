@@ -20,17 +20,15 @@ class ProviderMessageController extends Controller
 
         $customer = User::where('user_id', $customerId)->firstOrFail();
 
-        $conversation = Conversation::where('user_id', $customer->user_id)
-            ->where('provider_id', $provider->provider_id)
-            ->first();
-
-        if (!$conversation) {
-            $conversation = Conversation::create([
-                'user_id'           => $customer->user_id,
-                'provider_id'       => $provider->provider_id,
+        $conversation = Conversation::firstOrCreate(
+            [
+                'user_id' => $customer->user_id,
+                'provider_id' => $provider->provider_id,
+            ],
+            [
                 'last_message_time' => now(),
-            ]);
-        }
+            ]
+        );
 
         return redirect()->route('provider.messages.show', $conversation->conversation_id);
     }
@@ -53,7 +51,7 @@ class ProviderMessageController extends Controller
 
         $selectedConversation = null;
 
-        return view('providers.messages', compact('conversations', 'selectedConversation'));
+        return view('Providers.messages', compact('conversations', 'selectedConversation'));
     }
 
     public function show(Conversation $conversation)
@@ -79,7 +77,7 @@ class ProviderMessageController extends Controller
             $q->orderBy('created_at', 'asc');
         }]);
 
-        return view('providers.messages', compact('conversations'))
+        return view('Providers.messages', compact('conversations'))
             ->with('selectedConversation', $conversation);
     }
 
@@ -87,33 +85,44 @@ class ProviderMessageController extends Controller
     {
         $request->validate([
             'conversation_id' => 'required|exists:conversations,conversation_id',
-            'message'         => 'required|string'
+            'message' => 'required|string'
         ]);
 
-        $providerId = Auth::user()->providerProfile->provider_id;
+        $providerProfile = Auth::user()->providerProfile;
+        if (!$providerProfile) {
+            abort(403, 'Provider profile not found.');
+        }
+
+        $conversation = Conversation::query()
+            ->where('conversation_id', $request->conversation_id)
+            ->where('provider_id', $providerProfile->provider_id)
+            ->first();
+
+        if (!$conversation) {
+            abort(403, 'Unauthorized access.');
+        }
 
         $message = Message::create([
-            'conversation_id' => $request->conversation_id,
-            'sender_id'       => $providerId,
-            'sender_type'     => 'provider',
-            'message'         => $request->message,
-            'is_read'         => false,
+            'conversation_id' => $conversation->conversation_id,
+            'sender_id' => $providerProfile->provider_id,
+            'sender_type' => 'provider',
+            'message' => $request->message,
+            'is_read' => false,
         ]);
 
-        Conversation::where('conversation_id', $request->conversation_id)
-            ->update(['last_message_time' => now()]);
+        $conversation->update(['last_message_time' => now()]);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => [
-                    'id'          => $message->message_id,
-                    'message'     => $message->message,
+                    'id' => $message->message_id,
+                    'message' => $message->message,
                     'sender_type' => $message->sender_type,
-                    'is_read'     => false,
-                    'created_at'  => $message->created_at->toIso8601String(),
-                    'time'        => $message->created_at->format('H:i'),
-                    'human_time'  => $message->created_at->diffForHumans(),
+                    'is_read' => false,
+                    'created_at' => $message->created_at->toIso8601String(),
+                    'time' => $message->created_at->format('H:i'),
+                    'human_time' => $message->created_at->diffForHumans(),
                 ]
             ]);
         }
@@ -222,3 +231,5 @@ class ProviderMessageController extends Controller
         ]);
     }
 }
+
+

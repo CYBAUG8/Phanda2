@@ -1,4 +1,4 @@
-@extends('users.layout')
+@extends('Users.layout')
 @section('content')
 
 <!DOCTYPE html>

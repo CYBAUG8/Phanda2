@@ -4,12 +4,12 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -44,39 +44,12 @@ class User extends Authenticatable
 
     public function bookings(): HasMany
     {
-<<<<<<< HEAD
-        return $this->hasMany(ServiceRequest::class, 'user_id', 'user_id');
-    }
-    
-    public function providerProfile()
-    {
-       return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
-    }
-
-    public function addresses()
-    {
-       return $this->hasMany(Address::class, 'user_id', 'user_id');
-    }
-    public function locations(): HasMany
-    {
-        return $this->hasMany(Location::class, 'user_id', 'user_id');
-    }
-
-    public function loginHistories(): HasMany
-    {
-        return $this->hasMany(LoginHistory::class, 'user_id', 'user_id');
-    }
-    public function settings(): HasOne
-    {
-       return $this->hasOne(Setting::class, 'user_id', 'user_id');
-=======
         return $this->hasMany(Booking::class, 'user_id', 'user_id');
     }
 
     public function providerProfile(): HasOne
     {
         return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
->>>>>>> services-bookings-feature
     }
 
     public function addresses(): HasMany
@@ -87,6 +60,26 @@ class User extends Authenticatable
     public function locations(): HasMany
     {
         return $this->hasMany(Location::class, 'user_id', 'user_id');
+    }
+
+    public function loginHistories(): HasMany
+    {
+        return $this->hasMany(LoginHistory::class, 'user_id', 'user_id');
+    }
+
+    public function settings(): HasOne
+    {
+        return $this->hasOne(Setting::class, 'user_id', 'user_id');
+    }
+
+    public function emergencyContact(): HasOne
+    {
+        return $this->hasOne(EmergencyContact::class, 'user_id', 'user_id');
+    }
+
+    public function recoveryContact(): HasOne
+    {
+        return $this->hasOne(RecoveryContact::class, 'user_id', 'user_id');
     }
 
     public function conversations(): HasMany
@@ -103,17 +96,17 @@ class User extends Authenticatable
         });
     }
 
-    public function reviewsGiven()
+    public function reviewsGiven(): HasMany
     {
         return $this->hasMany(Review::class, 'from_user_id', 'user_id');
     }
 
-    public function reviewsReceived()
+    public function reviewsReceived(): HasMany
     {
         return $this->hasMany(Review::class, 'to_user_id', 'user_id');
     }
 
-    public function payouts()
+    public function payouts(): HasMany
     {
         return $this->hasMany(Payout::class, 'provider_id', 'user_id');
     }
@@ -123,5 +116,3 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class, 'user_id', 'user_id');
     }
 }
-
-

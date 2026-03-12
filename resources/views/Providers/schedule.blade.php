@@ -1,4 +1,4 @@
-@extends('providers.layout')
+@extends('Providers.layout')
 
 @section('content')
 
@@ -89,7 +89,8 @@ button:disabled {
     </div>
     <div class="p-5 border-t border-gray-100 flex flex-wrap gap-3 justify-end">
       <button id="confirmBtn" class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition" onclick="updateStatus('confirmed')">Confirm</button>
-      <button id="completeBtn" class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm" onclick="updateStatus('completed')">✓ Completed</button>
+      <button id="startBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm" onclick="updateStatus('in_progress')">Start</button>
+      <button id="completeBtn" class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm" onclick="updateStatus('completed')">Complete</button>
       <button id="messageCustomerBtn"
               class="px-4 py-2 text-sm border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition"
               data-customer-id=""
@@ -197,7 +198,9 @@ button:disabled {
         eventClick: function(info) {
             const e = info.event;
             const ext = e.extendedProps;
-            const currentStatus = ext.status || 'confirmed';
+            const currentStatus = ext.status || 'pending';
+            const paymentStatus = ext.payment_status || 'unpaid';
+            const isExpired = currentStatus === 'cancelled' && ext.cancellation_reason === 'expired';
 
             currentEventId = e.id;
             // Set message button data
@@ -213,10 +216,12 @@ button:disabled {
             document.getElementById('modalService').innerText = e.title;
 
             const badge = document.getElementById('modalStatusBadge');
-            badge.innerText = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+            badge.innerText = ext.status_label || (currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1));
             badge.className = 'px-3 py-1 text-xs font-semibold rounded-full';
-            if (currentStatus === 'confirmed') badge.classList.add('bg-orange-100', 'text-orange-700');
+            if (isExpired) badge.classList.add('bg-slate-200', 'text-slate-700');
+            else if (currentStatus === 'confirmed') badge.classList.add('bg-orange-100', 'text-orange-700');
             else if (currentStatus === 'pending') badge.classList.add('bg-gray-200', 'text-gray-700');
+            else if (currentStatus === 'in_progress') badge.classList.add('bg-indigo-100', 'text-indigo-700');
             else if (currentStatus === 'completed') badge.classList.add('bg-green-100', 'text-green-700');
             else if (currentStatus === 'cancelled') badge.classList.add('bg-red-100', 'text-red-700');
 
@@ -258,28 +263,14 @@ button:disabled {
 
             // Enable/disable action buttons based on current status
             const confirmBtn = document.getElementById('confirmBtn');
+            const startBtn = document.getElementById('startBtn');
             const completeBtn = document.getElementById('completeBtn');
             const cancelBtn = document.getElementById('cancelBtn');
 
-            // Reset all to enabled first
-            confirmBtn.disabled = false;
-            completeBtn.disabled = false;
-            cancelBtn.disabled = false;
-
-            // Apply logic:
-            // - Confirm button only enabled when status is 'pending'
-            // - Complete button only enabled when status is 'confirmed'
-            // - Cancel button always enabled (optional: disable if already cancelled/completed)
-            if (currentStatus !== 'pending') {
-                confirmBtn.disabled = true;
-            }
-            if (currentStatus !== 'confirmed') {
-                completeBtn.disabled = true;
-            }
-            if (currentStatus === 'cancelled' || currentStatus === 'completed') {
-                // Optionally disable cancel if already cancelled/completed
-                cancelBtn.disabled = true;
-            }
+            confirmBtn.disabled = currentStatus !== 'pending' || isExpired;
+            startBtn.disabled = currentStatus !== 'confirmed' || paymentStatus !== 'paid' || isExpired;
+            completeBtn.disabled = currentStatus !== 'in_progress' || isExpired;
+            cancelBtn.disabled = !['pending', 'confirmed'].includes(currentStatus) || isExpired;
 
             // Show the modal
             document.getElementById('eventModal').classList.remove('invisible', 'opacity-0');
@@ -327,30 +318,24 @@ button:disabled {
             },
             body: JSON.stringify({ status: status })
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // Optionally update badge without waiting for refetch
-                const badge = document.getElementById('modalStatusBadge');
-                badge.innerText = status.charAt(0).toUpperCase() + status.slice(1);
-                badge.className = 'px-3 py-1 text-xs font-semibold rounded-full';
-                if (status === 'confirmed') badge.classList.add('bg-orange-100', 'text-orange-700');
-                else if (status === 'pending') badge.classList.add('bg-gray-200', 'text-gray-700');
-                else if (status === 'completed') badge.classList.add('bg-green-100', 'text-green-700');
-                else if (status === 'cancelled') badge.classList.add('bg-red-100', 'text-red-700');
-
-                // Refresh calendar events
-                calendar.refetchEvents();
-
-                // Close modal after successful update
-                closeEventModal();
-            } else {
-                alert('Failed to update status.');
+        .then(async (res) => {
+            let data = {};
+            try {
+                data = await res.json();
+            } catch (err) {
+                data = {};
             }
+
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Failed to update status.');
+            }
+
+            calendar.refetchEvents();
+            closeEventModal();
         })
         .catch(err => {
             console.error(err);
-            alert('Error updating status.');
+            alert(err.message || 'Error updating status.');
         });
     };
 })();
@@ -370,3 +355,5 @@ button:disabled {
 </style>
 
 @endsection
+
+

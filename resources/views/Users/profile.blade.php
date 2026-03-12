@@ -1,4 +1,4 @@
-@extends('users.layout')
+@extends('Users.layout')
 @section('content')
 
 <!DOCTYPE html>
@@ -1205,5 +1205,6 @@ function profileData() {
 </body>
 </html>
 @endsection
+
 
 

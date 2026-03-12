@@ -15,10 +15,28 @@ class ProviderDashboardController extends Controller
     public function index(BookingLifecycleService $bookingLifecycleService)
     {
         $user = Auth::user();
-        abort_if(!$user, 403, 'Not authenticated');
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
         $profile = ProviderProfile::where('user_id', $user->user_id)->first();
-        abort_if(!$profile, 403, 'Provider profile not found');
+
+        if (!$profile) {
+            return view('Providers.dashboard', [
+                'totalBookings' => 0,
+                'completedBookings' => 0,
+                'pendingBookings' => 0,
+                'totalRevenue' => 0,
+                'commission' => 0,
+                'netEarnings' => 0,
+                'totalPaidOut' => 0,
+                'availableBalance' => 0,
+                'recentBookings' => collect(),
+                'averageRating' => 0,
+                'totalReviews' => 0,
+                'isOnline' => false,
+            ])->with('error', 'Provider profile not found. Complete your profile to enable dashboard data.');
+        }
 
         $providerId = $profile->provider_id;
 
@@ -39,7 +57,7 @@ class ProviderDashboardController extends Controller
         $netEarnings = $totalRevenue - $commission;
 
         $totalPaidOut = Payout::where('provider_id', $user->user_id)
-            ->where('status', 'paid')
+            ->whereIn('status', ['PAID', 'paid'])
             ->sum('amount');
 
         $availableBalance = $netEarnings - $totalPaidOut;
@@ -55,7 +73,7 @@ class ProviderDashboardController extends Controller
 
         $isOnline = (bool) $profile->is_online;
 
-        return view('providers.dashboard', compact(
+        return view('Providers.dashboard', compact(
             'totalBookings',
             'completedBookings',
             'pendingBookings',
@@ -74,10 +92,14 @@ class ProviderDashboardController extends Controller
     public function toggleOnline(Request $request)
     {
         $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
         $profile = ProviderProfile::where('user_id', $user->user_id)->first();
 
         if (!$profile) {
-            return response()->json(['success' => false], 404);
+            return response()->json(['success' => false, 'message' => 'Provider profile not found'], 404);
         }
 
         $profile->is_online = $request->boolean('is_online');
@@ -89,3 +111,6 @@ class ProviderDashboardController extends Controller
         ]);
     }
 }
+
+
+

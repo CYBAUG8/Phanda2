@@ -123,46 +123,6 @@ class UserServiceController extends Controller
         ];
 
         return view('Users.services', compact('services', 'categories', 'filters', 'showProximityWarning'));
-<<<<<<< HEAD
-    }
-
-    private function resolveUserCoordinates(Request $request): ?array
-    {
-        $requestLat = $request->input('lat');
-        $requestLng = $request->input('lng');
-
-        if (is_numeric($requestLat) && is_numeric($requestLng)) {
-            $lat = (float) $requestLat;
-            $lng = (float) $requestLng;
-
-            if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
-                return ['lat' => $lat, 'lng' => $lng];
-            }
-        }
-
-        $address = Address::query()
-            ->where('user_id', $request->user()->user_id)
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->orderByDesc('is_default')
-            ->orderByDesc('updated_at')
-            ->first();
-
-        if ($address === null) {
-            return null;
-        }
-
-        return [
-            'lat' => (float) $address->latitude,
-            'lng' => (float) $address->longitude,
-        ];
-    }
-
-    private function distanceSql(string $latColumn, string $lngColumn): string
-    {
-        return "(6371 * acos(least(1, greatest(-1, cos(radians(?)) * cos(radians({$latColumn})) * cos(radians({$lngColumn}) - radians(?)) + sin(radians(?)) * sin(radians({$latColumn})) ))))";
-=======
->>>>>>> services-bookings-feature
     }
 
     public function locationSuggestions(Request $request): \Illuminate\Http\JsonResponse

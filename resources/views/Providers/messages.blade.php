@@ -1,4 +1,4 @@
-@extends('providers.layout')
+@extends('Providers.layout')
 
 @section('content')
 <div class="h-[calc(100vh-120px)] flex bg-white rounded-lg shadow overflow-hidden">

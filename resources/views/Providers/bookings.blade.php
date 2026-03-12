@@ -215,8 +215,6 @@
         </div>
     </div>
 </div>
-<<<<<<< HEAD
 @endsection
-=======
-@endsection
->>>>>>> services-bookings-feature
+
+

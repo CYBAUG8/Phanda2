@@ -2,6 +2,13 @@
     --phanda-orange: #ff6a00;
     --phanda-dark: #0b0b0b;
     --phanda-white: #ffffff;
+    --phanda-gray-50: #f9fafb;
+    --phanda-gray-100: #f3f4f6;
+    --phanda-gray-200: #e5e7eb;
+    --phanda-gray-400: #9ca3af;
+    --phanda-gray-600: #4b5563;
+    --shadow-hover: 0 18px 34px rgba(11, 11, 11, 0.1);
+    --shadow-premium: 0 12px 30px rgba(11, 11, 11, 0.1);
     --sidebar-width: 260px;
 }
 

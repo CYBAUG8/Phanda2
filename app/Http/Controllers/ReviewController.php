@@ -18,8 +18,20 @@ class ReviewController extends Controller
     public function index(Request $request, BookingLifecycleService $bookingLifecycleService)
     {
         $currentUser = Auth::user();
+        $bookingReviewSchemaReady = $this->isBookingReviewSchemaReady();
 
-        $providers = User::where('role', 'provider')->get();
+        $providers = User::query()
+            ->where('role', 'provider')
+            ->whereIn('user_id', function ($query) use ($bookingReviewSchemaReady) {
+                $query->select('to_user_id')
+                    ->from('service_reviews');
+
+                if ($bookingReviewSchemaReady) {
+                    $query->whereNotNull('booking_id');
+                }
+            })
+            ->orderBy('full_name')
+            ->get();
 
         $selectedProviderId = $request->get('provider');
         $reviewableBooking = null;
@@ -27,7 +39,7 @@ class ReviewController extends Controller
         $bookingContextError = null;
 
         if ($currentUser && $request->filled('booking')) {
-            if (!$this->isBookingReviewSchemaReady()) {
+            if (!$bookingReviewSchemaReady) {
                 $bookingContextError = 'Review system update is pending. Please run database migrations.';
             } else {
                 $candidateBooking = Booking::with(['service.providerProfile.user'])
@@ -54,6 +66,13 @@ class ReviewController extends Controller
             }
         }
 
+        if ($reviewableBooking) {
+            $bookingProvider = optional(optional($reviewableBooking->service)->providerProfile)->user;
+            if ($bookingProvider && !$providers->contains('user_id', $bookingProvider->user_id)) {
+                $providers->prepend($bookingProvider);
+            }
+        }
+
         if (!$selectedProviderId) {
             $selectedProviderId = optional($providers->first())->user_id;
         }
@@ -64,8 +83,14 @@ class ReviewController extends Controller
             $selectedProviderId = $selectedProvider->user_id;
         }
 
-        $reviews = Review::with('customer')
-            ->orderByDesc('created_at')
+        $reviewsQuery = Review::with('customer')
+            ->orderByDesc('created_at');
+
+        if ($bookingReviewSchemaReady) {
+            $reviewsQuery->whereNotNull('booking_id');
+        }
+
+        $reviews = $reviewsQuery
             ->when($selectedProviderId, function ($query, $providerId) {
                 $query->where('to_user_id', $providerId);
             }, function ($query) {
@@ -74,9 +99,17 @@ class ReviewController extends Controller
             ->paginate(5)
             ->withQueryString();
 
-        $allReviews = $selectedProviderId
-            ? Review::where('to_user_id', $selectedProviderId)->get()
-            : collect();
+        $allReviews = collect();
+        if ($selectedProviderId) {
+            $allReviewsQuery = Review::query()
+                ->where('to_user_id', $selectedProviderId);
+
+            if ($bookingReviewSchemaReady) {
+                $allReviewsQuery->whereNotNull('booking_id');
+            }
+
+            $allReviews = $allReviewsQuery->get();
+        }
 
         $totalReviews = $allReviews->count();
         $averageRating = $totalReviews
@@ -108,7 +141,13 @@ class ReviewController extends Controller
      */
     public function apiIndex($provider_id)
     {
-        $reviews = Review::where('to_user_id', $provider_id)
+        $reviewsQuery = Review::where('to_user_id', $provider_id);
+
+        if ($this->isBookingReviewSchemaReady()) {
+            $reviewsQuery->whereNotNull('booking_id');
+        }
+
+        $reviews = $reviewsQuery
             ->with('customer:user_id,full_name')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -126,7 +165,11 @@ class ReviewController extends Controller
                 ];
             });
 
-        $averageRating = Review::where('to_user_id', $provider_id)->avg('rating') ?? 0;
+        $averageRatingQuery = Review::where('to_user_id', $provider_id);
+        if ($this->isBookingReviewSchemaReady()) {
+            $averageRatingQuery->whereNotNull('booking_id');
+        }
+        $averageRating = $averageRatingQuery->avg('rating') ?? 0;
 
         return response()->json([
             'average_rating' => round($averageRating, 1),
@@ -139,7 +182,12 @@ class ReviewController extends Controller
      */
     public function userReviews($user_id)
     {
-        $reviews = Review::where('from_user_id', $user_id)
+        $reviewsQuery = Review::where('from_user_id', $user_id);
+        if ($this->isBookingReviewSchemaReady()) {
+            $reviewsQuery->whereNotNull('booking_id');
+        }
+
+        $reviews = $reviewsQuery
             ->with('provider:user_id,full_name')
             ->orderBy('created_at', 'desc')
             ->get();

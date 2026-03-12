@@ -10,6 +10,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,11 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // User Info & Settings
     Route::prefix('settings')->group(function () {
-        Route::get('/userInfo', [SettingsController::class, 'getUserInfo']);
-        Route::post('/updateUserInfo', [SettingsController::class, 'updateUserInfo']);
-        Route::post('/sendOtp', [SettingsController::class, 'sendOtp']);
+        Route::get('/userInfo', [UserController::class, 'getUserInfo']);
+        Route::post('/updateUserInfo', [UserController::class, 'updateUserInfo']);
+        Route::post('/sendOtp', [UserController::class, 'sendOtp'])->middleware('throttle:6,1');
         Route::get('/getSettings', [SettingsController::class, 'getSettings']);
-        Route::post('/settings', [SettingsController::class, 'updateSettings']);
+        Route::post('/settings', [SettingsController::class, 'toggleSettings']);
         Route::post('/notification-preferences', [SettingsController::class, 'updateNotificationPreferences']);
     });
 
@@ -76,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/', [AccountController::class, 'destroy']);
     });
 
+
     // Additional routes
     Route::get('/user', function (Request $request) {
         return response()->json([
@@ -86,6 +88,9 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('provider-profile', [ProviderProfileController::class, 'store']);
-Route::post('/service-request', [ServiceRequestController::class, 'store']);
-Route::post('/services', [ServiceController::class, 'store']);
+Route::middleware('auth')->group(function () {
+    Route::post('provider-profile', [ProviderProfileController::class, 'store']);
+    Route::post('/service-request', [ServiceRequestController::class, 'store']);
+    Route::post('/services', [ServiceController::class, 'store']);
+});
+

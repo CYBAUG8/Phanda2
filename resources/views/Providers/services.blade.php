@@ -211,7 +211,7 @@
 
                     <form :action="'{{ url('/providers/services') }}/' + editingService.id" method="POST" class="space-y-4">
                         @csrf
-                        @method('PATCH')
+                        @method('PUT')
 
                         <div>
                             <label class="mb-1 block text-sm font-medium text-gray-700">Service Title</label>
@@ -259,8 +259,6 @@
         </div>
     @endif
 </div>
-<<<<<<< HEAD
 @endsection
-=======
-@endsection
->>>>>>> services-bookings-feature
+
+

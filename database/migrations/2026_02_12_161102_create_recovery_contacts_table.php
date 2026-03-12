@@ -9,22 +9,19 @@ return new class extends Migration
     public function up()
     {
         Schema::create('recovery_contacts', function (Blueprint $table) {
-            $table->uuid('recovery_contact_id');
+            $table->uuid('recovery_contact_id')->primary();
 
-          
-             $table->uuid('user_id')->unique();
-             $table->foreign('user_id')
-             ->references('user_id')
-             ->on('users')
-             ->onDelete('cascade');
+            $table->uuid('user_id')->unique();
+            $table->foreign('user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
 
             $table->string('name', 160);
             $table->string('phone', 32);
             $table->string('email', 160)->nullable();
             $table->string('relationship', 50)->nullable();
             $table->timestamps();
-
-           
         });
     }
 
