@@ -11,6 +11,29 @@ use App\Models\User;
 
 class UserMessageController extends Controller
 {
+
+public function startConversation(Request $request)
+{
+    $request->validate([
+        'provider_id' => 'required|exists:provider_profiles,provider_id',
+    ]);
+
+    $userId = Auth::user()->user_id;
+
+    // Find existing conversation or create a new one
+    $conversation = Conversation::firstOrCreate(
+        [
+            'user_id'     => $userId,
+            'provider_id' => $request->provider_id,
+        ],
+        [
+            'last_message_time' => now(),
+        ]
+    );
+
+    return redirect()->route('user.messages.show', $conversation->conversation_id);
+}
+
     public function index()
     {
         $userId = Auth::user()->user_id;

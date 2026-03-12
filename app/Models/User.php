@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasOne; 
+
 
 class User extends Authenticatable
 {
@@ -106,4 +108,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Payout::class, 'provider_id', 'user_id');
     }
+    
+public function userProfile(): HasOne
+{
+    return $this->hasOne(UserProfile::class, 'user_id', 'user_id');
+}
+
+public function emergencyContact(): HasOne
+{
+    return $this->hasOne(EmergencyContact::class, 'user_id', 'user_id');
+}
 }

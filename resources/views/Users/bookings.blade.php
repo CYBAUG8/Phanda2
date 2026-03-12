@@ -58,82 +58,93 @@
         @endforeach
     </div>
 
-    {{-- Booking Cards --}}
-    @if($bookings->count() > 0)
-        <div class="bookings-list">
-            @foreach($bookings as $booking)
-                <div class="booking-card card">
-                    <div class="booking-card__left">
-                        <div class="booking-card__icon">
-                            <i class="fas {{ optional($booking->service->category)->icon ?? 'fa-concierge-bell' }}"></i>
-                        </div>
-                    </div>
-
-                    <div class="booking-card__body">
-                        <div class="booking-card__header">
-                            <h3 class="booking-card__title">{{ $booking->service->title }}</h3>
-                            <span class="status-badge {{ $booking->status_color }}">
-                                {{ $booking->status_label }}
-                            </span>
-                        </div>
-
-                        <p class="booking-card__provider">
-                            <i class="fas fa-user-circle"></i> {{ $booking->service->provider_name }}
-                        </p>
-
-                        <div class="booking-card__details">
-                            <span>
-                                <i class="far fa-calendar"></i>
-                                {{ $booking->booking_date->format('d M Y') }}
-                            </span>
-                            <span>
-                                <i class="far fa-clock"></i>
-                                {{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }}
-                            </span>
-                            <span>
-                                <i class="fas fa-map-marker-alt"></i>
-                                {{ $booking->address }}
-                            </span>
-                        </div>
-
-                        @if($booking->notes)
-                            <p class="booking-card__notes">
-                                <i class="fas fa-sticky-note"></i> {{ $booking->notes }}
-                            </p>
-                        @endif
-                    </div>
-
-                    <div class="booking-card__right">
-                        <span class="booking-card__price">{{ $booking->formatted_price }}</span>
-
-                        <div class="booking-card__actions">
-                            @if($booking->can_cancel)
-                                <form action="{{ route('users.bookings.cancel', $booking->id) }}" method="POST"
-                                      onsubmit="return confirm('Are you sure you want to cancel this booking?')">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="btn-danger btn-sm">
-                                        <i class="fas fa-times"></i> Cancel
-                                    </button>
-                                </form>
-                            @endif
-
-                            @if($booking->status === 'completed')
-                                <a href="{{ route('reviews.reviews') }}" class="btn-outline btn-sm">
-                                    <i class="fas fa-star"></i> Review
-                                </a>
-                            @endif
-
-                            @if(in_array($booking->status, ['completed', 'cancelled']))
-                                <a href="{{ route('users.services') }}" class="btn-primary btn-sm">
-                                    <i class="fas fa-redo"></i> Rebook
-                                </a>
-                            @endif
-                        </div>
+ {{-- Booking Cards --}}
+@if($bookings->count() > 0)
+    <div class="bookings-list">
+        @foreach($bookings as $booking)
+            <div class="booking-card card">
+                <div class="booking-card__left">
+                    <div class="booking-card__icon">
+                        <i class="fas {{ optional($booking->service->category)->icon ?? 'fa-concierge-bell' }}"></i>
                     </div>
                 </div>
-            @endforeach
-        </div>
+
+                <div class="booking-card__body">
+                    <div class="booking-card__header">
+                        <h3 class="booking-card__title">{{ $booking->service->title }}</h3>
+                        <span class="status-badge {{ $booking->status_color }}">
+                            {{ $booking->status_label }}
+                        </span>
+                    </div>
+
+                    <p class="booking-card__provider">
+                        <i class="fas fa-user-circle"></i> {{ $booking->service->provider_name }}
+                    </p>
+
+                    <div class="booking-card__details">
+                        <span>
+                            <i class="far fa-calendar"></i>
+                            {{ $booking->booking_date->format('d M Y') }}
+                        </span>
+                        <span>
+                            <i class="far fa-clock"></i>
+                            {{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }}
+                        </span>
+                        <span>
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ $booking->address }}
+                        </span>
+                    </div>
+
+                    @if($booking->notes)
+                        <p class="booking-card__notes">
+                            <i class="fas fa-sticky-note"></i> {{ $booking->notes }}
+                        </p>
+                    @endif
+                </div>
+
+                <div class="booking-card__right">
+                    <span class="booking-card__price">{{ $booking->formatted_price }}</span>
+
+                    <div class="booking-card__actions">
+                        @if($booking->can_cancel)
+                            <form action="{{ route('users.bookings.cancel', $booking->booking_id) }}" method="POST"
+                                  onsubmit="return confirm('Are you sure you want to cancel this booking?')">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="btn-danger btn-sm">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- Message Provider button — shown for all non-cancelled bookings --}}
+                        @if($booking->status !== 'cancelled')
+                            <form action="{{ route('user.messages.start') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="provider_id" value="{{ $booking->service->provider_id }}">
+                                <button type="submit" class="btn-outline btn-sm">
+                                    <i class="fas fa-comment"></i> Message
+                                </button>
+                            </form>
+                        @endif
+
+                        @if($booking->status === 'completed')
+                            <a href="{{ route('reviews.reviews') }}" class="btn-outline btn-sm">
+                                <i class="fas fa-star"></i> Review
+                            </a>
+                        @endif
+
+                        @if(in_array($booking->status, ['completed', 'cancelled']))
+                            <a href="{{ route('users.services') }}" class="btn-primary btn-sm">
+                                <i class="fas fa-redo"></i> Rebook
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
     @else
         {{-- Empty State --}}
         <div class="empty-state card">

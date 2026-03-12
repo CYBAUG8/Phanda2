@@ -35,6 +35,8 @@ class EmergencyContactController extends Controller
             $validated
         );
 
+        $contact->save();
+
         return response()->json([
             'message' => 'Emergency contact saved successfully',
             'emergency_contact' => $contact

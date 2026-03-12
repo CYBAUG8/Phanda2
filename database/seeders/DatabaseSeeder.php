@@ -3,6 +3,21 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Faker\Factory as Faker;
+use App\Models\User;
+use App\Models\ProviderProfile;
+use App\Models\Service;
+use App\Models\Booking;
+use App\Models\ServiceRequest;
+use App\Models\ServiceReview;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\Payout;
+use App\Models\UserDashboardSummary;
+
 
 class DatabaseSeeder extends Seeder
 {

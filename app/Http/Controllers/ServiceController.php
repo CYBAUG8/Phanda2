@@ -5,9 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ProviderProfile;
+use App\Models\Category;
 
 class ServiceController extends Controller
 {
+    public function index()
+    {
+        $user = Auth::user();
+
+        $providerProfile = ProviderProfile::where('provider_id', $user->id)->first();
+        $categories = Category::all();
+        $services = Service::where('provider_id', $user->id)->with('category')->get();
+
+        return view('Providers.services', compact('providerProfile', 'categories', 'services'));
+    }    
     public function store(Request $request)
     {
         $request->validate([

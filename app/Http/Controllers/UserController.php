@@ -93,11 +93,38 @@ class UserController extends Controller
         if ($request->field === 'email') {
            Mail::to($request->value)->send(new OtpMail($otp));
         }
-        
-        return response()->json([
+if ($request->field === 'phone') {
+        try {
+            $twilio = new \Twilio\Rest\Client(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
+
+            $twilio->messages->create(
+                $request->value,
+                [
+                    'from' => config('services.twilio.from'),
+                    'body' => "Your Phanda verification code is: {$otp}. It expires in 10 minutes. Do not share this code with anyone.",
+                ]
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send OTP SMS', [
+                'user_id' => $user->user_id,
+                'phone'   => $request->value,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to send OTP via SMS. Please try again.',
+            ], 500);
+        }
+    }
+
+         return response()->json([
             'message' => 'OTP sent successfully',
-            'otp' => $otp 
         ]);
+        
+
     }
 
     // Update password
@@ -164,5 +191,59 @@ class UserController extends Controller
             'message' => 'Account deleted successfully'
         ]);
     }
+public function downloadData(Request $request)
+{
+    $user = $request->user();
+
+    $emergencyContact = $user->emergencyContact;
+    $locations        = $user->locations;
+    $loginHistories   = $user->loginHistories()->latest()->take(10)->get();
+
+    $bookings = \App\Models\ServiceRequest::where('user_id', $user->user_id)
+                    ->with('service.category')
+                    ->latest('booking_date')
+                    ->get();
+
+    // ── Financial summaries ───────────────────────────────────────
+    $completedBookings = $bookings->where('status', 'completed');
+    $pendingBookings   = $bookings->whereIn('status', ['pending', 'confirmed']);
+
+    $totalSpent = $completedBookings->sum('total_price');
+
+    // Breakdown by category
+    $categoryBreakdown = $completedBookings
+        ->groupBy(fn($b) => $b->service?->category?->name ?? 'Uncategorised')
+        ->map(fn($group) => [
+            'count'  => $group->count(),
+            'total'  => $group->sum('total_price'),
+        ])
+        ->sortByDesc(fn($item) => $item['total']);
+
+    // Monthly spending summary (last 12 months)
+    $monthlySpending = $completedBookings
+        ->filter(fn($b) => \Carbon\Carbon::parse($b->booking_date)->gte(now()->subMonths(12)))
+        ->groupBy(fn($b) => \Carbon\Carbon::parse($b->booking_date)->format('M Y'))
+        ->map(fn($group) => [
+            'count' => $group->count(),
+            'total' => $group->sum('total_price'),
+        ]);
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.user_data', compact(
+        'user',
+        'emergencyContact',
+        'locations',
+        'loginHistories',
+        'bookings',
+        'completedBookings',
+        'pendingBookings',
+        'totalSpent',
+        'categoryBreakdown',
+        'monthlySpending'
+    ));
+
+    $pdf->setPaper('A4', 'portrait');
+
+    return $pdf->download('phanda-my-data-' . now()->format('Y-m-d') . '.pdf');
+}
     
 }
