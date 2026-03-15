@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Review;
-use App\Models\Booking;
+use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -21,7 +21,7 @@ class ReviewController extends Controller
         $currentUser = Auth::user();
 
         //Get all completed bookings for the current user
-        $completedBookings = Booking::where('user_id', $currentUser->user_id)
+        $completedBookings = ServiceRequest::where('user_id', $currentUser->user_id)
             ->where('status', 'completed')
             ->get();
 

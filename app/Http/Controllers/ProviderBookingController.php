@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
+use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
 
 class ProviderBookingController extends Controller
@@ -12,7 +12,7 @@ class ProviderBookingController extends Controller
         $providerProfile = $request->user()->providerProfile;
         abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
-        $bookings = Booking::whereHas('service', function ($query) use ($providerProfile) {
+        $bookings = ServiceRequest::whereHas('service', function ($query) use ($providerProfile) {
                 $query->where('provider_id', $providerProfile->provider_id);
             })
             ->with(['user', 'service'])
@@ -74,12 +74,12 @@ class ProviderBookingController extends Controller
         return $this->statusResponse($request, $booking, true, 'Booking cancelled.');
     }
 
-    private function findProviderBooking(Request $request, string $id): Booking
+    private function findProviderBooking(Request $request, string $id): ServiceRequest
     {
         $providerProfile = $request->user()->providerProfile;
         abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
-        return Booking::where('id', $id)
+        return ServiceRequest::where('booking_id', $id)
             ->whereHas('service', function ($query) use ($providerProfile) {
                 $query->where('provider_id', $providerProfile->provider_id);
             })
@@ -87,14 +87,14 @@ class ProviderBookingController extends Controller
             ->firstOrFail();
     }
 
-    private function statusResponse(Request $request, Booking $booking, bool $success, string $message)
+    private function statusResponse(Request $request, ServiceRequest $booking, bool $success, string $message)
     {
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => $success,
                 'status' => $booking->status,
                 'message' => $message,
-                'booking_id' => $booking->id,
+                'booking_id' => $booking->booking_id,
             ], $success ? 200 : 422);
         }
 

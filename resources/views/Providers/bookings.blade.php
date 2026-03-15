@@ -101,29 +101,29 @@
                                 </button>
 
                                 @if($booking->status === 'pending')
-                                    <form method="POST" action="{{ route('provider.bookings.confirm', $booking->id) }}">
+                                    <form method="POST" action="{{ route('providers.bookings.confirm', $booking->booking_id) }}">
                                         @csrf
                                         @method('PATCH')
                                         <button class="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">Accept</button>
                                     </form>
-                                    <form method="POST" action="{{ route('provider.bookings.cancel', $booking->id) }}">
+                                    <form method="POST" action="{{ route('providers.bookings.cancel', $booking->booking_id) }}">
                                         @csrf
                                         @method('PATCH')
                                         <button class="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold">Decline</button>
                                     </form>
                                 @elseif($booking->status === 'confirmed')
-                                    <form method="POST" action="{{ route('provider.bookings.start', $booking->id) }}">
+                                    <form method="POST" action="{{ route('providers.bookings.start', $booking->booking_id) }}">
                                         @csrf
                                         @method('PATCH')
                                         <button class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Start</button>
                                     </form>
-                                    <form method="POST" action="{{ route('provider.bookings.cancel', $booking->id) }}">
+                                    <form method="POST" action="{{ route('providers.bookings.cancel', $booking->booking_id) }}">
                                         @csrf
                                         @method('PATCH')
                                         <button class="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold">Cancel</button>
                                     </form>
                                 @elseif($booking->status === 'in_progress')
-                                    <form method="POST" action="{{ route('provider.bookings.complete', $booking->id) }}">
+                                    <form method="POST" action="{{ route('providers.bookings.complete', $booking->booking_id) }}">
                                         @csrf
                                         @method('PATCH')
                                         <button class="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">Complete</button>

@@ -30,7 +30,7 @@
         <div class="bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-xl p-6">
             <p class="text-sm opacity-80">Available Balance</p>
             <h2 class="text-2xl font-bold mt-2">
-                R {{ number_format($availableBalance ??0,2) }}
+                R <span x-text="availableBalance.toFixed(2)"></span>
             </h2>
         </div>
 
@@ -46,20 +46,51 @@
 
     <!-- ================= PROCESSING REQUESTS ================= -->
     <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-        <h3 class="text-lg font-semibold mb-4">Processing Requests</h3>
+        <h3 class="text-lg font-semibold mb-4">Payout Requests</h3>
 
-        <template x-if="processingRequests.length === 0">
-            <p class="text-gray-400">No withdrawal requests in progress.</p>
+        <div class="flex gap-4 mb-4">
+            <button 
+                @click="activeTab = 'SCHEDULED'"
+                :class="{'border-b-2 border-orange-600 font-semibold': activeTab==='SCHEDULED'}"
+                class="px-3 py-1 text-sm text-gray-600 hover:text-orange-600"
+            >
+                Pending
+            </button>
+            <button 
+                @click="activeTab = 'PAID'"
+                :class="{'border-b-2 border-green-600 font-semibold': activeTab==='PAID'}"
+                class="px-3 py-1 text-sm text-gray-600 hover:text-green-600"
+            >
+                Paid
+            </button>
+            <button 
+                @click="activeTab = 'FAILED'"
+                :class="{'border-b-2 border-red-600 font-semibold': activeTab==='FAILED'}"
+                class="px-3 py-1 text-sm text-gray-600 hover:text-red-600"
+            >
+                Failed
+            </button>
+        </div>
+
+        <!-- Requests List -->
+        <template x-if="filteredPayouts.length === 0">
+            <p class="text-gray-400">No requests in this category.</p>
         </template>
 
-        <template x-for="request in processingRequests" :key="request.id">
+        <template x-for="request in filteredPayouts" :key="request.id">
             <div class="flex justify-between items-center border-b py-3">
                 <span class="font-medium">
                     R <span x-text="request.amount.toFixed(2)"></span>
                 </span>
-                <span class="text-yellow-500 text-sm font-semibold">
-                    Pending
-                </span>
+                <span 
+                    class="text-sm font-semibold"
+                    :class="{
+                        'text-yellow-500': request.status === 'SCHEDULED',
+                        'text-green-500': request.status === 'PAID',
+                        'text-red-500': request.status === 'FAILED'
+                    }"
+                    x-text="request.status"
+                ></span>
             </div>
         </template>
     </div>
@@ -69,6 +100,7 @@
     <div 
         x-show="withdrawOpen"
         x-transition
+        x-cloak
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
         style="display:none"
     >
@@ -157,9 +189,9 @@
 
                 <button 
                     @click="submitWithdraw"
-                    :disabled="amount > netEarnings || loading"
+                    :disabled="amount > availableBalance || loading"
                     class="px-4 py-2 text-white rounded-lg flex items-center gap-2"
-                    :class="amount > netEarnings || loading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'"
+                    :class="amount > availableBalance || loading ? 'bg-gray-400' : 'bg-orange-600 hover:bg-orange-700'"
                 >
                     <svg 
                         x-show="loading"
@@ -198,32 +230,81 @@ function earningsPage() {
         loading: false,
         showToast: false,
 
-        netEarnings:1000, // replace with {{ number_format($availableBalance ?? 0, 2) }}
+        availableBalance: {{ $availableBalance }}, // current available balance
 
         bank: '',
         accountNumber: '',
         accountHolder: '',
         amount: 0,
 
-        processingRequests: [],
+        payouts: @json($processingRequests ?? []),//convert php to json for js
+
+        activeTab: 'SCHEDULED', // default active tab
+
+        // Filter payouts based on selected tab
+        get filteredPayouts() {
+            return this.payouts.filter(p => p.status === this.activeTab);
+        },
 
         submitWithdraw() {
+            if (this.amount > this.availableBalance) {
+                alert("Insufficient balance");
+                return;
+            }
+
             this.loading = true;
 
-            setTimeout(() => {
+            fetch("{{ route('providers.payout.request') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    bank: this.bank,
+                    account_number: this.accountNumber,
+                    account_holder: this.accountHolder,
+                    amount: this.amount
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
                 this.loading = false;
                 this.withdrawOpen = false;
 
-                this.processingRequests.push({
-                    id: Date.now(),
-                    amount: parseFloat(this.amount)
+                // Add new payout request to list
+                this.payouts.unshift({
+                    id: data.payout.payout_id,
+                    amount: parseFloat(this.amount),
+                    status: data.payout.status
                 });
+
+                // Update available balance
+                this.availableBalance -= this.amount;
 
                 this.amount = 0;
                 this.showToast = true;
 
                 setTimeout(() => this.showToast = false, 3000);
-            }, 1500);
+            });
+        },
+
+        // Auto-refresh payouts every 10 seconds
+        init() {
+            setInterval(() => {
+                fetch("{{ route('providers.payout.refresh') }}")
+                    .then(res => res.json())
+                    .then(data => {
+                        this.payouts = data.payouts;
+
+                        // Recalculate available balance
+                        let totalPending = this.payouts
+                            .filter(p => p.status === 'SCHEDULED')
+                            .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+                        this.availableBalance = {{ $totalRevenue ?? 0 }} - totalPending;
+                    });
+            }, 10000);
         }
     }
 }

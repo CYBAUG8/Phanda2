@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('province');
             $table->string('postal_code', 20);
             $table->string('country')->default('south_africa');
+            // Location coordinates
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
             $table->boolean('is_default')->default(false);
             $table->timestamps();
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Booking;
+use App\Models\ServiceRequest;
 use App\Models\Payout;
 use App\Models\ProviderProfile;
 
@@ -29,7 +29,7 @@ class ProviderEarningsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $bookingQuery = Booking::whereHas('service', function ($query) use ($providerId) {
+        $bookingQuery = ServiceRequest::whereHas('service', function ($query) use ($providerId) {
             $query->where('provider_id', $providerId);
         });
 
@@ -39,9 +39,11 @@ class ProviderEarningsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $totalRevenue = (float) (clone $bookingQuery)
-            ->where('status', 'completed')
-            ->sum('total_price');
+        $totalRevenue = ServiceRequest::whereHas('service', function ($query) use ($providerProfile) {
+            $query->where('provider_id',$providerProfile->provider_id);
+        })
+        ->where('status', 'completed')
+        ->sum('total_price');
 
         /*
         |--------------------------------------------------------------------------
@@ -50,14 +52,6 @@ class ProviderEarningsController extends Controller
         */
 
         $commission = round($totalRevenue * self::COMMISSION_RATE, 2);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Net Earnings
-        |--------------------------------------------------------------------------
-        */
-
-        $netEarnings = round($totalRevenue , 2);
 
         /*
         |--------------------------------------------------------------------------
@@ -75,24 +69,39 @@ class ProviderEarningsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $availableBalance = max(0, $netEarnings - $totalWithdrawn);
+        $availableBalance = ($totalRevenue - $totalWithdrawn);
 
         /*
         |--------------------------------------------------------------------------
         | Processing Requests
         |--------------------------------------------------------------------------
         */
-
+        
         $processingRequests = Payout::where('provider_id', $user->user_id)
-            ->whereIn('status', ['SCHEDULED', 'scheduled'])
-            ->get();
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function($payout) {
+            return [
+                'id' => $payout->payout_id,
+                'amount' => (float) $payout->amount, // convert to number
+                'status' => $payout->status,
+            ];
+        });
 
         return view('providers.earnings', [
             'availableBalance' => $availableBalance,
             'totalRevenue' => $totalRevenue,
             'commission' => $commission,
-            'netEarnings' => $netEarnings,
             'processingRequests' => $processingRequests,
         ]);
+    }
+    public function refreshPayouts(Request $request)
+    {
+        $user = $request->user();
+        $payouts = Payout::where('provider_id', $user->user_id)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+
+        return response()->json(['payouts' => $payouts]);
     }
 }

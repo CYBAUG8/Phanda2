@@ -102,4 +102,15 @@ class ServiceRequest extends Model
             }
         });
     }
+    // Customer who made the booking
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    // Service booked
+    /*public function service()
+    {
+        return $this->belongsTo(Service::class, 'service_id', 'service_id');
+    }*/
 }
