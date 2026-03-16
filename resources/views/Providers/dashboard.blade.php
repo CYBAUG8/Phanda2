@@ -92,7 +92,7 @@
         </div>
 
         <!-- Balance -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-sm p-5">
+        <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl shadow-sm p-5">
             <p class="text-sm opacity-80">Available Balance</p>
             <h2 class="text-2xl font-bold mt-2">R0</h2>
         </div>

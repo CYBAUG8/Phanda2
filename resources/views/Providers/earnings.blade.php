@@ -10,7 +10,7 @@
 
         <button
             @click="withdrawOpen = true"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm transition"
+            class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-xl shadow-sm transition"
         >
             Withdraw Funds
         </button>
@@ -33,7 +33,7 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6">
+        <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl p-6">
             <p class="text-sm opacity-80">Available Balance (48h hold applied)</p>
             <h2 class="text-2xl font-bold mt-2">
                 R <span x-text="money(availableBalance)"></span>
@@ -179,7 +179,7 @@
                         @click="submitWithdraw"
                         :disabled="!canSubmit || loading"
                         class="px-4 py-2 text-white rounded-lg flex items-center gap-2"
-                        :class="!canSubmit || loading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'"
+                        :class="!canSubmit || loading ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'"
                     >
                         <svg
                             x-show="loading"
@@ -279,7 +279,6 @@ function earningsPage() {
 }
 </script>
 @endsection
-
 
 
 
