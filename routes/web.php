@@ -119,10 +119,33 @@ Route::get('/users/services', [UserServiceController::class, 'index'])->name('us
 Route::get('/users/bookings', [UserBookingController::class, 'index'])->name('users.bookings');
 Route::post('/users/bookings', [UserBookingController::class, 'store'])->name('users.bookings.store');
 Route::patch('/users/bookings/{booking}/cancel', [UserBookingController::class, 'cancel'])->name('users.bookings.cancel');
-Route::get('/users/bookings/{booking}/checkout', [UserPaymentController::class, 'showCheckout'])->name('users.payments.checkout');
-Route::post('/users/bookings/{booking}/payments/initiate', [UserPaymentController::class, 'initiate'])->name('users.payments.initiate');
-Route::post('/users/bookings/{booking}/payments/simulate-success', [UserPaymentController::class, 'simulateSuccess'])->name('users.payments.simulate-success');
-Route::post('/users/bookings/{booking}/payments/simulate-failure', [UserPaymentController::class, 'simulateFailure'])->name('users.payments.simulate-failure');
+Route::get('/users/payments', [UserPaymentController::class, 'index'])
+    ->middleware('auth')
+    ->name('users.payments.index');
+Route::post('/users/payments/methods', [UserPaymentController::class, 'storePaymentMethod'])
+    ->middleware('auth')
+    ->name('users.payments.methods.store');
+Route::patch('/users/payments/methods/{paymentMethod}/default', [UserPaymentController::class, 'setDefaultCard'])
+    ->middleware('auth')
+    ->name('users.payments.methods.default');
+Route::delete('/users/payments/methods/{paymentMethod}', [UserPaymentController::class, 'destroyPaymentMethod'])
+    ->middleware('auth')
+    ->name('users.payments.methods.destroy');
+Route::get('/users/bookings/{booking}/checkout', [UserPaymentController::class, 'showCheckout'])
+    ->middleware('auth')
+    ->name('users.payments.checkout');
+Route::post('/users/bookings/{booking}/payments/initiate', [UserPaymentController::class, 'initiate'])
+    ->middleware('auth')
+    ->name('users.payments.initiate');
+Route::post('/users/bookings/{booking}/payments/pay', [UserPaymentController::class, 'pay'])
+    ->middleware('auth')
+    ->name('users.payments.pay');
+Route::post('/users/bookings/{booking}/payments/simulate-success', [UserPaymentController::class, 'simulateSuccess'])
+    ->middleware('auth')
+    ->name('users.payments.simulate-success');
+Route::post('/users/bookings/{booking}/payments/simulate-failure', [UserPaymentController::class, 'simulateFailure'])
+    ->middleware('auth')
+    ->name('users.payments.simulate-failure');
 
 Route::get('/login', function () {
     return view('login');
@@ -286,8 +309,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/providers/profile', [ProviderProfileController::class, 'profile'])->name('providers.profile');
 });
-
-
 
 
 

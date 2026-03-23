@@ -19,6 +19,7 @@ class Payment extends Model
         'payment_id',
         'booking_id',
         'user_id',
+        'payment_method_id',
         'provider',
         'method',
         'amount',
@@ -59,6 +60,11 @@ class Payment extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id', 'payment_method_id');
     }
 
     public function refunds()

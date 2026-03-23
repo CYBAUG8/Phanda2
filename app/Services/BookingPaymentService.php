@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Refund;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -21,12 +22,18 @@ class BookingPaymentService
         ]);
     }
 
-    public function recordSuccessfulPayment(Booking $booking, string $method): Payment
+    public function recordSuccessfulPayment(
+        Booking $booking,
+        string $method,
+        ?PaymentMethod $paymentMethod = null,
+        array $methodMetadata = []
+    ): Payment
     {
-        return DB::transaction(function () use ($booking, $method) {
+        return DB::transaction(function () use ($booking, $method, $paymentMethod, $methodMetadata) {
             $payment = Payment::create([
                 'booking_id' => $booking->id,
                 'user_id' => $booking->user_id,
+                'payment_method_id' => $paymentMethod?->payment_method_id,
                 'provider' => self::PROVIDER,
                 'method' => $method,
                 'amount' => (float) $booking->total_price,
@@ -34,9 +41,7 @@ class BookingPaymentService
                 'status' => 'paid',
                 'reference' => $this->generateReference(),
                 'paid_at' => now(),
-                'metadata' => [
-                    'simulated' => true,
-                ],
+                'metadata' => $this->composeMetadata($paymentMethod, $methodMetadata),
             ]);
 
             $booking->update([
@@ -48,12 +53,18 @@ class BookingPaymentService
         });
     }
 
-    public function recordFailedPayment(Booking $booking, string $method): Payment
+    public function recordFailedPayment(
+        Booking $booking,
+        string $method,
+        ?PaymentMethod $paymentMethod = null,
+        array $methodMetadata = []
+    ): Payment
     {
-        return DB::transaction(function () use ($booking, $method) {
+        return DB::transaction(function () use ($booking, $method, $paymentMethod, $methodMetadata) {
             $payment = Payment::create([
                 'booking_id' => $booking->id,
                 'user_id' => $booking->user_id,
+                'payment_method_id' => $paymentMethod?->payment_method_id,
                 'provider' => self::PROVIDER,
                 'method' => $method,
                 'amount' => (float) $booking->total_price,
@@ -61,9 +72,7 @@ class BookingPaymentService
                 'status' => 'failed',
                 'reference' => $this->generateReference(),
                 'failed_at' => now(),
-                'metadata' => [
-                    'simulated' => true,
-                ],
+                'metadata' => $this->composeMetadata($paymentMethod, $methodMetadata),
             ]);
 
             $booking->update([
@@ -152,5 +161,17 @@ class BookingPaymentService
     private function generateReference(): string
     {
         return 'MOCK-' . strtoupper(Str::random(10));
+    }
+
+    private function composeMetadata(?PaymentMethod $paymentMethod, array $methodMetadata): array
+    {
+        $metadata = array_filter([
+            'simulated' => true,
+            'card_brand' => $paymentMethod?->brand ?? ($methodMetadata['card_brand'] ?? null),
+            'card_last_four' => $paymentMethod?->last_four ?? ($methodMetadata['card_last_four'] ?? null),
+            'card_holder_name' => $paymentMethod?->holder_name ?? ($methodMetadata['card_holder_name'] ?? null),
+        ], static fn ($value) => $value !== null && $value !== '');
+
+        return $metadata;
     }
 }

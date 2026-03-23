@@ -65,6 +65,10 @@
                     <i class="fas fa-calendar-check"></i>
                     <span>My Bookings</span>
                 </a>
+                <a href="/users/payments" class="sidebar-item @if(request()->is('users/payments*')) active @endif">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
                 <a href="/users/messages" class="sidebar-item @if(request()->is('users/messages')) active @endif">
                     <i class="fas fa-comments"></i>
                     <span>Messages</span>
