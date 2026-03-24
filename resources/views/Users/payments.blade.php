@@ -16,30 +16,21 @@
         }
     @endphp
 
-    <div class="payui-shell">
-        <div class="payui-header">
+    <div class="user-page-shell space-y-6">
+        <section class="user-page-header">
             <div>
                 <h1>Payments</h1>
-                <p>Manage your payment methods and review your payment history.</p>
+                <p class="user-page-subtitle">Manage saved cards and review payment history for your bookings.</p>
             </div>
-            <button type="button" class="payui-add-btn" data-open-modal="add-card">
+            <button type="button" class="ui-btn-primary" data-open-modal="add-card">
                 <i class="fas fa-plus"></i>
                 <span>Add Payment Method</span>
             </button>
-        </div>
+        </section>
 
-        @if(session('success'))
-            <div class="flash-message flash-message--success">
-                <i class="fas fa-check-circle"></i><span>{{ session('success') }}</span>
-            </div>
-        @endif
+        @include('partials.ui.flash')
 
-        @if(session('error'))
-            <div class="flash-message flash-message--error">
-                <i class="fas fa-exclamation-circle"></i><span>{{ session('error') }}</span>
-            </div>
-        @endif
-
+        <div class="payui-shell">
         <section class="payui-section">
             <div class="payui-section__head">
                 <h2>Saved Payment Methods</h2>
@@ -84,7 +75,10 @@
                                 <form
                                     method="POST"
                                     action="{{ route('users.payments.methods.destroy', $card->payment_method_id) }}"
-                                    onsubmit="return confirm('Are you sure you want to remove this payment method?');"
+                                    data-confirm="Are you sure you want to remove this payment method?"
+                                    data-confirm-title="Remove payment method"
+                                    data-confirm-text="Remove"
+                                    data-confirm-variant="danger"
                                 >
                                     @csrf
                                     @method('DELETE')
@@ -161,13 +155,14 @@
                 </div>
             @endif
         </section>
+        </div>
     </div>
 
     <div id="payuiAddCardModal" class="payui-modal {{ $shouldOpenModal ? 'is-open' : '' }}">
         <div class="payui-modal__backdrop" data-close-modal></div>
-        <div class="payui-modal__dialog" role="dialog" aria-modal="true" aria-label="Add Payment Method">
+        <div class="payui-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="payuiAddCardTitle">
             <div class="payui-modal__head">
-                <h3>Add Payment Method</h3>
+                <h3 id="payuiAddCardTitle">Add Payment Method</h3>
                 <button type="button" class="payui-modal__close" data-close-modal>
                     <i class="fas fa-times"></i>
                 </button>

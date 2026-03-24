@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Phanda Account</title>
+    @include('partials.ui.favicons')
     <style>
         :root {
             --phanda-orange: #ff6a00;

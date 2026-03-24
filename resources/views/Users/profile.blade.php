@@ -1,62 +1,48 @@
 @extends('Users.layout')
 @section('content')
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - Panda</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Heroicons -->
-    <script src="https://unpkg.com/@heroicons/react@24/outline/index.js"></script>
-    
-    <!-- Alpine.js for interactivity -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <style>
-        /* Custom animations */
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.4);
-            animation: fadeIn 0.2s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .modal-content {
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes slide-in {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .animate-slide-in {
-            animation: slide-in 0.3s ease-out;
-        }
-        /* Smooth transitions */
-        * {
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-        }
-        /* Fix for input cursor jumping */
-        input, select, textarea {
-            transition: none !important;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 min-h-screen text-gray-900" x-data="profileData()" x-init="init()">
-    <!-- Main Container -->
-    <div class="p-4 sm:p-6 md:p-10 space-y-6 md:space-y-8">
+@push('styles')
+<style>
+    .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.4);
+        animation: fadeIn 0.2s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .modal-content {
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+    }
+</style>
+@endpush
+
+<div id="userProfilePage" class="user-page-shell space-y-6 text-gray-900 md:space-y-8" x-data="profileData()" x-init="init()">
+        <section class="user-page-header">
+            <div>
+                <h1>Profile</h1>
+                <p class="user-page-subtitle">Manage your personal details, addresses, and account controls.</p>
+            </div>
+            <a href="{{ route('users.settings') }}" class="ui-btn-secondary">
+                <i class="fa-solid fa-gear"></i>
+                <span>Open Settings</span>
+            </a>
+        </section>
+
+        @include('partials.ui.flash')
         <!-- PROFILE HEADER -->
-        <section class="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-6 sm:p-8">
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                 <!-- Initials Circle -->
                 <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
@@ -77,7 +63,7 @@
         </section>
 
         <!-- ACCOUNT SUMMARY -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Account Summary</h2>
             
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -108,7 +94,7 @@
         </section>
 
         <!-- PERSONAL INFORMATION -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Personal Information</h2>
             
             <div class="space-y-3 text-gray-700">
@@ -186,10 +172,10 @@
         </section>
 
         <!-- ADDRESS INFORMATION -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-orange-500">Address Information</h2>
-                <button @click="openAddressModal()" class="flex items-center gap-2 px-3 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors duration-200">
+                <button type="button" @click.prevent.stop="openAddressModal()" class="flex items-center gap-2 px-3 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors duration-200">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
@@ -246,7 +232,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         <p class="text-gray-500">No addresses added yet</p>
-                        <button @click="openAddressModal()" class="mt-2 text-orange-500 hover:text-orange-600 font-medium">
+                        <button type="button" @click.prevent.stop="openAddressModal()" class="mt-2 text-orange-500 hover:text-orange-600 font-medium">
                             Add your first address
                         </button>
                     </div>
@@ -255,7 +241,7 @@
         </section>
 
         <!-- ADDITIONAL INFORMATION -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Additional Information</h2>
             
             <div class="space-y-3 text-gray-700">
@@ -295,7 +281,7 @@
         </section>
 
         <!-- PROFILE ACTIONS -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Profile Actions</h2>
             
             <div class="flex flex-col sm:flex-row gap-3">
@@ -370,11 +356,11 @@
         <div class="fixed inset-0 z-50">
             <div class="modal-overlay fixed inset-0" @click="closeAddressModal()"></div>
             <div class="fixed z-50 inset-0 flex items-center justify-center p-4">
-                <div class="modal-content bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+                <form class="modal-content bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" @submit.prevent="saveAddress()">
                     <h3 class="text-lg font-medium mb-4 text-orange-500">
                         <span x-text="addressModal.isEditing ? 'Edit Address' : 'Add New Address'"></span>
                     </h3>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
@@ -384,20 +370,20 @@
                                 <option value="other">Other</option>
                             </select>
                         </div>
-                        
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
-                            <input type="text" x-model="addressModal.data.street" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="123 Main Street">
+                            <input type="text" x-model="addressModal.data.street" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="123 Main Street" required>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                <input type="text" x-model="addressModal.data.city" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Johannesburg">
+                                <input type="text" x-model="addressModal.data.city" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Johannesburg" required>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
-                                <select x-model="addressModal.data.province" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <select x-model="addressModal.data.province" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
                                     <option value="">Select Province</option>
                                     <option value="gauteng">Gauteng</option>
                                     <option value="western_cape">Western Cape</option>
@@ -411,11 +397,11 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
-                                <input type="text" x-model="addressModal.data.postal_code" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="2001">
+                                <input type="text" x-model="addressModal.data.postal_code" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="2001" required>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
@@ -425,27 +411,36 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-xs text-gray-500" x-text="addressModal.data.latitude && addressModal.data.longitude ? `Location: ${addressModal.data.latitude}, ${addressModal.data.longitude}` : 'No GPS coordinates selected'"></p>
-                            <button type="button" @click="useCurrentLocationForAddress()" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Use Current Location</button>
+                            <button
+                                type="button"
+                                @click="useCurrentLocationForAddress()"
+                                :disabled="addressModal.isLocating || addressModal.saving"
+                                class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                <span x-text="addressModal.isLocating ? 'Locating...' : 'Use Current Location'"></span>
+                            </button>
                         </div>
 
                         <div class="flex items-center gap-2">
                             <input type="checkbox" x-model="addressModal.data.is_default" id="default-address" class="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
                             <label for="default-address" class="text-sm text-gray-700">Set as default address</label>
                         </div>
+
+                        <p x-show="addressModal.error" class="text-sm text-red-600" x-text="addressModal.error"></p>
                     </div>
-                    
+
                     <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-                        <button @click="closeAddressModal()" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">
+                        <button type="button" @click="closeAddressModal()" :disabled="addressModal.saving" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60">
                             Cancel
                         </button>
-                        <button @click="saveAddress()" :disabled="!addressModal.data.street || !addressModal.data.city || !addressModal.data.postal_code" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                            <span x-text="addressModal.isEditing ? 'Update Address' : 'Save Address'"></span>
+                        <button type="submit" :disabled="addressModal.saving || !canSaveAddress()" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            <span x-text="addressModal.saving ? (addressModal.isEditing ? 'Updating...' : 'Saving...') : (addressModal.isEditing ? 'Update Address' : 'Save Address')"></span>
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </template>
@@ -623,6 +618,9 @@ function profileData() {
             show: false,
             isEditing: false,
             editingId: null,
+            isLocating: false,
+            saving: false,
+            error: '',
             data: {
                 type: 'home',
                 street: '',
@@ -734,7 +732,7 @@ function profileData() {
         async saveEdit() {
             const { field, value } = this.editModal;
 
-            if (!value?.trim()) {
+            if (!value || !String(value).trim()) {
                 this.editModal.error = 'This field is required';
                 return;
             }
@@ -769,7 +767,7 @@ function profileData() {
                     this.showToast('Updated successfully');
                     this.closeEditModal();
                 } else {
-                    this.editModal.error = data.message ?? 'Update failed';
+                    this.editModal.error = data && data.message ? data.message : 'Update failed';
                 }
             } catch (e) {
                 console.error(e);
@@ -779,48 +777,95 @@ function profileData() {
 
         // Address Modal Functions
         openAddressModal() {
-            this.addressModal = {
-                show: true,
-                isEditing: false,
-                editingId: null,
-                data: {
-                    type: 'home',
-                    street: '',
-                    city: '',
-                    province: '',
-                    postal_code: '',
-                    country: 'south_africa',
+            this.addressModal.show = true;
+            this.addressModal.isEditing = false;
+            this.addressModal.editingId = null;
+            this.addressModal.isLocating = false;
+            this.addressModal.saving = false;
+            this.addressModal.error = '';
+            this.addressModal.data = {
+                type: 'home',
+                street: '',
+                city: '',
+                province: '',
+                postal_code: '',
+                country: 'south_africa',
                 latitude: null,
                 longitude: null,
                 is_default: false,
-                }
             };
         },
 
         closeAddressModal() {
             this.addressModal.show = false;
+            this.addressModal.isLocating = false;
+            this.addressModal.saving = false;
+            this.addressModal.error = '';
         },
 
         editAddress(address) {
-            this.addressModal = {
-                show: true,
-                isEditing: true,
-                editingId: address.address_id,
-                data: {
-                    type: address.type || 'home',
-                    street: address.street || '',
-                    city: address.city || '',
-                    province: address.province || '',
-                    postal_code: address.postal_code || '',
-                    country: address.country || 'south_africa',
-                    latitude: address.latitude || null,
-                    longitude: address.longitude || null,
-                    is_default: address.is_default || false,
-                }
+            this.addressModal.show = true;
+            this.addressModal.isEditing = true;
+            this.addressModal.editingId = address.address_id;
+            this.addressModal.isLocating = false;
+            this.addressModal.saving = false;
+            this.addressModal.error = '';
+            this.addressModal.data = {
+                type: address.type || 'home',
+                street: address.street || '',
+                city: address.city || '',
+                province: this.normalizeProvince(address.province) || '',
+                postal_code: address.postal_code || '',
+                country: this.normalizeCountry(address.country || 'south_africa'),
+                latitude: address.latitude || null,
+                longitude: address.longitude || null,
+                is_default: address.is_default || false,
             };
         },
 
+        canSaveAddress(data = this.addressModal.data) {
+            return Boolean(
+                String(data.street || '').trim()
+                && String(data.city || '').trim()
+                && String(data.province || '').trim()
+                && String(data.postal_code || '').trim()
+            );
+        },
+
+        normalizeAddressPayload() {
+            return {
+                type: this.addressModal.data.type || 'home',
+                street: String(this.addressModal.data.street || '').trim(),
+                city: String(this.addressModal.data.city || '').trim(),
+                province: String(this.addressModal.data.province || '').trim(),
+                postal_code: String(this.addressModal.data.postal_code || '').trim(),
+                country: String(this.addressModal.data.country || 'south_africa').trim() || 'south_africa',
+                latitude: this.addressModal.data.latitude ?? null,
+                longitude: this.addressModal.data.longitude ?? null,
+                is_default: Boolean(this.addressModal.data.is_default),
+            };
+        },
+
+        getFirstErrorMessage(errors) {
+            if (!errors || typeof errors !== 'object') {
+                return '';
+            }
+
+            const firstEntry = Object.values(errors).find((messages) => Array.isArray(messages) && messages.length > 0);
+            return firstEntry ? firstEntry[0] : '';
+        },
+
         async saveAddress() {
+            const payload = this.normalizeAddressPayload();
+
+            if (!this.canSaveAddress(payload)) {
+                this.addressModal.error = 'Please complete street, city, province, and postal code.';
+                return;
+            }
+
+            this.addressModal.error = '';
+            this.addressModal.saving = true;
+
             try {
                 let url, method;
                 
@@ -839,20 +884,25 @@ function profileData() {
                         Accept: 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: JSON.stringify(this.addressModal.data)
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await res.json();
-                if (data.success) {
+                if (res.ok && data.success) {
                     this.showToast('Address saved successfully');
                     this.closeAddressModal();
                     await this.loadProfile();
                 } else {
-                    this.showToast(data.message || 'Failed to save address', 'error');
+                    this.addressModal.error = this.getFirstErrorMessage(data.errors) || data.message || 'Failed to save address';
+                    this.showToast(this.addressModal.error, 'error');
                 }
             } catch (e) {
                 console.error(e);
+                this.addressModal.error = 'Failed to save address';
                 this.showToast('Failed to save address', 'error');
+            } finally {
+                this.addressModal.saving = false;
             }
         },
 
@@ -932,34 +982,96 @@ function profileData() {
             }
         },
 
+        normalizeProvince(value) {
+            const raw = String(value || '').trim().toLowerCase();
+            if (!raw) return '';
+
+            const key = raw
+                .replace(/-/g, '_')
+                .replace(/\s+/g, '_')
+                .replace(/_+/g, '_');
+
+            const aliases = {
+                gauteng: 'gauteng',
+                western_cape: 'western_cape',
+                eastern_cape: 'eastern_cape',
+                limpopo: 'limpopo',
+                mpumalanga: 'mpumalanga',
+                free_state: 'free_state',
+                northern_cape: 'northern_cape',
+                north_west: 'north_west',
+                northwest: 'north_west',
+                kwa_zulu_natal: 'kwa_zulu_natal',
+                kwazulu_natal: 'kwa_zulu_natal',
+                kzn: 'kwa_zulu_natal',
+            };
+
+            return aliases[key] || '';
+        },
+
+        normalizeCountry(value) {
+            const raw = String(value || '').trim().toLowerCase();
+            if (!raw) return 'south_africa';
+
+            const key = raw
+                .replace(/-/g, '_')
+                .replace(/\s+/g, '_')
+                .replace(/_+/g, '_');
+
+            if (['south_africa', 'za', 'southafrica', 'republic_of_south_africa'].includes(key)) {
+                return 'south_africa';
+            }
+
+            return 'other';
+        },
+
         useCurrentLocationForAddress() {
             if (!navigator.geolocation) {
                 this.showToast('Geolocation is not supported on this device', 'error');
                 return;
             }
 
+            if (this.addressModal.isLocating) {
+                return;
+            }
+
+            this.addressModal.isLocating = true;
+
             navigator.geolocation.getCurrentPosition(async (position) => {
-                const lat = Number(position.coords.latitude.toFixed(7));
-                const lng = Number(position.coords.longitude.toFixed(7));
-                this.addressModal.data.latitude = lat;
-                this.addressModal.data.longitude = lng;
+                try {
+                    const lat = Number(position.coords.latitude.toFixed(7));
+                    const lng = Number(position.coords.longitude.toFixed(7));
+                    this.addressModal.data.latitude = lat;
+                    this.addressModal.data.longitude = lng;
 
-                const geo = await this.reverseGeocode(lat, lng);
-                if (!geo || !geo.address) {
-                    this.showToast('Location found, but address lookup failed', 'error');
-                    return;
+                    const geo = await this.reverseGeocode(lat, lng);
+                    if (!geo || !geo.address) {
+                        this.showToast('Location saved. Fill in remaining address details manually.');
+                        return;
+                    }
+
+                    const a = geo.address;
+                    const street = [a.house_number, a.road].filter(Boolean).join(' ').trim()
+                        || a.neighbourhood
+                        || a.suburb
+                        || '';
+                    const city = a.city || a.town || a.village || a.suburb || a.county || '';
+                    const province = this.normalizeProvince(a.state || a.region || '');
+
+                    if (street) this.addressModal.data.street = street;
+                    if (city) this.addressModal.data.city = city;
+                    if (province) this.addressModal.data.province = province;
+                    if (a.postcode) this.addressModal.data.postal_code = a.postcode;
+                    this.addressModal.data.country = this.normalizeCountry(a.country || a.country_code || this.addressModal.data.country);
+
+                    this.showToast('Address filled from current location');
+                } finally {
+                    this.addressModal.isLocating = false;
                 }
-
-                const a = geo.address;
-                this.addressModal.data.street = a.road || a.neighbourhood || this.addressModal.data.street;
-                this.addressModal.data.city = a.city || a.town || a.village || a.county || this.addressModal.data.city;
-                this.addressModal.data.province = (a.state || '').toLowerCase().replace(/\s+/g, '_') || this.addressModal.data.province;
-                this.addressModal.data.postal_code = a.postcode || this.addressModal.data.postal_code;
-                this.addressModal.data.country = a.country ? a.country.toLowerCase().replace(/\s+/g, '_') : this.addressModal.data.country;
-
-                this.showToast('Address filled from current location');
-            }, () => {
-                this.showToast('Unable to get current location', 'error');
+            }, (error) => {
+                const isDenied = error && error.code === error.PERMISSION_DENIED;
+                this.showToast(isDenied ? 'Location access denied. Please allow permission and try again.' : 'Unable to get current location', 'error');
+                this.addressModal.isLocating = false;
             }, { enableHighAccuracy: true, timeout: 10000 });
         },
 
@@ -1038,7 +1150,7 @@ function profileData() {
                     this.closeOtpModal();
                     this.showToast('Verified successfully');
                 } else {
-                    this.otpModal.error = data.message ?? 'Verification failed';
+                    this.otpModal.error = data && data.message ? data.message : 'Verification failed';
                 }
             } catch (e) {
                 console.error(e);
@@ -1202,9 +1314,5 @@ function profileData() {
     };
 }
 </script>
-</body>
-</html>
 @endsection
-
-
 

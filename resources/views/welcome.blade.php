@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Phanda – where users meet providers</title>
-<script src="https://cdn.tailwindcss.com"></script>
+@include('partials.ui.favicons')
+@vite(['resources/css/app.css'])
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
     /* Soft warm gray background with very subtle dots */
@@ -94,7 +95,7 @@
             <a href="#" class="hover:text-orange-500 transition">FAQ</a>
         </div>
         <div class="text-xs">
-            © 2025 Phanda. The future of service connections.
+            © 2026 Phanda. The future of service connections.
         </div>
     </div>
     <div class="flex justify-center gap-1 mt-4 opacity-10">

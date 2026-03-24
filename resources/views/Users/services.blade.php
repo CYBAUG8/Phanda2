@@ -1,70 +1,370 @@
 @extends('Users.layout')
 
+@push('styles')
+<style>
+    .services-page {
+        overflow-x: clip;
+    }
+
+    .services-page .search-section {
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        background: #fff;
+        padding: 1rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .services-page .search-row {
+        display: grid;
+        grid-template-columns: 2.2fr 1.1fr 0.95fr;
+        gap: 0.85rem;
+        align-items: end;
+    }
+
+    .services-page .search-row + .search-row {
+        margin-top: 0.85rem;
+        grid-template-columns: 180px auto 1fr;
+    }
+
+    .services-page .search-section .form-label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        color: #475569;
+        text-transform: uppercase;
+    }
+
+    .services-page .search-row-actions {
+        display: flex;
+        align-items: end;
+        gap: 0.75rem;
+    }
+
+    .services-page .search-row-actions .ui-btn-primary,
+    .services-page .search-row-actions .ui-btn-secondary {
+        width: 100%;
+        min-height: 2.75rem;
+        white-space: nowrap;
+    }
+
+    .services-page .category-pills-container,
+    .services-page .category-pills,
+    .services-page .booking-modal,
+    .services-page .location-autocomplete-dropdown {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .services-page .services-grid {
+        gap: 1rem;
+    }
+
+    .services-page .service-card {
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .services-page .service-card:hover {
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .services-page .service-card__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 1rem 1rem 0.8rem;
+    }
+
+    .services-page .service-card__provider-group {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 0.7rem;
+    }
+
+    .services-page .service-card__provider-initial {
+        display: inline-flex;
+        width: 2.2rem;
+        height: 2.2rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        color: #c2410c;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .services-page .service-card__provider-name {
+        margin: 0;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.25;
+    }
+
+    .services-page .service-card__provider-rating {
+        margin: 0.18rem 0 0;
+        font-size: 0.76rem;
+        color: #64748b;
+        line-height: 1.25;
+    }
+
+    .services-page .service-card__category-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.2rem 0.58rem;
+        border: 1px solid #fdba74;
+        background: #fff;
+        color: #c2410c;
+        font-size: 0.68rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .services-page .service-card__body {
+        padding: 0.9rem 1rem 0;
+    }
+
+    .services-page .service-card__title {
+        margin: 0 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.35;
+    }
+
+    .services-page .service-card__description {
+        margin: 0;
+        color: #475569;
+        font-size: 0.88rem;
+        line-height: 1.45;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .services-page .service-card__location {
+        margin-top: 0.6rem;
+        font-size: 0.8rem;
+        color: #64748b;
+        line-height: 1.35;
+    }
+
+    .services-page .service-card__footer {
+        padding: 0.9rem 1rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .services-page .service-card__meta {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .services-page .service-card__price {
+        font-size: 1.7rem;
+        letter-spacing: -0.015em;
+        line-height: 1;
+    }
+
+    .services-page .service-card__duration {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .services-page .service-card__actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .services-page .service-card__reviews-link {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: #ea580c;
+        text-decoration: none;
+        white-space: nowrap;
+        padding: 0 0.35rem;
+    }
+
+    .services-page .service-card__reviews-link:hover {
+        color: #c2410c;
+    }
+
+    .services-page .category-pills-container::-webkit-scrollbar,
+    .services-page .category-pills::-webkit-scrollbar,
+    .services-page .booking-modal::-webkit-scrollbar,
+    .services-page .location-autocomplete-dropdown::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none;
+    }
+
+    .services-page .results-header {
+        margin-bottom: 0.25rem;
+    }
+
+    .services-page .sort-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .services-page .sort-wrap label {
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+
+    .services-page .sort-dropdown {
+        min-height: 2.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        padding: 0.56rem 0.75rem;
+        font-size: 0.875rem;
+        color: #0f172a;
+        background: #fff;
+    }
+
+    .services-page .sort-dropdown:focus {
+        outline: none;
+        border-color: #fb923c;
+        box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.2);
+    }
+
+    @media (max-width: 700px) {
+        .services-page .search-row,
+        .services-page .search-row + .search-row {
+            grid-template-columns: 1fr;
+        }
+
+        .services-page .search-row-actions {
+            align-items: stretch;
+        }
+
+        .services-page .search-row-actions .ui-btn-primary,
+        .services-page .search-row-actions .ui-btn-secondary {
+            width: 100%;
+            white-space: normal;
+        }
+
+        .services-page .sort-wrap {
+            width: 100%;
+        }
+
+        .services-page .sort-dropdown {
+            width: 100%;
+        }
+
+        .services-page .service-card__head {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.55rem;
+        }
+
+        .services-page .service-card__actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .services-page .service-card__reviews-link {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="page-header">
-    <h2>Find Services</h2>
-    <p>Find nearby providers and send requests quickly.</p>
-</div>
-
-@if(session('success'))
-    <div class="flash-message flash-message--success">
-        <i class="fas fa-check-circle"></i><span>{{ session('success') }}</span>
+<div class="user-page-shell services-page space-y-6">
+<section class="user-page-header">
+    <div>
+        <h1>Find Services</h1>
+        <p class="user-page-subtitle">Find nearby providers and send requests quickly.</p>
     </div>
-@endif
+</section>
 
-@if(session('error'))
-    <div class="flash-message flash-message--error">
-        <i class="fas fa-exclamation-circle"></i><span>{{ session('error') }}</span>
-    </div>
-@endif
+@include('partials.ui.flash')
 
 @if(!empty($showProximityWarning))
-    <div class="flash-message flash-message--error">
-        <i class="fas fa-location-crosshairs"></i>
-        <span>Set your location to see providers within your radius.</span>
+    <div class="ui-alert ui-alert-error flex items-start gap-2">
+        <i class="fas fa-location-crosshairs mt-0.5"></i>
+        <span>Set your location to see providers within your selected radius.</span>
     </div>
 @endif
 
-<form action="{{ route('users.services') }}" method="GET" class="search-section card" id="serviceSearchForm">
+<form action="{{ route('users.services') }}" method="GET" class="search-section" id="serviceSearchForm">
     <input type="hidden" name="lat" id="searchLat" value="{{ $filters['lat'] ?? '' }}">
     <input type="hidden" name="lng" id="searchLng" value="{{ $filters['lng'] ?? '' }}">
 
     <div class="search-row">
-        <div class="search-input-wrap">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" name="search" class="search-input" placeholder="Search services or providers" value="{{ $filters['search'] }}">
+        <div>
+            <label for="serviceSearchInput" class="form-label">Search</label>
+            <input
+                type="text"
+                id="serviceSearchInput"
+                name="search"
+                class="user-input"
+                placeholder="Search services or providers"
+                value="{{ $filters['search'] }}"
+            >
         </div>
 
         <div class="search-input-wrap search-input-wrap--location">
-            <i class="fas fa-map-marker-alt search-icon"></i>
-            <input type="text" name="location" id="filterLocation" class="search-input" placeholder="Location (city or suburb)" value="{{ $filters['location'] }}" autocomplete="off">
+            <label for="filterLocation" class="form-label">Location</label>
+            <input
+                type="text"
+                name="location"
+                id="filterLocation"
+                class="user-input"
+                placeholder="City or suburb"
+                value="{{ $filters['location'] }}"
+                autocomplete="off"
+            >
         </div>
 
-        <button type="submit" class="btn-primary">
-            <i class="fas fa-search"></i>
-            <span>Search</span>
-        </button>
+        <div class="search-row-actions">
+            <button type="submit" class="ui-btn-primary justify-center">
+                <span>Search</span>
+            </button>
+        </div>
     </div>
 
-    <div class="search-row" style="margin-top: 12px; grid-template-columns: 180px auto 1fr;">
+    <div class="search-row">
         <div>
             <label for="radius_km" class="form-label">Radius (km)</label>
-            <input type="number" min="1" max="100" class="form-input" name="radius_km" id="radius_km" value="{{ $filters['radius_km'] ?? 25 }}">
+            <input type="number" min="1" max="100" class="user-input" name="radius_km" id="radius_km" value="{{ $filters['radius_km'] ?? 25 }}">
         </div>
 
-        <div style="display:flex;align-items:end;">
-            <button type="button" class="btn-outline" id="detectLocationBtn">
-                <i class="fas fa-location-crosshairs"></i> Use Current Location
+        <div class="search-row-actions">
+            <button type="button" class="ui-btn-secondary justify-center" id="detectLocationBtn">
+                <span>Use Current Location</span>
             </button>
         </div>
 
-        <div style="display:none;">
+        <div class="hidden">
             <small class="text-muted" id="locationStatusText" aria-live="polite"></small>
         </div>
     </div>
 </form>
 
-<div class="category-pills-container" style="margin-bottom: 24px; width: 100%;">
+<div class="category-pills-container">
     <div class="category-pills">
         <a href="{{ route('users.services', array_merge($filters, ['category' => ''])) }}" class="category-pill {{ $filters['category'] === '' ? 'category-pill--active' : '' }}">
             <i class="fas fa-th-large"></i><span>All</span>
@@ -77,8 +377,8 @@
     </div>
 </div>
 
-<div class="results-header" style="margin-bottom: 24px;">
-    <span class="results-count">Showing <strong>{{ $services->total() }}</strong> services</span>
+<div class="results-header flex items-center justify-between gap-3">
+    <span class="text-sm text-slate-500">Showing <strong class="text-slate-900">{{ $services->total() }}</strong> services</span>
     <div class="sort-wrap">
         <label for="sortSelect">Sort by:</label>
         <select id="sortSelect" class="sort-dropdown" onchange="window.location.href=this.value">
@@ -103,36 +403,59 @@
 @if($services->count() > 0)
     <div class="services-grid">
         @foreach($services as $service)
+            @php
+                $ratingValue = (float) ($service->live_rating ?? $service->rating ?? 0);
+                $reviewCount = (int) ($service->live_reviews_count ?? $service->reviews_count ?? 0);
+                $providerInitial = strtoupper(substr((string) ($service->provider_name ?? 'P'), 0, 1));
+            @endphp
             <div class="service-card">
-                <div class="service-card__image">
-                    <i class="fas {{ optional($service->category)->icon ?? 'fa-concierge-bell' }}"></i>
-                    <span class="service-card__category-badge">{{ optional($service->category)->name ?? 'General' }}</span>
+                <div class="service-card__head">
+                    <div class="service-card__provider-group">
+                        <span class="service-card__provider-initial">{{ $providerInitial !== '' ? $providerInitial : 'P' }}</span>
+                        <div class="min-w-0">
+                            <p class="service-card__provider-name">{{ $service->provider_name }}</p>
+                            @if($reviewCount > 0)
+                                <p class="service-card__provider-rating">
+                                    {{ number_format($ratingValue, 1) }}/5 · {{ number_format($reviewCount) }} review{{ $reviewCount === 1 ? '' : 's' }}
+                                </p>
+                            @else
+                                <p class="service-card__provider-rating">No reviews yet</p>
+                            @endif
+                        </div>
+                    </div>
+                    <span class="service-card__category-pill">{{ optional($service->category)->name ?? 'General' }}</span>
                 </div>
 
                 <div class="service-card__body">
                     <h3 class="service-card__title">{{ $service->title }}</h3>
-                    <p class="service-card__provider"><i class="fas fa-user-circle"></i> {{ $service->provider_name }}</p>
                     <p class="service-card__description">{{ \Illuminate\Support\Str::limit($service->description, 90) }}</p>
-                </div>
-
-                <div class="service-card__footer">
-                    <div class="service-card__meta">
-                        <span class="service-card__price">R{{ number_format((float) $service->base_price, 2) }}</span>
-                        <span class="service-card__duration"><i class="far fa-clock"></i> {{ $service->formatted_duration }}</span>
-                    </div>
 
                     <div class="service-card__location">
-                        <i class="fas fa-map-marker-alt"></i>
                         @if(isset($service->distance_km))
                             {{ number_format((float) $service->distance_km, 1) }} km away
                         @else
                             {{ $service->location }}
                         @endif
                     </div>
+                </div>
 
-                    <button type="button" class="btn-primary" onclick='openBookingModal(@json($service->service_id), @json($service->title), @json($service->formatted_price), @json($service->provider_name))'>
-                        <i class="fas fa-calendar-alt"></i> Request Service
-                    </button>
+                <div class="service-card__footer">
+                    <div class="service-card__meta">
+                        <span class="service-card__price">R{{ number_format((float) $service->base_price, 2) }}</span>
+                        <span class="service-card__duration">{{ $service->formatted_duration }}</span>
+                    </div>
+
+                    <div class="service-card__actions">
+                        @if($reviewCount > 0)
+                            <a href="{{ route('reviews.reviews', ['provider' => $service->provider_id]) }}" class="service-card__reviews-link">
+                                <span>View reviews</span>
+                            </a>
+                        @endif
+
+                        <button type="button" class="ui-btn-primary w-full justify-center" onclick='openBookingModal(@json($service->service_id), @json($service->title), @json($service->formatted_price), @json($service->provider_name))'>
+                            Request Service
+                        </button>
+                    </div>
                 </div>
             </div>
         @endforeach
@@ -140,18 +463,18 @@
 
     <div class="pagination-wrap">{{ $services->links() }}</div>
 @else
-    <div class="empty-state card">
+    <div class="user-empty-state">
         <div class="empty-state__icon"><i class="fas fa-search"></i></div>
         <h3>No nearby services found</h3>
         <p>Try increasing your radius or updating your location.</p>
-        <a href="{{ route('users.services') }}" class="btn-primary"><i class="fas fa-redo"></i> Reset</a>
+        <a href="{{ route('users.services') }}" class="ui-btn-primary mt-4"><i class="fas fa-redo"></i> Reset</a>
     </div>
 @endif
 
-<div class="modal-overlay" id="bookingModal" aria-hidden="true">
-    <div class="booking-modal">
+<div class="modal-overlay" id="bookingModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+    <div class="booking-modal provider-modal-panel">
         <div class="modal__header">
-            <h3><i class="fas fa-calendar-check"></i> Send Service Request</h3>
+            <h3 id="bookingModalTitle"><i class="fas fa-calendar-check"></i> Send Service Request</h3>
             <button class="modal__close" type="button" onclick="closeBookingModal()"><i class="fas fa-times"></i></button>
         </div>
 
@@ -168,36 +491,37 @@
             <input type="hidden" name="search_lng" id="bookingSearchLng" value="{{ $filters['lng'] ?? '' }}">
             <input type="hidden" name="radius_km" id="bookingRadiusKm" value="{{ $filters['radius_km'] ?? 25 }}">
 
-            <div class="grid modal__grid-fix" style="grid-template-columns: 1fr 1fr; margin-bottom: 20px; gap: 16px;">
+            <div class="grid modal__grid-fix">
                 <div class="form-group">
                     <label for="booking_date"><i class="far fa-calendar"></i> Service Date</label>
-                    <input type="date" name="booking_date" id="booking_date" class="form-input" min="{{ date('Y-m-d') }}" required>
+                    <input type="date" name="booking_date" id="booking_date" class="user-input" min="{{ date('Y-m-d') }}" required>
                 </div>
                 <div class="form-group">
                     <label for="start_time"><i class="far fa-clock"></i> Start Time</label>
-                    <input type="time" name="start_time" id="start_time" class="form-input" min="07:00" max="18:00" required>
+                    <input type="time" name="start_time" id="start_time" class="user-input" min="07:00" max="18:00" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="address"><i class="fas fa-map-marker-alt"></i> Full Address</label>
-                <input type="text" name="address" id="address" class="form-input" placeholder="Street, suburb, city" required>
-                <button type="button" class="btn-outline" style="margin-top:8px;" id="fillBookingLocationBtn">
+                <input type="text" name="address" id="address" class="user-input" placeholder="Street, suburb, city" required>
+                <button type="button" class="ui-btn-secondary mt-2" id="fillBookingLocationBtn">
                     <i class="fas fa-location-crosshairs"></i> Use Current Location
                 </button>
             </div>
 
             <div class="form-group">
                 <label for="notes"><i class="fas fa-sticky-note"></i> Notes</label>
-                <textarea name="notes" id="notes" class="form-input form-textarea" rows="3" placeholder="Any special details"></textarea>
+                <textarea name="notes" id="notes" class="user-textarea" rows="3" placeholder="Any special details"></textarea>
             </div>
 
             <div class="modal__actions">
-                <button type="button" class="btn-outline" onclick="closeBookingModal()">Cancel</button>
-                <button type="submit" class="btn-primary"><i class="fas fa-check"></i> Send Request</button>
+                <button type="button" class="ui-btn-secondary" onclick="closeBookingModal()">Cancel</button>
+                <button type="submit" class="ui-btn-primary"><i class="fas fa-check"></i> Send Request</button>
             </div>
         </form>
     </div>
+</div>
 </div>
 @endsection
 
@@ -331,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (detectBtn) {
         detectBtn.addEventListener('click', function () {
             if (!navigator.geolocation) {
-                alert('Geolocation is not supported in this browser.');
+                window.uiToast('Geolocation is not supported in this browser.', 'error');
                 return;
             }
 
@@ -370,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }, function () {
                 detectBtn.disabled = false;
                 detectBtn.innerHTML = defaultDetectBtnLabel;
-                alert('Unable to access your current location.');
+                window.uiToast('Unable to access your current location.', 'error');
             }, { enableHighAccuracy: true, timeout: 10000 });
         });
     }
@@ -378,7 +702,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (fillBookingLocationBtn) {
         fillBookingLocationBtn.addEventListener('click', function () {
             if (!navigator.geolocation) {
-                alert('Geolocation is not supported in this browser.');
+                window.uiToast('Geolocation is not supported in this browser.', 'error');
                 return;
             }
 
@@ -413,7 +737,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }, function () {
                 fillBookingLocationBtn.disabled = false;
                 fillBookingLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Use Current Location';
-                alert('Unable to access your current location.');
+                window.uiToast('Unable to access your current location.', 'error');
             }, { enableHighAccuracy: true, timeout: 10000 });
         });
     }
@@ -848,4 +1172,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
-

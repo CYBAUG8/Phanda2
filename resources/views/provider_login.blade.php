@@ -3,43 +3,39 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Provider Login — Phanda</title>
-    {{-- Minimal inline styles so the form is usable even before Vite builds --}}
-    <style>
-        body{ font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; background:#fafafa; color:#0b0b0b; display:flex; align-items:center; justify-content:center; height:100vh; margin:0 }
-        .login-card{ background:#fff; padding:22px; border-radius:12px; box-shadow:0 12px 32px rgba(11,11,11,0.06); width:360px }
-        .login-card h2{ margin:0 0 8px }
-        .field{ margin-top:12px }
-        input{ width:100%; padding:10px 12px; border:1px solid #e6e6e6; border-radius:8px }
-        .btn{ margin-top:16px; background:#ff6a00; color:#fff; border:none; padding:10px 12px; border-radius:8px; width:100%; font-weight:700 }
-        .muted{ color:rgba(11,11,11,0.6); font-size:14px }
-        .error{ color:#d23; margin-top:8px }
-        a.back{ display:inline-block; margin-top:12px; color:#333; font-size:13px }
-    </style>
+    <title>Provider Login - Phanda</title>
+    @include('partials.ui.favicons')
+    @vite(['resources/css/app.css'])
 </head>
-<body>
-    <div class="login-card">
-        <h2>Provider Sign in</h2>
-        <p class="muted">Sign in with your provider account to access the dashboard.</p>
+<body class="grid min-h-screen place-items-center bg-slate-50 px-4 py-10 text-slate-900">
+    <div class="w-full max-w-md">
+        <a href="/" class="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 no-underline hover:text-slate-900">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600">P</span>
+            <span>Phanda</span>
+        </a>
 
-        @if(session('error'))
-            <div class="error">{{ session('error') }}</div>
-        @endif
+        <div class="ui-card p-5 sm:p-6">
+            <h1 class="text-xl font-semibold text-slate-900">Provider Sign in</h1>
+            <p class="mt-1 text-sm text-slate-500">Sign in with your provider account to access the dashboard.</p>
 
-        <!-- Simplified: use GET submit so CSRF is not required for demo/no-security login -->
-        <form method="GET" action="/provider/enter">
-            <div class="field">
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" required placeholder="provider@example.com" />
-            </div>
-            <div class="field">
-                <label for="password">Password</label>
-                <input id="password" name="password" type="password" required placeholder="secret" />
-            </div>
-            <button class="btn" type="submit">Sign in</button>
-        </form>
+            @if(session('error'))
+                <div class="ui-alert ui-alert-error mt-4">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-        <a class="back" href="/">← Back to start</a>
+            <form method="GET" action="/provider/enter" class="mt-5 space-y-4">
+                <div>
+                    <label for="email" class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                    <input id="email" name="email" type="email" required placeholder="provider@example.com" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100">
+                </div>
+                <div>
+                    <label for="password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+                    <input id="password" name="password" type="password" required placeholder="secret" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100">
+                </div>
+                <button class="ui-btn-primary w-full justify-center" type="submit">Sign in</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>

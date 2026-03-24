@@ -1,64 +1,97 @@
 @extends('Users.layout')
 
 @section('content')
-    <div class="page-header dashboard-page-header">
-        <h2>Welcome back, {{ $userDisplay }}</h2>
-        <p>Track your bookings, messages, and latest account activity in one place.</p>
-    </div>
+<div class="user-page-shell space-y-6">
+    <section class="user-page-header">
+        <div>
+            <h1>Dashboard</h1>
+            <p class="user-page-subtitle">
+                Welcome back, {{ $userDisplay }}. Track bookings, messages, and account activity in one place.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('users.services') }}" class="ui-btn-primary">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Find Services</span>
+            </a>
+            <a href="{{ route('users.bookings') }}" class="ui-btn-secondary">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span>My Bookings</span>
+            </a>
+        </div>
+    </section>
 
-    <div class="stats-row dashboard-stats-row">
+    @include('partials.ui.flash')
+
+    <section class="user-metrics-grid" aria-label="Customer dashboard metrics">
         @foreach($dashboardStats as $stat)
-            <a href="{{ $stat['href'] }}" class="stat-card card dashboard-stat-card">
-                <div class="stat-card__icon dashboard-stat-card__icon {{ $stat['icon_class'] }}">
-                    <i class="fas {{ $stat['icon'] }}"></i>
+            @php
+                $metricTone = match ($loop->index) {
+                    0 => 'text-orange-700',
+                    1 => 'text-sky-700',
+                    default => 'text-amber-700',
+                };
+                $iconTone = match ($loop->index) {
+                    0 => 'bg-orange-50 text-orange-600',
+                    1 => 'bg-sky-50 text-sky-600',
+                    default => 'bg-amber-50 text-amber-600',
+                };
+            @endphp
+            <a href="{{ $stat['href'] }}" class="user-metric-card no-underline transition hover:-translate-y-0.5 hover:shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg {{ $iconTone }}">
+                        <i class="fas {{ $stat['icon'] }} text-sm"></i>
+                    </span>
+                    @if(!empty($stat['badge']))
+                        <span class="user-status-badge user-status-payment-required">{{ $stat['badge'] }}</span>
+                    @endif
                 </div>
-
-                <div class="stat-card__info">
-                    <span class="stat-card__number">{{ $stat['value'] }}</span>
-                    <span class="stat-card__label">{{ $stat['label'] }}</span>
-                </div>
-
-                @if(!empty($stat['badge']))
-                    <span class="dashboard-stat-badge">{{ $stat['badge'] }}</span>
-                @endif
+                <p class="user-metric-label mt-3">{{ $stat['label'] }}</p>
+                <p class="user-metric-value {{ $metricTone }}">{{ $stat['value'] }}</p>
             </a>
         @endforeach
-    </div>
+    </section>
 
-    <section class="card dashboard-activity-card">
-        <div class="dashboard-section-header">
-            <h3>Recent Activity</h3>
-            <a href="{{ route('users.bookings') }}" class="dashboard-section-link">View bookings</a>
+    <section class="user-section-card">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="user-section-title">Recent Activity</h2>
+                <p class="user-section-copy">Latest booking and messaging updates from your account.</p>
+            </div>
+            <a href="{{ route('users.bookings') }}" class="ui-btn-secondary px-3 py-2 text-xs">
+                <i class="fa-solid fa-list-check"></i>
+                <span>View bookings</span>
+            </a>
         </div>
 
         @if($activityFeed->isNotEmpty())
-            <div class="dashboard-activity-list">
+            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
                 @foreach($activityFeed as $activity)
-                    <a href="{{ $activity['href'] }}" class="dashboard-activity-item">
-                        <span class="dashboard-activity__icon {{ $activity['icon_class'] }}">
-                            <i class="fas {{ $activity['icon'] }}"></i>
+                    <a
+                        href="{{ $activity['href'] }}"
+                        class="flex items-start gap-3 border-b border-slate-100 px-4 py-3 text-slate-900 no-underline transition hover:bg-slate-50 last:border-b-0"
+                    >
+                        <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                            <i class="fas {{ $activity['icon'] }} text-xs"></i>
                         </span>
-
-                        <span class="dashboard-activity__body">
-                            <span class="dashboard-activity__title">{{ $activity['text'] }}</span>
-                            <span class="dashboard-activity__meta">{{ $activity['timestamp']->diffForHumans() }}</span>
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-semibold">{{ $activity['text'] }}</span>
+                            <span class="block text-xs text-slate-500">{{ $activity['timestamp']->diffForHumans() }}</span>
                         </span>
-
-                        <i class="fas fa-chevron-right dashboard-activity__chevron" aria-hidden="true"></i>
+                        <i class="fa-solid fa-chevron-right mt-1 text-xs text-slate-400" aria-hidden="true"></i>
                     </a>
                 @endforeach
             </div>
         @else
-            <div class="empty-state dashboard-empty-state">
-                <div class="empty-state__icon">
-                    <i class="fas fa-bell"></i>
-                </div>
+            <div class="user-empty-state">
                 <h3>No activity yet</h3>
                 <p>Your bookings and messages will appear here once you start using the portal.</p>
-                <a href="{{ route('users.services') }}" class="btn-primary btn-sm">
-                    <i class="fas fa-search"></i> Find Services
+                <a href="{{ route('users.services') }}" class="ui-btn-primary mt-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>Find Services</span>
                 </a>
             </div>
         @endif
     </section>
+</div>
 @endsection

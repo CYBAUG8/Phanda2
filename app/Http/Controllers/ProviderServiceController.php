@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ProviderServiceController extends Controller
 {
@@ -15,18 +16,82 @@ class ProviderServiceController extends Controller
         abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
         $showArchived = $request->boolean('archived');
+        $search = trim((string) $request->query('q', ''));
+        $category = trim((string) $request->query('category', ''));
+        $status = trim((string) $request->query('status', 'all'));
+        $sort = trim((string) $request->query('sort', 'newest'));
 
-        $servicesQuery = Service::with('category')
-            ->where('provider_id', $providerProfile->provider_id)
-            ->orderByDesc('created_at');
+        $providerServices = Service::query()->where('provider_id', $providerProfile->provider_id);
 
-        $services = $showArchived
-            ? $servicesQuery->onlyTrashed()->get()
-            : $servicesQuery->get();
+        $serviceMetrics = [
+            'total' => (clone $providerServices)->count(),
+            'active' => (clone $providerServices)->where('is_active', true)->count(),
+            'paused' => (clone $providerServices)->where('is_active', false)->count(),
+            'archived' => (clone $providerServices)->onlyTrashed()->count(),
+        ];
+
+        $servicesQuery = $showArchived
+            ? (clone $providerServices)->onlyTrashed()
+            : clone $providerServices;
+
+        $servicesQuery->with('category');
+
+        if ($search !== '') {
+            $servicesQuery->where(function ($query) use ($search) {
+                $query
+                    ->where('title', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%')
+                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        if ($category !== '' && Str::isUuid($category)) {
+            $servicesQuery->where('category_id', $category);
+        }
+
+        if (!$showArchived) {
+            if ($status === 'active') {
+                $servicesQuery->where('is_active', true);
+            }
+
+            if ($status === 'paused') {
+                $servicesQuery->where('is_active', false);
+            }
+        }
+
+        match ($sort) {
+            'oldest' => $servicesQuery->orderBy('created_at'),
+            'price_low' => $servicesQuery->orderBy('base_price'),
+            'price_high' => $servicesQuery->orderByDesc('base_price'),
+            'name_asc' => $servicesQuery->orderBy('title'),
+            'name_desc' => $servicesQuery->orderByDesc('title'),
+            default => $servicesQuery->orderByDesc('created_at'),
+        };
+
+        $services = $servicesQuery
+            ->paginate(12)
+            ->withQueryString();
 
         $categories = Category::orderBy('name')->get();
+        $serviceFilters = [
+            'q' => $search,
+            'category' => $category,
+            'status' => in_array($status, ['all', 'active', 'paused'], true) ? $status : 'all',
+            'sort' => in_array($sort, ['newest', 'oldest', 'price_low', 'price_high', 'name_asc', 'name_desc'], true)
+                ? $sort
+                : 'newest',
+        ];
 
-        return view('Providers.services', compact('services', 'categories', 'providerProfile', 'showArchived'));
+        return view('Providers.services', compact(
+            'services',
+            'categories',
+            'providerProfile',
+            'showArchived',
+            'serviceMetrics',
+            'serviceFilters'
+        ));
     }
 
     public function store(Request $request)

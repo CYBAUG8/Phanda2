@@ -161,6 +161,7 @@ class ProviderMessageController extends Controller
                     'name'        => $conv->user->full_name ?? 'Unknown',
                     'last_message'=> $lastMsg?->message ?? '',
                     'last_sender' => $lastMsg?->sender_type ?? '',
+                    'last_time'   => optional($conv->last_message_time ?? $lastMsg?->created_at)->toIso8601String(),
                     'unread_count'=> $unread,
                 ];
             });
@@ -231,5 +232,4 @@ class ProviderMessageController extends Controller
         ]);
     }
 }
-
 

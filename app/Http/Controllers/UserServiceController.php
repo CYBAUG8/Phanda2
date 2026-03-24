@@ -18,6 +18,8 @@ class UserServiceController extends Controller
 
         $query = Service::query()
             ->with(['category', 'providerProfile'])
+            ->withCount(['reviews as live_reviews_count'])
+            ->withAvg('reviews as live_rating', 'rating')
             ->where('is_active', true);
 
         if ($search = trim((string) $request->input('search', ''))) {

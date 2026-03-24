@@ -1,56 +1,50 @@
 @extends('Users.layout')
 @section('content')
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Panda</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Heroicons -->
-    <script src="https://unpkg.com/@heroicons/react@24/outline/index.js"></script>
-    
-    <!-- Alpine.js for interactivity -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <style>
-        /* Custom toggle switch */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #f97316;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #f97316;
-        }
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.4);
-            animation: fadeIn 0.2s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .modal-content {
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-    </style>
-</head>
-<body class="bg-gray-50 min-h-screen" x-data="settingsData()" x-init="init()">
-    <div class="p-4 sm:p-6 md:p-10 space-y-6 md:space-y-8 text-gray-900">
-        <h1 class="text-2xl sm:text-3xl font-semibold mb-4 sm:mb-6 text-orange-500">Settings</h1>
+@push('styles')
+<style>
+    .toggle-checkbox:checked {
+        right: 0;
+        border-color: #f97316;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+        background-color: #f97316;
+    }
+    .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.4);
+        animation: fadeIn 0.2s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .modal-content {
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+@endpush
+
+<div class="user-page-shell space-y-6 text-gray-900 md:space-y-8" x-data="settingsData()" x-init="init()">
+    <section class="user-page-header">
+        <div>
+            <h1>Settings</h1>
+            <p class="user-page-subtitle">Control preferences, safety, notifications, and security for your account.</p>
+        </div>
+        <a href="/users/profile" class="ui-btn-secondary">
+            <i class="fa-solid fa-user"></i>
+            <span>Back to Profile</span>
+        </a>
+    </section>
+
+    @include('partials.ui.flash')
 
         
        <!-- PERSONAL INFO -->
-<section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+<section class="ui-card p-4 sm:p-6">
     <h2 class="text-lg font-semibold mb-4 text-orange-500">Personal Information</h2>
 
     <div class="space-y-3 text-gray-700">
@@ -80,7 +74,7 @@
 
 
         <!-- SERVICE PREFERENCES -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Service Preferences</h2>
 
             <template x-if="loading.settings">
@@ -116,7 +110,7 @@
         </section>
 
         <!-- SAFETY & SHARING -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Safety & Sharing</h2>
 
             <div class="space-y-4">
@@ -175,7 +169,7 @@
         </section>
 
         <!-- SAVED LOCATIONS -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Saved Locations</h2>
 
             <template x-if="loading.locations">
@@ -220,7 +214,7 @@
         </section>
 
         <!-- SECURITY & PRIVACY -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Security & Privacy</h2>
 
             <div class="space-y-4">
@@ -277,7 +271,7 @@
         </section>
 
         <!-- NOTIFICATIONS -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Notifications</h2>
 
             <div class="space-y-4">
@@ -292,7 +286,7 @@
         </section>
 
         <!-- DATA MANAGEMENT -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Data Management</h2>
 
             <div class="flex flex-col sm:flex-row gap-3">
@@ -786,6 +780,15 @@
                 await this.fetchRecoveryContact();
             },
 
+            notify(message, type = null) {
+                const resolvedType = type ?? (/fail|error|invalid|unable|cannot|must|required|please/i.test(String(message)) ? 'error' : 'success');
+                if (typeof window.uiToast === 'function') {
+                    window.uiToast(message, resolvedType);
+                    return;
+                }
+                console.log(message);
+            },
+
             async fetchUserInfo() {
                 try {
                     const response = await fetch('/userInfo', {
@@ -950,13 +953,13 @@
                     if (response.ok) {
                         this.editModal = false;
                         await this.fetchUserInfo();
-                        alert('Information updated successfully!');
+                        this.notify('Information updated successfully!');
                     } else {
-                        alert(data.message || 'Failed to update. Please try again.');
+                        this.notify(data.message || 'Failed to update. Please try again.');
                     }
                 } catch (error) {
                     console.error('Error updating user info:', error);
-                    alert('Failed to update. Please try again.');
+                    this.notify('Failed to update. Please try again.');
                 }
             },
 
@@ -992,11 +995,11 @@
                         this.otp = '';
                         this.otpError = '';
                     } else {
-                        alert(data.message || 'Failed to send verification code.');
+                        this.notify(data.message || 'Failed to send verification code.');
                     }
                 } catch (error) {
                     console.error('Error sending OTP:', error);
-                    alert('An error occurred while sending verification code.');
+                    this.notify('An error occurred while sending verification code.');
                 }
             },
 
@@ -1039,7 +1042,7 @@
                         this.otpError = '';
                         this.pendingVerification = null;
                         await this.fetchUserInfo();
-                        alert('Information verified successfully!');
+                        this.notify('Information verified successfully!');
                     } else {
                         this.otpError = data.message || 'Invalid OTP. Please try again.';
                     }
@@ -1070,7 +1073,7 @@
                     }
                 } catch (error) {
                     console.error('Error updating settings:', error);
-                    alert('Failed to update settings. Please try again.');
+                    this.notify('Failed to update settings. Please try again.');
                 }
             },
 
@@ -1099,7 +1102,7 @@
                 };
                 
                 if (!clean.name || !clean.address) {
-                    alert('Please fill in both location name and address');
+                    this.notify('Please fill in both location name and address');
                     return;
                 }
 
@@ -1125,18 +1128,24 @@
                     if (response.ok && data.success) {
                         this.locationModal = false;
                         await this.fetchLocations();
-                        alert('Location saved successfully!');
+                        this.notify('Location saved successfully!');
                     } else {
-                        alert(data.message || 'Failed to save location');
+                        this.notify(data.message || 'Failed to save location');
                     }
                 } catch (error) {
                     console.error('Error saving location:', error);
-                    alert('Failed to save location. Please try again.');
+                    this.notify('Failed to save location. Please try again.');
                 }
             },
 
             async deleteLocation(id) {
-                if (!confirm('Delete this location?')) return;
+                const confirmed = await window.uiConfirm({
+                    title: 'Delete location',
+                    message: 'Delete this location?',
+                    confirmText: 'Delete',
+                    variant: 'danger',
+                });
+                if (!confirmed) return;
                 
                 try {
                     const response = await fetch(`/locations/${id}`, {
@@ -1151,13 +1160,13 @@
                     
                     if (response.ok && data.success) {
                         await this.fetchLocations();
-                        alert('Location deleted successfully!');
+                        this.notify('Location deleted successfully!');
                     } else {
-                        alert(data.message || 'Failed to delete location');
+                        this.notify(data.message || 'Failed to delete location');
                     }
                 } catch (error) {
                     console.error('Error deleting location:', error);
-                    alert('Failed to delete location. Please try again.');
+                    this.notify('Failed to delete location. Please try again.');
                 }
             },
 
@@ -1170,7 +1179,7 @@
 
             async saveEmergencyContact() {
                 if (!this.emergencyContact?.name?.trim() || !this.emergencyContact?.phone?.trim()) {
-                    alert('Please fill in both name and phone number');
+                    this.notify('Please fill in both name and phone number');
                     return;
                 }
 
@@ -1195,18 +1204,24 @@
                     if (response.ok) {
                         this.emergencyContact = data.emergency_contact;
                         this.emergencyContactModal = false;
-                        alert('Emergency contact saved successfully!');
+                        this.notify('Emergency contact saved successfully!');
                     } else {
-                        alert(data.message || 'Failed to save emergency contact');
+                        this.notify(data.message || 'Failed to save emergency contact');
                     }
                 } catch (error) {
                     console.error(error);
-                    alert('Could not save emergency contact. Please try again.');
+                    this.notify('Could not save emergency contact. Please try again.');
                 }
             },
 
             async removeEmergencyContact() {
-                if (!confirm('Remove emergency contact?')) return;
+                const confirmed = await window.uiConfirm({
+                    title: 'Remove emergency contact',
+                    message: 'Remove emergency contact?',
+                    confirmText: 'Remove',
+                    variant: 'danger',
+                });
+                if (!confirmed) return;
 
                 try {
                     const response = await fetch('/emergency-contact', {
@@ -1220,20 +1235,20 @@
                     if (response.ok) {
                         this.emergencyContact = null;
                         this.settings.auto_share = false;
-                        alert('Emergency contact removed.');
+                        this.notify('Emergency contact removed.');
                         await this.fetchSettings();
                     }
                 } catch (error) {
                     console.error(error);
-                    alert('Failed to remove emergency contact');
+                    this.notify('Failed to remove emergency contact');
                 }
             },
 
             testShare() {
                 if (this.emergencyContact) {
-                    alert(`Test message would be sent to ${this.emergencyContact.name} at ${this.emergencyContact.phone}.`);
+                    this.notify(`Test message would be sent to ${this.emergencyContact.name} at ${this.emergencyContact.phone}.`);
                 } else {
-                    alert('Please add an emergency contact first');
+                    this.notify('Please add an emergency contact first');
                 }
             },
 
@@ -1246,22 +1261,22 @@
     const { currentPassword, newPassword, confirmPassword } = this.passwordData;
     
     if (!currentPassword || !newPassword || !confirmPassword) {
-        alert('Please fill in all password fields');
+        this.notify('Please fill in all password fields');
         return;
     }
 
     if (newPassword !== confirmPassword) {
-        alert('New password and confirm password do not match!');
+        this.notify('New password and confirm password do not match!');
         return;
     }
 
     if (newPassword.length < 6 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-        alert('Password must be at least 6 characters, and include letters and numbers.');
+        this.notify('Password must be at least 6 characters, and include letters and numbers.');
         return;
     }
 
     if (newPassword === currentPassword) {
-        alert('New password must be different from current password.');
+        this.notify('New password must be different from current password.');
         return;
     }
 
@@ -1283,15 +1298,15 @@
         const data = await response.json();
         
         if (response.ok) {
-            alert('Password updated successfully!');
+            this.notify('Password updated successfully!');
             this.passwordModal = false;
             this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
         } else {
-            alert(data.message || 'Failed to update password');
+            this.notify(data.message || 'Failed to update password');
         }
     } catch (error) {
         console.error('Error updating password:', error);
-        alert('Failed to update password. Please try again.');
+        this.notify('Failed to update password. Please try again.');
     }
 },
 
@@ -1305,7 +1320,7 @@
 
             async saveRecoveryContact() {
     if (!this.recoveryContact?.name?.trim() || !this.recoveryContact?.phone?.trim()) {
-        alert('Please fill in both name and phone number');
+        this.notify('Please fill in both name and phone number');
         return;
     }
 
@@ -1331,18 +1346,24 @@
         if (response.ok) {
             this.recoveryContact = data.recovery_contact;
             this.recoveryContactModal = false;
-            alert('Recovery contact saved successfully!');
+            this.notify('Recovery contact saved successfully!');
         } else {
-            alert(data.message || 'Failed to save recovery contact');
+            this.notify(data.message || 'Failed to save recovery contact');
         }
     } catch (error) {
         console.error(error);
-        alert('Could not save recovery contact. Please try again.');
+        this.notify('Could not save recovery contact. Please try again.');
     }
 },
 
-            async removeRecoveryContact() {
-    if (!confirm('Remove recovery contact?')) return;
+async removeRecoveryContact() {
+    const confirmed = await window.uiConfirm({
+        title: 'Remove recovery contact',
+        message: 'Remove recovery contact?',
+        confirmText: 'Remove',
+        variant: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
         const response = await fetch('/recovery-contact', {
@@ -1355,13 +1376,13 @@
 
         if (response.ok) {
             this.recoveryContact = null;
-            alert('Recovery contact removed.');
+            this.notify('Recovery contact removed.');
         } else {
-            alert('Failed to remove recovery contact');
+            this.notify('Failed to remove recovery contact');
         }
     } catch (error) {
         console.error(error);
-        alert('Failed to remove recovery contact');
+        this.notify('Failed to remove recovery contact');
     }
 },
 
@@ -1389,7 +1410,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'my-panda-settings.json';
+                a.download = 'my-phanda-settings.json';
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
@@ -1414,14 +1435,14 @@
                     
                     if (response.ok) {
                         localStorage.clear();
-                        alert('Your account has been deleted');
+                        this.notify('Your account has been deleted');
                         window.location.href = '/';
                     } else {
-                        alert(data.message || 'Failed to delete account');
+                        this.notify(data.message || 'Failed to delete account');
                     }
                 } catch (error) {
                     console.error(error);
-                    alert('Failed to delete account');
+                    this.notify('Failed to delete account');
                 }
             },
 
@@ -1431,6 +1452,6 @@
         }
     }
     </script>
-</body>
-</html>
 @endsection
+
+

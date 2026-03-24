@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -65,6 +66,11 @@ class Service extends Model
         return $this->hasMany(Booking::class, 'service_id', 'service_id');
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'service_id', 'service_id');
+    }
+
     public function getFormattedPriceAttribute(): string
     {
         return 'R' . number_format((float) $this->base_price, 2);
@@ -87,5 +93,4 @@ class Service extends Model
         return "{$minutes}m";
     }
 }
-
 

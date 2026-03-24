@@ -9,32 +9,22 @@
         }
     @endphp
 
-    <div class="page-header">
-        <h2>Complete Payment</h2>
-        <p>Securely pay for your confirmed service booking.</p>
-    </div>
+    <div class="user-page-shell space-y-6">
+        <section class="user-page-header">
+            <div>
+                <h1>Complete Payment</h1>
+                <p class="user-page-subtitle">Securely pay for your confirmed service booking.</p>
+            </div>
+            <a href="{{ route('users.bookings') }}" class="ui-btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to Bookings</span>
+            </a>
+        </section>
 
-    @if(session('success'))
-        <div class="flash-message flash-message--success">
-            <i class="fas fa-check-circle"></i><span>{{ session('success') }}</span>
-        </div>
-    @endif
+        @include('partials.ui.flash')
 
-    @if(session('error'))
-        <div class="flash-message flash-message--error">
-            <i class="fas fa-exclamation-circle"></i><span>{{ session('error') }}</span>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="flash-message flash-message--error">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{ $errors->first() }}</span>
-        </div>
-    @endif
-
-    <div class="payments-layout-grid">
-        <section class="card payment-checkout-card">
+        <div class="payments-layout-grid">
+        <section class="ui-card payment-checkout-card">
             <div class="checkout-booking-summary">
                 <div>
                     <p class="checkout-label">Booking</p>
@@ -57,7 +47,7 @@
 
                 <div class="form-group">
                     <label for="method"><i class="fas fa-money-check-dollar"></i> Payment Method</label>
-                    <select name="method" id="method" class="form-input" required>
+                    <select name="method" id="method" class="user-select" required>
                         @foreach($methods as $methodKey => $methodLabel)
                             <option value="{{ $methodKey }}" {{ old('method', 'card') === $methodKey ? 'selected' : '' }}>
                                 {{ $methodLabel }}
@@ -83,7 +73,7 @@
                                             <span class="saved-card-option__top">
                                                 <strong>{{ strtoupper($card->brand) }}</strong>
                                                 @if($card->is_default)
-                                                    <span class="status-badge payment-badge payment-badge--paid">Default</span>
+                                                    <span class="user-status-badge user-status-payment-paid">Default</span>
                                                 @endif
                                             </span>
                                             <span class="saved-card-option__meta">
@@ -122,7 +112,7 @@
                                     type="text"
                                     id="card_holder_name"
                                     name="card_holder_name"
-                                    class="form-input"
+                                    class="user-input"
                                     value="{{ old('card_holder_name') }}"
                                     placeholder="Card holder full name"
                                 >
@@ -133,7 +123,7 @@
                                     type="text"
                                     id="card_number"
                                     name="card_number"
-                                    class="form-input"
+                                    class="user-input"
                                     value="{{ old('card_number') }}"
                                     placeholder="4111 1111 1111 1111"
                                     inputmode="numeric"
@@ -145,7 +135,7 @@
                                     type="number"
                                     id="expiry_month"
                                     name="expiry_month"
-                                    class="form-input"
+                                    class="user-input"
                                     min="1"
                                     max="12"
                                     value="{{ old('expiry_month') }}"
@@ -158,7 +148,7 @@
                                     type="number"
                                     id="expiry_year"
                                     name="expiry_year"
-                                    class="form-input"
+                                    class="user-input"
                                     min="{{ now()->year }}"
                                     max="{{ now()->year + 20 }}"
                                     value="{{ old('expiry_year') }}"
@@ -171,7 +161,7 @@
                                     type="password"
                                     id="cvv"
                                     name="cvv"
-                                    class="form-input"
+                                    class="user-input"
                                     placeholder="123"
                                     inputmode="numeric"
                                 >
@@ -191,32 +181,32 @@
                     </div>
                 </div>
 
-                <p class="booking-card__notes" style="margin-top: 0;">
+                <p class="booking-card__notes mt-0">
                     <i class="fas fa-shield-alt"></i>
                     Demo mode: card details are never charged. Only masked data is saved.
                 </p>
 
                 <div class="checkout-actions">
-                    <button type="submit" class="btn-primary btn-sm">
+                    <button type="submit" class="ui-btn-primary min-h-11">
                         <i class="fas fa-check"></i> Complete Payment
                     </button>
 
                     <button
                         type="button"
-                        class="btn-danger btn-sm"
+                        class="ui-btn-danger min-h-11"
                         onclick="submitFailure()"
                     >
                         <i class="fas fa-times"></i> Simulate Failure
                     </button>
 
-                    <a href="{{ route('users.bookings') }}" class="btn-outline btn-sm">
+                    <a href="{{ route('users.bookings') }}" class="ui-btn-secondary min-h-11">
                         <i class="fas fa-arrow-left"></i> Back to Bookings
                     </a>
                 </div>
             </form>
         </section>
 
-        <aside class="card payment-history-preview">
+        <aside class="ui-card payment-history-preview">
             <div class="payment-history-preview__header">
                 <h3>Recent Payments</h3>
                 <a href="{{ route('users.payments.index') }}" class="btn-outline btn-sm">View Full History</a>
@@ -250,6 +240,7 @@
                 </div>
             @endif
         </aside>
+    </div>
     </div>
 @endsection
 

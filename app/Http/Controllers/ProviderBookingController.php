@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Services\BookingLifecycleService;
 use App\Services\BookingPaymentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ProviderBookingController extends Controller
@@ -18,12 +19,136 @@ class ProviderBookingController extends Controller
             $this->providerBookingQuery($providerProfile->provider_id)
         );
 
-        $bookings = $this->providerBookingQuery($providerProfile->provider_id)
-            ->with(['user', 'service'])
-            ->orderByDesc('created_at')
-            ->get();
+        $status = trim((string) $request->query('status', 'pending'));
+        $search = trim((string) $request->query('q', ''));
+        $payment = trim((string) $request->query('payment', 'all'));
+        $scheduledFor = trim((string) $request->query('scheduled_for', 'all'));
+        $sort = trim((string) $request->query('sort', 'newest'));
+        $today = Carbon::now('Africa/Johannesburg')->toDateString();
 
-        return view('Providers.bookings', compact('bookings'));
+        $providerBookings = $this->providerBookingQuery($providerProfile->provider_id);
+
+        $statusCounts = [
+            'all' => (clone $providerBookings)->count(),
+            Booking::STATUS_PENDING => (clone $providerBookings)->where('status', Booking::STATUS_PENDING)->count(),
+            Booking::STATUS_CONFIRMED => (clone $providerBookings)->where('status', Booking::STATUS_CONFIRMED)->count(),
+            Booking::STATUS_IN_PROGRESS => (clone $providerBookings)->where('status', Booking::STATUS_IN_PROGRESS)->count(),
+            Booking::STATUS_COMPLETED => (clone $providerBookings)->where('status', Booking::STATUS_COMPLETED)->count(),
+            Booking::STATUS_CANCELLED => (clone $providerBookings)->where('status', Booking::STATUS_CANCELLED)->count(),
+        ];
+
+        $bookingMetrics = [
+            'pending' => (clone $providerBookings)->where('status', Booking::STATUS_PENDING)->count(),
+            'confirmed_upcoming' => (clone $providerBookings)
+                ->where('status', Booking::STATUS_CONFIRMED)
+                ->whereDate('booking_date', '>=', $today)
+                ->count(),
+            'in_progress' => (clone $providerBookings)->where('status', Booking::STATUS_IN_PROGRESS)->count(),
+            'awaiting_payment' => (clone $providerBookings)
+                ->where('status', Booking::STATUS_CONFIRMED)
+                ->whereIn('payment_status', [
+                    Booking::PAYMENT_STATUS_REQUIRED,
+                    Booking::PAYMENT_STATUS_UNPAID,
+                    Booking::PAYMENT_STATUS_FAILED,
+                ])
+                ->count(),
+        ];
+
+        $bookings = $this->providerBookingQuery($providerProfile->provider_id)
+            ->with([
+                'user',
+                'service' => fn ($query) => $query->withTrashed(),
+            ]);
+
+        if (in_array($status, [
+            Booking::STATUS_PENDING,
+            Booking::STATUS_CONFIRMED,
+            Booking::STATUS_IN_PROGRESS,
+            Booking::STATUS_COMPLETED,
+            Booking::STATUS_CANCELLED,
+        ], true)) {
+            $bookings->where('status', $status);
+        }
+
+        if ($search !== '') {
+            $bookings->where(function ($query) use ($search) {
+                $query
+                    ->where('id', 'like', '%' . $search . '%')
+                    ->orWhere('address', 'like', '%' . $search . '%')
+                    ->orWhere('notes', 'like', '%' . $search . '%')
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('full_name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('service', function ($serviceQuery) use ($search) {
+                        $serviceQuery->withTrashed()->where('title', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $paymentMap = [
+            'required' => Booking::PAYMENT_STATUS_REQUIRED,
+            'paid' => Booking::PAYMENT_STATUS_PAID,
+            'failed' => Booking::PAYMENT_STATUS_FAILED,
+            'refunded' => Booking::PAYMENT_STATUS_REFUNDED,
+            'unpaid' => Booking::PAYMENT_STATUS_UNPAID,
+        ];
+
+        if (array_key_exists($payment, $paymentMap)) {
+            $bookings->where('payment_status', $paymentMap[$payment]);
+        }
+
+        if ($scheduledFor === 'today') {
+            $bookings->whereDate('booking_date', $today);
+        }
+
+        if ($scheduledFor === 'upcoming') {
+            $bookings->whereDate('booking_date', '>=', $today);
+        }
+
+        if ($scheduledFor === 'past') {
+            $bookings->whereDate('booking_date', '<', $today);
+        }
+
+        match ($sort) {
+            'oldest' => $bookings->orderBy('created_at'),
+            'scheduled_asc' => $bookings->orderBy('booking_date')->orderBy('start_time'),
+            'scheduled_desc' => $bookings->orderByDesc('booking_date')->orderByDesc('start_time'),
+            'amount_high' => $bookings->orderByDesc('total_price'),
+            'amount_low' => $bookings->orderBy('total_price'),
+            default => $bookings->orderByDesc('created_at'),
+        };
+
+        $bookings = $bookings
+            ->paginate(10)
+            ->withQueryString();
+
+        $bookingFilters = [
+            'status' => in_array($status, [
+                'all',
+                Booking::STATUS_PENDING,
+                Booking::STATUS_CONFIRMED,
+                Booking::STATUS_IN_PROGRESS,
+                Booking::STATUS_COMPLETED,
+                Booking::STATUS_CANCELLED,
+            ], true) ? $status : 'pending',
+            'q' => $search,
+            'payment' => in_array($payment, ['all', 'required', 'paid', 'failed', 'refunded', 'unpaid'], true)
+                ? $payment
+                : 'all',
+            'scheduled_for' => in_array($scheduledFor, ['all', 'today', 'upcoming', 'past'], true)
+                ? $scheduledFor
+                : 'all',
+            'sort' => in_array($sort, ['newest', 'oldest', 'scheduled_asc', 'scheduled_desc', 'amount_high', 'amount_low'], true)
+                ? $sort
+                : 'newest',
+        ];
+
+        return view('Providers.bookings', compact(
+            'bookings',
+            'statusCounts',
+            'bookingMetrics',
+            'bookingFilters'
+        ));
     }
 
     public function confirm(
@@ -98,16 +223,19 @@ class ProviderBookingController extends Controller
 
         return Booking::where('id', $id)
             ->whereHas('service', function ($query) use ($providerProfile) {
-                $query->where('provider_id', $providerProfile->provider_id);
+                $query->withTrashed()->where('provider_id', $providerProfile->provider_id);
             })
-            ->with(['user', 'service'])
+            ->with([
+                'user',
+                'service' => fn ($query) => $query->withTrashed(),
+            ])
             ->firstOrFail();
     }
 
     private function providerBookingQuery(string $providerId)
     {
         return Booking::query()->whereHas('service', function ($query) use ($providerId) {
-            $query->where('provider_id', $providerId);
+            $query->withTrashed()->where('provider_id', $providerId);
         });
     }
 
