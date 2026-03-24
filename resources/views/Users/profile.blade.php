@@ -175,7 +175,7 @@
         <section class="ui-card p-4 sm:p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-orange-500">Address Information</h2>
-                <button type="button" data-open-address-modal @click.prevent.stop="openAddressModal()" class="relative z-10 flex items-center gap-2 px-3 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors duration-200">
+                <button type="button" @click="openAddressModal()" class="relative z-10 flex items-center gap-2 px-3 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors duration-200">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
@@ -232,7 +232,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         <p class="text-gray-500">No addresses added yet</p>
-                        <button type="button" data-open-address-modal @click.prevent.stop="openAddressModal()" class="relative z-10 mt-2 text-orange-500 hover:text-orange-600 font-medium">
+                        <button type="button" @click="openAddressModal()" class="relative z-10 mt-2 text-orange-500 hover:text-orange-600 font-medium">
                             Add your first address
                         </button>
                     </div>
@@ -307,7 +307,6 @@
                 </button>
             </div>
         </section>
-    </div>
 
     <!-- MODALS -->
 
@@ -352,99 +351,97 @@
     </template>
 
     <!-- ADDRESS MODAL -->
-    <template x-teleport="body">
-        <template x-if="addressModal.show">
-            <div class="fixed inset-0 z-50">
-                <div class="modal-overlay fixed inset-0" @click="closeAddressModal()"></div>
-                <div class="fixed z-50 inset-0 flex items-center justify-center p-4">
-                    <form class="modal-content bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" @submit.prevent="saveAddress()">
-                        <h3 class="text-lg font-medium mb-4 text-orange-500">
-                            <span x-text="addressModal.isEditing ? 'Edit Address' : 'Add New Address'"></span>
-                        </h3>
+    <template x-if="addressModal.show">
+        <div class="fixed inset-0 z-50">
+            <div class="modal-overlay fixed inset-0" @click="closeAddressModal()"></div>
+            <div class="fixed z-50 inset-0 flex items-center justify-center p-4">
+                <form class="modal-content bg-white rounded-lg shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" @submit.prevent="saveAddress()">
+                    <h3 class="text-lg font-medium mb-4 text-orange-500">
+                        <span x-text="addressModal.isEditing ? 'Edit Address' : 'Add New Address'"></span>
+                    </h3>
 
-                        <div class="space-y-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
+                            <select x-model="addressModal.data.type" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="home">Home</option>
+                                <option value="work">Work</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+                            <input type="text" x-model="addressModal.data.street" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="123 Main Street" required>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
-                                <select x-model="addressModal.data.type" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-                                    <option value="home">Home</option>
-                                    <option value="work">Work</option>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                <input type="text" x-model="addressModal.data.city" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Johannesburg" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
+                                <select x-model="addressModal.data.province" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
+                                    <option value="">Select Province</option>
+                                    <option value="gauteng">Gauteng</option>
+                                    <option value="western_cape">Western Cape</option>
+                                    <option value="kwa_zulu_natal">KwaZulu-Natal</option>
+                                    <option value="eastern_cape">Eastern Cape</option>
+                                    <option value="limpopo">Limpopo</option>
+                                    <option value="mpumalanga">Mpumalanga</option>
+                                    <option value="north_west">North West</option>
+                                    <option value="free_state">Free State</option>
+                                    <option value="northern_cape">Northern Cape</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                                <input type="text" x-model="addressModal.data.postal_code" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="2001" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                <select x-model="addressModal.data.country" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                    <option value="south_africa">South Africa</option>
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
-                                <input type="text" x-model="addressModal.data.street" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="123 Main Street" required>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                    <input type="text" x-model="addressModal.data.city" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Johannesburg" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
-                                    <select x-model="addressModal.data.province" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
-                                        <option value="">Select Province</option>
-                                        <option value="gauteng">Gauteng</option>
-                                        <option value="western_cape">Western Cape</option>
-                                        <option value="kwa_zulu_natal">KwaZulu-Natal</option>
-                                        <option value="eastern_cape">Eastern Cape</option>
-                                        <option value="limpopo">Limpopo</option>
-                                        <option value="mpumalanga">Mpumalanga</option>
-                                        <option value="north_west">North West</option>
-                                        <option value="free_state">Free State</option>
-                                        <option value="northern_cape">Northern Cape</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
-                                    <input type="text" x-model="addressModal.data.postal_code" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="2001" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                                    <select x-model="addressModal.data.country" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-                                        <option value="south_africa">South Africa</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center justify-between gap-2">
-                                <p class="text-xs text-gray-500" x-text="addressModal.data.latitude && addressModal.data.longitude ? `Location: ${addressModal.data.latitude}, ${addressModal.data.longitude}` : 'No GPS coordinates selected'"></p>
-                                <button
-                                    type="button"
-                                    @click="useCurrentLocationForAddress()"
-                                    :disabled="addressModal.isLocating || addressModal.saving"
-                                    class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <span x-text="addressModal.isLocating ? 'Locating...' : 'Use Current Location'"></span>
-                                </button>
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" x-model="addressModal.data.is_default" id="default-address" class="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
-                                <label for="default-address" class="text-sm text-gray-700">Set as default address</label>
-                            </div>
-
-                            <p x-show="addressModal.error" class="text-sm text-red-600" x-text="addressModal.error"></p>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-                            <button type="button" @click="closeAddressModal()" :disabled="addressModal.saving" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60">
-                                Cancel
-                            </button>
-                            <button type="submit" :disabled="addressModal.saving || !canSaveAddress()" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                <span x-text="addressModal.saving ? (addressModal.isEditing ? 'Updating...' : 'Saving...') : (addressModal.isEditing ? 'Update Address' : 'Save Address')"></span>
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-xs text-gray-500" x-text="addressModal.data.latitude && addressModal.data.longitude ? `Location: ${addressModal.data.latitude}, ${addressModal.data.longitude}` : 'No GPS coordinates selected'"></p>
+                            <button
+                                type="button"
+                                @click="useCurrentLocationForAddress()"
+                                :disabled="addressModal.isLocating || addressModal.saving"
+                                class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                <span x-text="addressModal.isLocating ? 'Locating...' : 'Use Current Location'"></span>
                             </button>
                         </div>
-                    </form>
-                </div>
+
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" x-model="addressModal.data.is_default" id="default-address" class="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
+                            <label for="default-address" class="text-sm text-gray-700">Set as default address</label>
+                        </div>
+
+                        <p x-show="addressModal.error" class="text-sm text-red-600" x-text="addressModal.error"></p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+                        <button type="button" @click="closeAddressModal()" :disabled="addressModal.saving" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60">
+                            Cancel
+                        </button>
+                        <button type="submit" :disabled="addressModal.saving || !canSaveAddress()" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            <span x-text="addressModal.saving ? (addressModal.isEditing ? 'Updating...' : 'Saving...') : (addressModal.isEditing ? 'Update Address' : 'Save Address')"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
-        </template>
+        </div>
     </template>
 
     <!-- OTP VERIFICATION MODAL -->
@@ -602,6 +599,8 @@
             </div>
         </div>
     </template>
+
+</div>
 
 <script>
 function profileData() {
