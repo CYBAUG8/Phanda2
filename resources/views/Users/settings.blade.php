@@ -160,7 +160,7 @@
                             <button @click="editLocation(location)" class="text-blue-500 hover:text-blue-600 p-1 rounded-md hover:bg-blue-50 transition-colors duration-200" title="Edit location">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
-                            <button @click="deleteLocation(location.location_id)" class="text-red-500 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors duration-200" title="Delete location">
+                            <button @click="confirmDeleteLocation(location.location_id)" class="text-red-500 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors duration-200" title="Delete location">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                         </div>
@@ -250,6 +250,39 @@
         </section>
     </div>
 
+    <!-- CUSTOM CONFIRMATION MODAL -->
+    <template x-if="confirmModal.show">
+        <div class="fixed inset-0 z-50">
+            <div class="modal-overlay fixed inset-0" @click="closeConfirmModal(false)"></div>
+            <div class="fixed z-50 inset-0 flex items-center justify-center p-4">
+                <div class="modal-content bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                    <h3 class="text-lg font-medium mb-3 text-orange-500">Confirm Action</h3>
+                    <p class="text-gray-600 mb-4" x-text="confirmModal.message"></p>
+                    <div class="flex flex-col sm:flex-row justify-end gap-3">
+                        <button @click="closeConfirmModal(false)" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
+                        <button @click="closeConfirmModal(true)" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- CUSTOM ALERT MODAL -->
+    <template x-if="alertModal.show">
+        <div class="fixed inset-0 z-50">
+            <div class="modal-overlay fixed inset-0" @click="closeAlertModal()"></div>
+            <div class="fixed z-50 inset-0 flex items-center justify-center p-4">
+                <div class="modal-content bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                    <h3 class="text-lg font-medium mb-3 text-orange-500" x-text="alertModal.type === 'error' ? 'Error' : 'Notification'"></h3>
+                    <p class="text-gray-600 mb-4" x-text="alertModal.message"></p>
+                    <div class="flex justify-end">
+                        <button @click="closeAlertModal()" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- DELETE MODAL -->
     <template x-if="deleteModal">
         <div class="fixed inset-0 z-50">
@@ -257,10 +290,34 @@
             <div class="fixed z-50 inset-0 flex items-center justify-center p-4">
                 <div class="modal-content bg-white rounded-lg shadow-lg w-full max-w-md p-6">
                     <h3 class="text-lg font-medium mb-3">Confirm Deletion</h3>
-                    <p class="text-gray-600 mb-6">Are you sure you want to delete your account? This action cannot be undone.</p>
+                    <p class="text-gray-600 mb-4">Are you sure you want to delete your account? This action cannot be undone.</p>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
+                        <div class="relative">
+                            <input :type="showDeletePassword ? 'text' : 'password'"
+                                   x-model="deletePassword"
+                                   class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-10"
+                                   placeholder="Enter your password">
+                            <button type="button" @click="showDeletePassword = !showDeletePassword"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                <svg x-show="showDeletePassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                </svg>
+                                <svg x-show="!showDeletePassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <p x-show="deletePasswordError" class="text-sm text-red-500 mt-1" x-text="deletePasswordError"></p>
+                    </div>
                     <div class="flex flex-col sm:flex-row justify-end gap-3">
                         <button @click="closeModal('deleteModal')" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
-                        <button @click="deleteAccount()" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">Confirm</button>
+                        <button @click="deleteAccount()"
+                                :disabled="!deletePassword"
+                                class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Confirm Delete
+                        </button>
                     </div>
                 </div>
             </div>
@@ -365,7 +422,6 @@
                             <p class="text-xs text-gray-500 mt-1">
                                 Format: +27821234567 — SA numbers starting with 0 will be converted automatically.
                             </p>
-                            <!-- live validation feedback -->
                             <p x-show="emergencyContact.phone && !validatePhoneE164(emergencyContact.phone)"
                                class="text-xs text-red-500 mt-1">
                                 Invalid phone number format.
@@ -588,6 +644,13 @@
             recoveryContactModal: false,
             loginHistoryModal: false,
             otpModal: false,
+            deletePassword: '',
+            deletePasswordError: '',
+            showDeletePassword: false,
+
+            // New generic modals
+            confirmModal: { show: false, message: '', onConfirm: null },
+            alertModal: { show: false, message: '', type: 'info' },
 
             dataShare: localStorage.getItem('dataShare') === 'true',
 
@@ -627,16 +690,31 @@
             loginHistory: [],
             pendingVerification: null,
 
+            // ── New generic modal methods ─────────────────────────────────
+            showConfirm(message, onConfirm) {
+                this.confirmModal = { show: true, message: message, onConfirm: onConfirm };
+            },
+            closeConfirmModal(confirmed) {
+                if (confirmed && this.confirmModal.onConfirm) {
+                    this.confirmModal.onConfirm();
+                }
+                this.confirmModal.show = false;
+                this.confirmModal.onConfirm = null;
+            },
+            showAlert(message, type = 'info') {
+                this.alertModal = { show: true, message: message, type: type };
+            },
+            closeAlertModal() {
+                this.alertModal.show = false;
+            },
+
             // ── Phone helpers ────────────────────────────────────────
             formatPhoneE164(phone) {
                 if (!phone) return '';
-                // Strip spaces, dashes, brackets
                 let cleaned = String(phone).replace(/[\s\-\(\)]/g, '');
-                // Convert SA local format 0821234567 → +27821234567
                 if (cleaned.startsWith('0') && cleaned.length === 10) {
                     cleaned = '+27' + cleaned.slice(1);
                 }
-                // Ensure + prefix
                 if (!cleaned.startsWith('+')) {
                     cleaned = '+' + cleaned;
                 }
@@ -741,14 +819,27 @@
                         body: JSON.stringify({ field: this.selectedField, value: this.editValue })
                     });
                     const data = await res.json();
-                    if (res.ok) { this.editModal = false; await this.fetchUserInfo(); alert('Information updated successfully!'); }
-                    else { alert(data.message || 'Failed to update. Please try again.'); }
-                } catch (e) { alert('Failed to update. Please try again.'); }
+                    if (res.ok) {
+                        this.editModal = false;
+                        await this.fetchUserInfo();
+                        this.showAlert('Information updated successfully!', 'info');
+                    } else {
+                        this.showAlert(data.message || 'Failed to update. Please try again.', 'error');
+                    }
+                } catch (e) {
+                    this.showAlert('Failed to update. Please try again.', 'error');
+                }
             },
 
             async verifyField() {
-                if (this.selectedField === 'email' && !this.validateEmail(this.editValue)) { this.editError = 'Please enter a valid email address.'; return; }
-                if (this.selectedField === 'phone' && !this.validateSAPhone(this.editValue)) { this.editError = 'Enter a valid SA phone number.'; return; }
+                if (this.selectedField === 'email' && !this.validateEmail(this.editValue)) {
+                    this.editError = 'Please enter a valid email address.';
+                    return;
+                }
+                if (this.selectedField === 'phone' && !this.validateSAPhone(this.editValue)) {
+                    this.editError = 'Enter a valid SA phone number.';
+                    return;
+                }
                 try {
                     const res = await fetch('/sendOtp', {
                         method: 'POST',
@@ -756,16 +847,31 @@
                         body: JSON.stringify({ field: this.selectedField, value: this.editValue })
                     });
                     const data = await res.json();
-                    if (res.ok) { this.pendingVerification = { field: this.selectedField, value: this.editValue }; this.editModal = false; this.otpModal = true; this.otp = ''; this.otpError = ''; }
-                    else { alert(data.message || 'Failed to send verification code.'); }
-                } catch (e) { alert('An error occurred while sending verification code.'); }
+                    if (res.ok) {
+                        this.pendingVerification = { field: this.selectedField, value: this.editValue };
+                        this.editModal = false;
+                        this.otpModal = true;
+                        this.otp = '';
+                        this.otpError = '';
+                    } else {
+                        this.showAlert(data.message || 'Failed to send verification code.', 'error');
+                    }
+                } catch (e) {
+                    this.showAlert('An error occurred while sending verification code.', 'error');
+                }
             },
 
             filterOtp(event) { this.otp = event.target.value.replace(/\D/g, '').slice(0, 6); this.otpError = ''; },
 
             async verifyOtp() {
-                if (!this.pendingVerification) { this.otpError = 'No pending verification. Please try again.'; return; }
-                if (!this.otp || this.otp.length !== 6) { this.otpError = 'Please enter a valid 6-digit OTP.'; return; }
+                if (!this.pendingVerification) {
+                    this.otpError = 'No pending verification. Please try again.';
+                    return;
+                }
+                if (!this.otp || this.otp.length !== 6) {
+                    this.otpError = 'Please enter a valid 6-digit OTP.';
+                    return;
+                }
                 try {
                     const res = await fetch('/updateUserInfo', {
                         method: 'POST',
@@ -773,9 +879,19 @@
                         body: JSON.stringify({ field: this.pendingVerification.field, value: this.pendingVerification.value, otp: this.otp })
                     });
                     const data = await res.json();
-                    if (res.ok) { this.otpModal = false; this.otp = ''; this.otpError = ''; this.pendingVerification = null; await this.fetchUserInfo(); alert('Information verified successfully!'); }
-                    else { this.otpError = data.message || 'Invalid OTP. Please try again.'; }
-                } catch (e) { this.otpError = 'An error occurred. Please try again.'; }
+                    if (res.ok) {
+                        this.otpModal = false;
+                        this.otp = '';
+                        this.otpError = '';
+                        this.pendingVerification = null;
+                        await this.fetchUserInfo();
+                        this.showAlert('Information verified successfully!', 'info');
+                    } else {
+                        this.otpError = data.message || 'Invalid OTP. Please try again.';
+                    }
+                } catch (e) {
+                    this.otpError = 'An error occurred. Please try again.';
+                }
             },
 
             // ── Settings toggle ───────────────────────────────────────
@@ -788,8 +904,14 @@
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                         body: JSON.stringify({ key, value })
                     });
-                    if (!res.ok) { this.settings[key] = prev; alert('Failed to update settings. Please try again.'); }
-                } catch (e) { this.settings[key] = prev; alert('Failed to update settings. Please try again.'); }
+                    if (!res.ok) {
+                        this.settings[key] = prev;
+                        this.showAlert('Failed to update settings. Please try again.', 'error');
+                    }
+                } catch (e) {
+                    this.settings[key] = prev;
+                    this.showAlert('Failed to update settings. Please try again.', 'error');
+                }
             },
 
             toggleDataShare(value) { this.dataShare = value; localStorage.setItem('dataShare', value); },
@@ -800,25 +922,42 @@
 
             async saveLocation() {
                 const clean = { ...this.newLocation, name: this.newLocation.name.trim(), address: this.newLocation.address.trim() };
-                if (!clean.name || !clean.address) { alert('Please fill in both location name and address'); return; }
+                if (!clean.name || !clean.address) {
+                    this.showAlert('Please fill in both location name and address', 'error');
+                    return;
+                }
                 try {
                     const url = this.isEditingLocation && this.newLocation.location_id ? `/locations/${this.newLocation.location_id}` : '/locations';
                     const method = this.isEditingLocation && this.newLocation.location_id ? 'PUT' : 'POST';
                     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }, body: JSON.stringify(clean) });
                     const data = await res.json();
-                    if (res.ok && data.success) { this.locationModal = false; await this.fetchLocations(); alert('Location saved successfully!'); }
-                    else { alert(data.message || 'Failed to save location'); }
-                } catch (e) { alert('Failed to save location. Please try again.'); }
+                    if (res.ok && data.success) {
+                        this.locationModal = false;
+                        await this.fetchLocations();
+                        this.showAlert('Location saved successfully!', 'info');
+                    } else {
+                        this.showAlert(data.message || 'Failed to save location', 'error');
+                    }
+                } catch (e) {
+                    this.showAlert('Failed to save location. Please try again.', 'error');
+                }
             },
 
-            async deleteLocation(id) {
-                if (!confirm('Delete this location?')) return;
-                try {
-                    const res = await fetch(`/locations/${id}`, { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
-                    const data = await res.json();
-                    if (res.ok && data.success) { await this.fetchLocations(); alert('Location deleted!'); }
-                    else { alert(data.message || 'Failed to delete location'); }
-                } catch (e) { alert('Failed to delete location. Please try again.'); }
+            confirmDeleteLocation(id) {
+                this.showConfirm('Delete this location?', async () => {
+                    try {
+                        const res = await fetch(`/locations/${id}`, { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            await this.fetchLocations();
+                            this.showAlert('Location deleted!', 'info');
+                        } else {
+                            this.showAlert(data.message || 'Failed to delete location', 'error');
+                        }
+                    } catch (e) {
+                        this.showAlert('Failed to delete location. Please try again.', 'error');
+                    }
+                });
             },
 
             // ── Emergency Contact ─────────────────────────────────────
@@ -828,9 +967,15 @@
             },
 
             async saveEmergencyContact() {
-                if (!this.emergencyContact?.name?.trim() || !this.emergencyContact?.phone?.trim()) { alert('Please fill in both name and phone number'); return; }
+                if (!this.emergencyContact?.name?.trim() || !this.emergencyContact?.phone?.trim()) {
+                    this.showAlert('Please fill in both name and phone number', 'error');
+                    return;
+                }
                 this.emergencyContact.phone = this.formatPhoneE164(this.emergencyContact.phone);
-                if (!this.validatePhoneE164(this.emergencyContact.phone)) { alert('Please enter a valid phone number with country code (e.g. +27821234567)'); return; }
+                if (!this.validatePhoneE164(this.emergencyContact.phone)) {
+                    this.showAlert('Please enter a valid phone number with country code (e.g. +27821234567)', 'error');
+                    return;
+                }
                 try {
                     const method = this.emergencyContact.emergency_contact_id ? 'PUT' : 'POST';
                     const res = await fetch('/emergency-contact', {
@@ -839,22 +984,42 @@
                         body: JSON.stringify({ name: this.emergencyContact.name, phone: this.emergencyContact.phone, relationship: this.emergencyContact.relationship })
                     });
                     const data = await res.json();
-                    if (res.ok) { this.emergencyContact = data.emergency_contact; this.emergencyContactModal = false; alert('Emergency contact saved successfully!'); }
-                    else { alert(data.message || 'Failed to save emergency contact'); }
-                } catch (e) { alert('Could not save emergency contact. Please try again.'); }
+                    if (res.ok) {
+                        this.emergencyContact = data.emergency_contact;
+                        this.emergencyContactModal = false;
+                        this.showAlert('Emergency contact saved successfully!', 'info');
+                    } else {
+                        this.showAlert(data.message || 'Failed to save emergency contact', 'error');
+                    }
+                } catch (e) {
+                    this.showAlert('Could not save emergency contact. Please try again.', 'error');
+                }
             },
 
-            async removeEmergencyContact() {
-                if (!confirm('Remove emergency contact?')) return;
-                try {
-                    const res = await fetch('/emergency-contact', { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
-                    if (res.ok) { this.emergencyContact = null; this.settings.auto_share = false; await this.fetchSettings(); alert('Emergency contact removed.'); }
-                } catch (e) { alert('Failed to remove emergency contact'); }
+            removeEmergencyContact() {
+                this.showConfirm('Remove emergency contact?', async () => {
+                    try {
+                        const res = await fetch('/emergency-contact', { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                        if (res.ok) {
+                            this.emergencyContact = null;
+                            this.settings.auto_share = false;
+                            await this.fetchSettings();
+                            this.showAlert('Emergency contact removed.', 'info');
+                        } else {
+                            this.showAlert('Failed to remove emergency contact', 'error');
+                        }
+                    } catch (e) {
+                        this.showAlert('Failed to remove emergency contact', 'error');
+                    }
+                });
             },
 
             testShare() {
-                if (this.emergencyContact) { alert(`Test SMS would be sent to ${this.emergencyContact.name} at ${this.emergencyContact.phone}.`); }
-                else { alert('Please add an emergency contact first'); }
+                if (this.emergencyContact) {
+                    this.showAlert(`Test SMS would be sent to ${this.emergencyContact.name} at ${this.emergencyContact.phone}.`, 'info');
+                } else {
+                    this.showAlert('Please add an emergency contact first', 'error');
+                }
             },
 
             // ── Password ─────────────────────────────────────────────
@@ -862,10 +1027,22 @@
 
             async updatePassword() {
                 const { currentPassword, newPassword, confirmPassword } = this.passwordData;
-                if (!currentPassword || !newPassword || !confirmPassword) { alert('Please fill in all password fields'); return; }
-                if (newPassword !== confirmPassword) { alert('New password and confirm password do not match!'); return; }
-                if (newPassword.length < 6 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) { alert('Password must be at least 6 characters, and include letters and numbers.'); return; }
-                if (newPassword === currentPassword) { alert('New password must be different from current password.'); return; }
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    this.showAlert('Please fill in all password fields', 'error');
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    this.showAlert('New password and confirm password do not match!', 'error');
+                    return;
+                }
+                if (newPassword.length < 6 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+                    this.showAlert('Password must be at least 6 characters, and include letters and numbers.', 'error');
+                    return;
+                }
+                if (newPassword === currentPassword) {
+                    this.showAlert('New password must be different from current password.', 'error');
+                    return;
+                }
                 try {
                     const res = await fetch('/update-password', {
                         method: 'POST',
@@ -873,9 +1050,16 @@
                         body: JSON.stringify({ current_password: currentPassword, new_password: newPassword, new_password_confirmation: confirmPassword })
                     });
                     const data = await res.json();
-                    if (res.ok) { alert('Password updated successfully!'); this.passwordModal = false; this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' }; }
-                    else { alert(data.message || 'Failed to update password'); }
-                } catch (e) { alert('Failed to update password. Please try again.'); }
+                    if (res.ok) {
+                        this.showAlert('Password updated successfully!', 'info');
+                        this.passwordModal = false;
+                        this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
+                    } else {
+                        this.showAlert(data.message || 'Failed to update password', 'error');
+                    }
+                } catch (e) {
+                    this.showAlert('Failed to update password. Please try again.', 'error');
+                }
             },
 
             // ── Recovery Contact ──────────────────────────────────────
@@ -885,9 +1069,15 @@
             },
 
             async saveRecoveryContact() {
-                if (!this.recoveryContact?.name?.trim() || !this.recoveryContact?.phone?.trim()) { alert('Please fill in both name and phone number'); return; }
+                if (!this.recoveryContact?.name?.trim() || !this.recoveryContact?.phone?.trim()) {
+                    this.showAlert('Please fill in both name and phone number', 'error');
+                    return;
+                }
                 this.recoveryContact.phone = this.formatPhoneE164(this.recoveryContact.phone);
-                if (!this.validatePhoneE164(this.recoveryContact.phone)) { alert('Please enter a valid phone number with country code (e.g. +27821234567)'); return; }
+                if (!this.validatePhoneE164(this.recoveryContact.phone)) {
+                    this.showAlert('Please enter a valid phone number with country code (e.g. +27821234567)', 'error');
+                    return;
+                }
                 try {
                     const method = this.recoveryContact.recovery_contact_id ? 'PUT' : 'POST';
                     const res = await fetch('/recovery-contact', {
@@ -896,37 +1086,79 @@
                         body: JSON.stringify({ name: this.recoveryContact.name, phone: this.recoveryContact.phone, email: this.recoveryContact.email, relationship: this.recoveryContact.relationship })
                     });
                     const data = await res.json();
-                    if (res.ok) { this.recoveryContact = data.recovery_contact; this.recoveryContactModal = false; alert('Recovery contact saved successfully!'); }
-                    else { alert(data.message || 'Failed to save recovery contact'); }
-                } catch (e) { alert('Could not save recovery contact. Please try again.'); }
+                    if (res.ok) {
+                        this.recoveryContact = data.recovery_contact;
+                        this.recoveryContactModal = false;
+                        this.showAlert('Recovery contact saved successfully!', 'info');
+                    } else {
+                        this.showAlert(data.message || 'Failed to save recovery contact', 'error');
+                    }
+                } catch (e) {
+                    this.showAlert('Could not save recovery contact. Please try again.', 'error');
+                }
             },
 
-            async removeRecoveryContact() {
-                if (!confirm('Remove recovery contact?')) return;
-                try {
-                    const res = await fetch('/recovery-contact', { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
-                    if (res.ok) { this.recoveryContact = null; alert('Recovery contact removed.'); }
-                    else { alert('Failed to remove recovery contact'); }
-                } catch (e) { alert('Failed to remove recovery contact'); }
+            removeRecoveryContact() {
+                this.showConfirm('Remove recovery contact?', async () => {
+                    try {
+                        const res = await fetch('/recovery-contact', { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                        if (res.ok) {
+                            this.recoveryContact = null;
+                            this.showAlert('Recovery contact removed.', 'info');
+                        } else {
+                            this.showAlert('Failed to remove recovery contact', 'error');
+                        }
+                    } catch (e) {
+                        this.showAlert('Failed to remove recovery contact', 'error');
+                    }
+                });
             },
 
             // ── Login History ─────────────────────────────────────────
             openLoginHistoryModal() { this.fetchLoginHistory(); this.loginHistoryModal = true; },
 
             // ── Data Management ───────────────────────────────────────
-downloadData() {
-    window.location.href = '/download-my-data';
-},
+            downloadData() {
+                window.location.href = '/download-my-data';
+            },
 
-            openDeleteModal() { this.deleteModal = true; },
+            openDeleteModal() {
+                this.deletePassword = '';
+                this.deletePasswordError = '';
+                this.showDeletePassword = false;
+                this.deleteModal = true;
+            },
 
             async deleteAccount() {
+                if (!this.deletePassword) {
+                    this.deletePasswordError = 'Please enter your password to confirm.';
+                    return;
+                }
                 try {
-                    const res = await fetch('/profile', { method: 'DELETE', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                    const res = await fetch('/account', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ password: this.deletePassword })
+                    });
                     const data = await res.json();
-                    if (res.ok) { localStorage.clear(); alert('Your account has been deleted'); window.location.href = '/'; }
-                    else { alert(data.message || 'Failed to delete account'); }
-                } catch (e) { alert('Failed to delete account'); }
+                    if (res.ok) {
+                        localStorage.clear();
+                        this.showAlert('Your account has been deleted', 'info');
+                        window.location.href = '/';
+                    } else {
+                        if (res.status === 422 || res.status === 401) {
+                            this.deletePasswordError = data.message || 'Incorrect password. Please try again.';
+                        } else {
+                            this.showAlert(data.message || 'Failed to delete account', 'error');
+                        }
+                    }
+                } catch (e) {
+                    this.showAlert('Failed to delete account', 'error');
+                }
             },
 
             closeModal(modalName) { this[modalName] = false; }

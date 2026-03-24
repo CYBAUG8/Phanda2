@@ -183,7 +183,9 @@ if ($request->field === 'phone') {
         }
         
    
-        $user->delete();
+         $user->delete();
+         $user->is_deleted = true;
+         $user->save();
         
         Auth::logout();
         
