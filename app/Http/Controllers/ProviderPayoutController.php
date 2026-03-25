@@ -18,11 +18,15 @@ class ProviderPayoutController extends Controller
         ]);
 
         $provider = auth()->user();
+        $amount = (float) $request->amount;
+
+        $commission = $amount * 0.10;
+        $total = $amount + $commission;
 
         $payout = Payout::create([
             'payout_id' => Str::uuid(),
             'provider_id' => $provider->user_id,
-            'amount' => $request->amount,
+            'amount' => $total, 
             'currency' => 'ZAR',
             'status' => 'SCHEDULED',
             'scheduled_at' => now(),

@@ -2,9 +2,10 @@
 
 @section('content')
 <div class="page">
-
-    <h1>Provider Reviews</h1>
-
+    <div class="mb-4">
+        <h2>Review</h2>
+        <p class="text-muted">Here you can give a review to a provider that has completed your requested service.</p>
+    </div>
     <div class="card" style="padding:16px;border-radius:12px;border:1px solid #eee">
 
         {{-- Header --}}
