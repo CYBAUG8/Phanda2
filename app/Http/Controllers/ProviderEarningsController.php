@@ -53,13 +53,15 @@ class ProviderEarningsController extends Controller
     public function refreshPayouts(Request $request)
     {
         $user = $request->user();
+        
+        $providerProfile = \App\Models\ProviderProfile::where('user_id', $user->user_id)->firstOrFail(); 
 
         $payouts = Payout::where('provider_id', $user->user_id)
             ->orderBy('created_at', 'desc')
             ->get();
 
         $totalRevenue = \App\Models\ServiceRequest::whereHas('service', function ($q) use ($user) {
-            $q->where('provider_id', $user->user_id);
+            $q->where('provider_id', $providerProfile->provider_id);
         })->where('status', 'completed')->sum('total_price');
 
         $totalWithdrawn = $payouts->whereIn('status', ['PAID', 'SCHEDULED'])->sum('amount');

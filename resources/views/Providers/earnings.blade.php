@@ -170,7 +170,8 @@ function earningsPage() {
         activeTab: 'SCHEDULED',
 
         get filteredPayouts() {
-            return this.payouts.filter(p => p.status.toUpperCase() === this.activeTab);
+            return this.payouts
+            .filter(p => p.status.toUpperCase() === this.activeTab);
         },
 
         submitWithdraw() {
@@ -244,7 +245,7 @@ function earningsPage() {
                             .filter(p => ['SCHEDULED','PAID'].includes(p.status))
                             .reduce((sum, p) => sum + p.amount, 0);
 
-                        this.availableBalance = parseFloat({{ $totalRevenue ?? 0 }}) - totalWithdrawn;
+                        this.availableBalance = parseFloat(data.availableBalance);
                     });
 
             }, 10000);
