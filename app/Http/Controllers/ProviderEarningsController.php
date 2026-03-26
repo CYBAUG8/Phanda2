@@ -25,7 +25,7 @@ class ProviderEarningsController extends Controller
         ->where('status', 'completed')
         ->sum('total_price');
 
-        // 🔥 TOTAL WITHDRAWN (already includes commission)
+        //TOTAL WITHDRAWN (already includes commission)
         $totalWithdrawn = Payout::where('provider_id', $user->user_id)
             ->whereIn('status', ['PAID', 'SCHEDULED'])
             ->sum('amount');
@@ -50,27 +50,6 @@ class ProviderEarningsController extends Controller
         ]);
     }
 
-    // 🔥 CREATE PAYOUT (CRITICAL FIX HERE)
-    public function requestPayout(Request $request)
-    {
-        $user = $request->user();
-
-        $amount = (float) $request->amount;
-
-        $commission = $amount * self::COMMISSION_RATE;
-        $total = $amount + $commission;
-
-        $payout = Payout::create([
-            'provider_id' => $user->user_id,
-            'amount' => $total, // 🔥 STORE TOTAL (amount + commission)
-            'status' => 'SCHEDULED',
-        ]);
-
-        return response()->json([
-            'payout' => $payout
-        ]);
-    }
-
     public function refreshPayouts(Request $request)
     {
         $user = $request->user();
@@ -79,6 +58,16 @@ class ProviderEarningsController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json(['payouts' => $payouts]);
+        $totalRevenue = \App\Models\ServiceRequest::whereHas('service', function ($q) use ($user) {
+            $q->where('provider_id', $user->user_id);
+        })->where('status', 'completed')->sum('total_price');
+
+        $totalWithdrawn = $payouts->whereIn('status', ['PAID', 'SCHEDULED'])->sum('amount');
+        $availableBalance = $totalRevenue - $totalWithdrawn;
+
+        return response()->json([
+            'payouts' => $payouts,
+            'availableBalance' => $availableBalance,
+        ]);
     }
 }
