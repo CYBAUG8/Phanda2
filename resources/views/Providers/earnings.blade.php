@@ -120,17 +120,16 @@
                 Amount must be greater than 0
             </p>
 
-            <p x-show="parseFloat(amount || 0) > parseFloat(availableBalance || 0) && triedSubmit"
-                class="text-red-500 text-sm mt-1">
-                Amount exceeds available balance
-            </p>
         </div>
 
         <!-- COMMISSION ONLY -->
         <div class="bg-gray-50 rounded-lg p-3 text-sm mb-3">
             <p class="font-semibold">
-                Commission for this withdrawal: 
-                R <span x-text="(parseFloat(amount || 0) * 0.10).toFixed(2)"></span>
+                Commission (10%): R <span x-text="(parseFloat(amount || 0) * 0.10).toFixed(2)"></span>
+            </p>
+            <p class="text-gray-500 mt-1">
+                New balance after withdrawal: 
+                R <span x-text="(parseFloat(availableBalance || 0) - parseFloat(amount || 0) - (parseFloat(amount || 0) * 0.10)).toFixed(2)"></span>
             </p>
         </div>
 
@@ -140,9 +139,9 @@
                 class="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
 
             <button @click="submitWithdraw"
-                :disabled="parseFloat(amount || 0) > parseFloat(availableBalance || 0) || parseFloat(amount || 0) <= 0 || loading"
+                :disabled="parseFloat(amount || 0) <= 0 || loading"
                 class="px-4 py-2 text-white rounded-lg"
-                :class="parseFloat(amount || 0) > parseFloat(availableBalance || 0) || parseFloat(amount || 0) <= 0 || loading ? 'bg-gray-400' : 'bg-orange-600'">
+                :class="parseFloat(amount || 0) <= 0 || loading ? 'bg-gray-400' : 'bg-orange-600'">
                 <span x-text="loading ? 'Processing...' : 'Send Request'"></span>
             </button>
         </div>
@@ -171,21 +170,17 @@ function earningsPage() {
 
         get filteredPayouts() {
             return this.payouts
-            .filter(p => p.status.toUpperCase() === this.activeTab);
+            .filter(p => p.status.toUpperCase() === this.activeTab)
+            .slice(0, 5);
         },
 
         submitWithdraw() {
-            this.triedSubmit = true; 
+            this.triedSubmit = true;
 
             let amount = parseFloat(this.amount) || 0;
             let available = parseFloat(this.availableBalance) || 0;
 
-            // VALIDATION
             if (!this.bank || !this.accountNumber || !this.accountHolder || !this.amount || amount <= 0) {
-                return;
-            }
-
-            if (amount > available) {
                 return;
             }
 
@@ -218,10 +213,9 @@ function earningsPage() {
                     status: data.payout.status.toUpperCase()
                 });
 
-                // deduct amount + commission
+                //Deduct withdrawal + commission from balance (can go negative)
                 this.availableBalance = available - total;
 
-                // reset form
                 this.amount = '';
                 this.bank = '';
                 this.accountNumber = '';
