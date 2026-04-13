@@ -32,8 +32,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('provider_id')
-                  ->references('user_id')
-                  ->on('users')
+                  ->references('provider_id')
+                  ->on('provider_profiles')
                   ->cascadeOnDelete();
         });
     }

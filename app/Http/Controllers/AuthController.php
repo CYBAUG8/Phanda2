@@ -14,44 +14,63 @@ use App\Models\ProviderProfile;
 class AuthController extends Controller
 {
     
+
+ 
+    // ─────────────────────────────────────────────
+    //  Handle registration
+    // ─────────────────────────────────────────────
     public function register(Request $request)
-{
-    $data = $request->validate([
-        'email' => 'required|email|unique:users,email',
-        'phone' => 'required|unique:users,phone',
-        'password' => 'required|min:6',
-        'full_name' => 'required|string',
-        'role' => 'required|in:customer,provider,admin'
-    ]);
-
-    $user = User::create([
-        'user_id' => (string) Str::uuid(),
-        'email' => $data['email'],
-        'phone' => $data['phone'],
-        'password' => Hash::make($data['password']),
-        'full_name' => $data['full_name'],
-        'role' => $data['role'],
-        'status' => 'ACTIVE',
-        'is_verified' => false,
-    ]);
-
-    //provider profile
-    if (strtoupper($data['role']) === 'PROVIDER') {
-
-        ProviderProfile::create([
-            'provider_id' => (string) Str::uuid(),
-            'user_id' => $user->user_id,
-            'business_name' => $user->full_name . "'s Business",
-            'bio' => null,
-            'years_experience' => 0,
+    {
+        $data = $request->validate([
+            'email'     => 'required|email|unique:users_profile,email',
+            'phone'     => 'required|unique:users_profile,phone',
+            'password'  => 'required|min:6|confirmed',   // expects password_confirmation field
+            'full_name' => 'required|string|max:160',
+            'role'      => 'required|in:customer,provider',
         ]);
+ 
+        // ── Create user record ──────────────────────────────────────────
+        $user = User::create([
+            'user_id'   => (string) Str::uuid(),
+            'email'     => $data['email'],
+            'phone'     => $data['phone'],
+            'password'  => Hash::make($data['password']),
+            'full_name' => $data['full_name'],
+            'role'      => strtoupper($data['role']),   // stored as CUSTOMER / PROVIDER
+            'account_status' => 'ACTIVE',
+            'is_verified'    => false,
+        ]);
+ 
+        // ── Customer profile ────────────────────────────────────────────
+        if (strtoupper($data['role']) === 'CUSTOMER') {
+            UserProfile::create([
+                'user_id'   => $user->user_id,
+                'full_name' => $user->full_name,
+                'email'     => $user->email,
+                'phone'     => $user->phone,
+                'role'      => 'CUSTOMER',
+                'account_status' => 'ACTIVE',
+                // gender / member_id left null until the user fills their profile
+            ]);
+        }
+ 
+        // ── Provider profile ────────────────────────────────────────────
+        if (strtoupper($data['role']) === 'PROVIDER') {
+            ProviderProfile::create([
+                'provider_id'    => (string) Str::uuid(),
+                'user_id'        => $user->user_id,
+                'business_name'  => $user->full_name . "'s Business",
+                'bio'            => null,
+                'years_experience' => 0,
+            ]);
+        }
+ 
+        // ── Log the user in ─────────────────────────────────────────────
+        Auth::login($user);
+ 
+       
+        return redirect('/dashboard')->with('success', 'Welcome to Phanda, ' . $user->full_name . '!');
     }
-
-    Auth::login($user);
-
-    return response()->json(['message' => 'User created'], 201);
-}
-
     
 public function login(Request $request)
 {
