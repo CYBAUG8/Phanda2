@@ -22,6 +22,7 @@ use App\Http\Controllers\ProviderDashboardController;
 use App\Http\Controllers\ProviderServiceController;
 use App\Http\Controllers\ProviderBookingController;
 use App\Http\Controllers\ProviderEarningsController;
+use App\Http\Controllers\ProviderPayoutController;
 use App\Http\Controllers\ProviderProfileController;
 use App\Http\Controllers\ProviderCalendarController;
 
@@ -110,25 +111,29 @@ Route::middleware('auth')->group(function () {
         ->name('provider.toggleOnline');
 
     Route::get('/providers/bookings', [ProviderBookingController::class, 'index'])
-        ->name('provider.bookings');
+        ->name('providers.bookings');
 
     Route::patch('/providers/bookings/{id}/confirm', [ProviderBookingController::class, 'confirm'])
-        ->name('provider.bookings.confirm');
+        ->name('providers.bookings.confirm');
 
     Route::patch('/providers/bookings/{id}/start', [ProviderBookingController::class, 'start'])
-        ->name('provider.bookings.start');
+        ->name('providers.bookings.start');
 
     Route::patch('/providers/bookings/{id}/complete', [ProviderBookingController::class, 'complete'])
-        ->name('provider.bookings.complete');
+        ->name('providers.bookings.complete');
 
     Route::patch('/providers/bookings/{id}/cancel', [ProviderBookingController::class, 'cancel'])
-        ->name('provider.bookings.cancel');
+        ->name('providers.bookings.cancel');
     Route::get('/providers/schedule', function () {
         return view('providers.schedule');
     });
 
     Route::get('/providers/earnings', [ProviderEarningsController::class, 'index'])
         ->name('providers.earnings');
+    Route::post('/providers/payout/request', [ProviderPayoutController::class,'requestPayout'])
+    ->name('providers.payout.request');
+    Route::get('/providers/payout/refresh', [ProviderEarningsController::class, 'refreshPayouts'])
+     ->name('providers.payout.refresh');
 
 
     /*

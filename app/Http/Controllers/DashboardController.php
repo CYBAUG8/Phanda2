@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Booking;
+use App\Models\ServiceRequest;
 use App\Models\Message;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
@@ -19,7 +19,7 @@ class DashboardController extends Controller
         }
 
         //Count bookings in progress
-        $totalBookings = Booking::where('user_id', $user->user_id)
+        $totalBookings = ServiceRequest::where('user_id', $user->user_id)
             ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
             ->count();
 
@@ -39,7 +39,7 @@ class DashboardController extends Controller
         $activities = [];
 
         // Add latest bookings (limit 5)
-        $latestBookings = Booking::where('user_id', $user->user_id)
+        $latestBookings = ServiceRequest::where('user_id', $user->user_id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
@@ -67,7 +67,7 @@ class DashboardController extends Controller
         foreach ($latestMessages as $message) {
             $activities[] = [
                 'type' => 'message',
-                'text' => "New message: " . substr($message->message, 0, 50),
+                'text' => "New message" ,
                 'ts' => $message->created_at
             ];
         }

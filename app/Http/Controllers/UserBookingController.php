@@ -83,17 +83,27 @@ class UserBookingController extends Controller
             return redirect()->back()->withInput()->with('error', 'You are outside this provider\'s service area.');
         }
 
-        $booking = ServiceRequest::create([
-            'user_id'      => $request->user()->user_id,
-            'provider_id'  => $provider->provider_id,
-            'service_id'   => $service->service_id,
-            'booking_date' => $validated['booking_date'],
-            'start_time'   => $validated['start_time'],
-            'status'       => 'pending',
-            'total_price'  => $service->base_price,
-            'address'      => $validated['address'],
-            'notes'        => $validated['notes'] ?? null,
-        ]);
+        $address = Address::where('user_id', $request->user()->user_id)
+        ->where('is_default', true)
+        ->first();
+
+    if (!$address) {
+        return back()->with('error', 'Please add an address first.');
+    }
+
+    $booking = ServiceRequest::create([
+        'user_id'      => $request->user()->user_id,
+        'provider_id'  => $provider->provider_id,
+        'service_id'   => $service->service_id,
+        'address_id'   => $address->address_id,
+        'booking_date' => $validated['booking_date'],
+        'start_time'   => $validated['start_time'],
+        'end_time'     => now()->addHour()->format('H:i'), // temporary
+        'status'       => 'pending',
+        'total_price'  => $service->base_price,
+        'address'      => $validated['address'],
+        'notes'        => $validated['notes'] ?? null,
+    ]);
 
         // ── auto_share: SMS emergency contact ─────────────────────────
         $this->maybeShareWithEmergencyContact($request->user(), $booking);

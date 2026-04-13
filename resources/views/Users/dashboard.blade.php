@@ -1,65 +1,82 @@
 @extends('users.layout')
 
 @section('content')
+
 <div class="container">
-    <h2>Welcome back, {{ $user->full_name ?? 'User' }}</h2>
+<!-- Header -->
+<section>
+    <div class="bg-white border rounded-lg p-8 shadow-sm mb-8">
+        <h2 class="text-2xl font-bold text-gray-800">Welcome back, {{ $user->full_name ?? 'User' }} </h2>
+        <p class="text-muted">Here’s what’s happening with your account today.</p>
+    </div>
+</section>
 
-    {{-- Stats Grid --}}
-    <div class="stats-grid">
-        <a href="{{ url('/users/bookings') }}" class="stat-card card">
-            <div class="stat-label">Bookings in Progress</div>
-            <div class="stat-value">{{ $totalBookings ?? 0 }}</div>
-        </a>
 
-        <a href="{{ url('/users/messages') }}" class="stat-card card">
-            <div class="stat-label">Unread Messages</div>
-            <div class="stat-value">{{ $unreadMessages ?? 0 }}</div>
-            @if(($unreadMessages ?? 0) > 0)
-                <div class="chip chip-attn">{{ $unreadMessages }} unread</div>
-            @endif
-        </a>
+{{-- Stats Grid --}}
+<div class="stats-grid mb-4">
+    <a href="{{ url('/users/bookings') }}" class="stat-card card">
+        <div class="stat-label">Active Bookings</div>
+        <div class="stat-value">{{ $totalBookings ?? 0 }}</div>
+    </a>
 
-        <div class="stat-card card">
-            <div class="stat-label" style="display:flex;align-items:center;gap:4px">
-                Average Rating
+    <a href="{{ url('/users/messages') }}" class="stat-card card">
+        <div class="stat-label">Messages</div>
+        <div class="stat-value">{{ $unreadMessages ?? 0 }}</div>
+
+        @if(($unreadMessages ?? 0) > 0)
+            <div class="chip chip-attn">
+                {{ $unreadMessages }} new
             </div>
-            <span>{{ number_format($averageRating, 1) }}</span>
+        @endif
+    </a>
+</div>
+
+{{-- Recent Activity --}}
+<section class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Recent Activity</div>
+            <div class="card-subtitle">
+                Your latest bookings, messages, and payments
+            </div>
         </div>
     </div>
 
-    {{-- Recent Activity --}}
-    <section class="card">
-        <div class="card-header">
-            <div class="card-title">Recent Activities</div>
-        </div>
+    @if(!empty($activities))
+        <div class="list">
+            @foreach($activities as $a)
+                <div class="list-row">
+                    
+                    <div class="activity-icon activity-{{ $a['type'] }}">
+                        @switch($a['type'])
+                            @case('booking') 📅 @break
+                            @case('message') 💬 @break
+                            @case('payment') 💰 @break
+                            @default 🔔
+                        @endswitch
+                    </div>
 
-        @if(!empty($activities))
-            <div class="list">
-                @foreach($activities as $a)
-                    <div class="list-row">
-                        <div class="activity-icon activity-{{ $a['type'] }}">
-                            @switch($a['type'])
-                                @case('booking') 📅 @break
-                                @case('message') ✉️ @break
-                                @case('payment') 💳 @break
-                                @default 🔔
-                            @endswitch
+                    <div class="activity-body">
+                        <div class="row-title">
+                            {{ $a['text'] }}
                         </div>
-
-                        <div class="activity-body">
-                            <div class="row-title">{{ $a['text'] }}</div>
-                            <div class="row-note">{{ $a['ts']->diffForHumans() }}</div>
+                        <div class="row-note">
+                            {{ $a['ts']->diffForHumans() }} • Activity
                         </div>
                     </div>
-                @endforeach
+
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div class="empty">
+            <div class="empty-emoji">📭</div>
+            <div class="empty-title">Nothing here yet</div>
+            <div class="empty-note">
+                Once you start booking services or receiving messages, they’ll show up here.
             </div>
-        @else
-            <div class="empty">
-                <div class="empty-emoji">🔔</div>
-                <div class="empty-title">No activity yet</div>
-                <div class="empty-note">Your bookings and messages will appear here.</div>
-            </div>
-        @endif
-    </section>
+        </div>
+    @endif
+</section>
 </div>
 @endsection
