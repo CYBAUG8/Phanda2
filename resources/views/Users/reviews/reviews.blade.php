@@ -12,23 +12,6 @@
 
             <div>
                 <h2 >
-<<<<<<< HEAD
-                    Reviews for {{ $selectedProvider['name'] ?? 'Provider' }}
-                </h2>
-
-                <form method="GET">
-                    <select name="provider"
-                            onchange="this.form.submit()"
-                            style="margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid #ddd">
-                        @foreach($providers as $provider)
-                            <option value="{{ $provider['id'] }}"
-                                @selected($provider['id'] === $selectedProviderId)>
-                                {{ $provider['name'] }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
-=======
                     Reviews for {{ $selectedProvider['full_name'] ?? 'Provider' }}
                 </h2>
 
@@ -52,17 +35,12 @@
                     </select>
                 </form>
                 @endif
->>>>>>> Lethokuhle
             </div>
 
             <div style="display:flex;gap:8px">
                 @if($userReviewForSelected)
                     <form method="POST"
-<<<<<<< HEAD
-                          action="{{ route('reviews.destroy', $userReviewForSelected->id) }}">
-=======
                           action="{{ route('reviews.destroy', $userReviewForSelected->review_id) }}">
->>>>>>> Lethokuhle
                         @csrf
                         @method('DELETE')
                         <button style="padding:8px 16px;border-radius:25px;border:1px solid #ddd;background:#fff">
@@ -131,11 +109,7 @@
 
                             <div style="display:flex;justify-content:space-between">
                                 <strong style="color:#6b4f3b">
-<<<<<<< HEAD
-                                    {{ $review->user_id === optional($currentUser)->id ? 'You' : ($review->user->name ?? 'Anonymous') }}
-=======
                                     {{ $review->user_id === optional($currentUser)->user_id ? 'You' : ($review->customer->full_name ?? 'Anonymous') }}
->>>>>>> Lethokuhle
                                 </strong>
                                 <small style="color:#666">
                                     {{ $review->created_at->format('d M Y') }}
@@ -159,8 +133,6 @@
 </div>
 
 @include('users.reviews.partials.modal')
-<<<<<<< HEAD
-=======
 
 <script>
     function openModal() {
@@ -177,5 +149,4 @@
         }
     }
 </script>
->>>>>>> Lethokuhle
 @endsection

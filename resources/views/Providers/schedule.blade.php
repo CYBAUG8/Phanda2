@@ -1,11 +1,6 @@
 @extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
-    <h2>Schedule</h2>
-    <p>Set your availability and manage your calendar here.</p>
-@endsection
-=======
 
 {{-- Add CSRF meta tag if not already in layout --}}
 <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -402,4 +397,3 @@ button:disabled {
 </style>
 
 @endsection
->>>>>>> Lethokuhle

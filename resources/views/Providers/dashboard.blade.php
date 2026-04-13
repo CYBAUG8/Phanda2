@@ -1,11 +1,6 @@
 @extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
-    <h2>Provider Dashboard</h2>
-    <p>Welcome to the Provider Dashboard. This area will show analytics, quick links and summaries.</p>
-@endsection
-=======
 <div class="px-6 py-6">
 
     <!-- Page Header -->
@@ -143,4 +138,3 @@
 
 </div>
 @endsection
->>>>>>> Lethokuhle

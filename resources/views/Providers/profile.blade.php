@@ -1,11 +1,6 @@
 @extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
-    <h2>Profile</h2>
-    <p>Edit your provider profile, bio and contact information here.</p>
-@endsection
-=======
 <div class="p-6 space-y-8" 
      x-data="providerProfile({{ json_encode($provider) }})" 
      x-init="init()">
@@ -321,4 +316,3 @@ function providerProfile(initialData) {
 }
 </script>
 @endpush
->>>>>>> Lethokuhle

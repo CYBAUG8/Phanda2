@@ -1,11 +1,6 @@
 @extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
-    <h2>Messages</h2>
-    <p>Provider messages and conversations will appear here.</p>
-@endsection
-=======
 <div class="h-[calc(100vh-120px)] flex bg-white rounded-lg shadow overflow-hidden">
 
     <!-- LEFT: Conversations List -->
@@ -538,4 +533,3 @@ const doubleTickSVG = `
 });
 </script>
 @endpush
->>>>>>> Lethokuhle

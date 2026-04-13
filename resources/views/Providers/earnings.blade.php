@@ -1,11 +1,6 @@
 @extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
-    <h2>Earnings</h2>
-    <p>View payouts and earnings breakdown here.</p>
-@endsection
-=======
 <div 
     x-data="earningsPage()" 
     class="px-6 py-6 relative"
@@ -235,4 +230,3 @@ function earningsPage() {
 </script>
 
 @endsection
->>>>>>> Lethokuhle
