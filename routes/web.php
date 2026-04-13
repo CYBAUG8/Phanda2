@@ -13,7 +13,7 @@ use App\Http\Controllers\UserServiceController;
 use App\Http\Controllers\UserBookingController;
 use App\Http\Controllers\UserPaymentController;
 //profile
-use App\Http\Controllers\AuthController;
+
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\LocationController;
@@ -33,7 +33,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserMessageController;
 use App\Http\Controllers\ProviderMessageController;
 use App\Http\Controllers\ServiceController;
-use Illuminate\Support\Facades\Http;
+
 /*`
 |--------------------------------------------------------------------------
 | Public Routes
