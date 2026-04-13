@@ -1,7 +1,7 @@
 <?php
 
 namespace Database\Seeders;
-
+use Illuminate\Support\Str;
 use App\Models\Category;
 use Illuminate\Database\Seeder;
 

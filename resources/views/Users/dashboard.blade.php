@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="container">
+<<<<<<< HEAD
     <h2>Welcome back, {{ $summary->name }}</h2>
 
     {{-- Stats Grid --}}
@@ -25,6 +26,30 @@
                  Average Rating
             </div>
             <span >{{ number_format($summary->average_rating, 1) }}</span>
+=======
+    <h2>Welcome back, {{ $user->full_name ?? 'User' }}</h2>
+
+    {{-- Stats Grid --}}
+    <div class="stats-grid">
+        <a href="{{ url('/users/bookings') }}" class="stat-card card">
+            <div class="stat-label">Bookings in Progress</div>
+            <div class="stat-value">{{ $totalBookings ?? 0 }}</div>
+        </a>
+
+        <a href="{{ url('/users/messages') }}" class="stat-card card">
+            <div class="stat-label">Unread Messages</div>
+            <div class="stat-value">{{ $unreadMessages ?? 0 }}</div>
+            @if(($unreadMessages ?? 0) > 0)
+                <div class="chip chip-attn">{{ $unreadMessages }} unread</div>
+            @endif
+        </a>
+
+        <div class="stat-card card">
+            <div class="stat-label" style="display:flex;align-items:center;gap:4px">
+                Average Rating
+            </div>
+            <span>{{ number_format($averageRating, 1) }}</span>
+>>>>>>> Lethokuhle
         </div>
     </div>
 
@@ -34,7 +59,11 @@
             <div class="card-title">Recent Activities</div>
         </div>
 
+<<<<<<< HEAD
         @if(isset($activities) && $activities->isNotEmpty())
+=======
+        @if(!empty($activities))
+>>>>>>> Lethokuhle
             <div class="list">
                 @foreach($activities as $a)
                     <div class="list-row">
@@ -63,4 +92,8 @@
         @endif
     </section>
 </div>
+<<<<<<< HEAD
 @endsection
+=======
+@endsection
+>>>>>>> Lethokuhle

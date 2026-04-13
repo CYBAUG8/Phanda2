@@ -4,6 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Panda User</title>
+<<<<<<< HEAD
+=======
+       <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <script src="https://unpkg.com/@heroicons/react@24/outline/index.js"></script>
+ 
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+    {{-- FontAwesome CDN --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+>>>>>>> Lethokuhle
 
     {{-- Load Vite JS and users CSS (reuses firstpage entry) --}}
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -14,7 +27,10 @@
         <link rel="stylesheet" href="/build/assets/users.css">
         <script src="/build/assets/firstpage.js"></script>
     @endif
+<<<<<<< HEAD
     
+=======
+>>>>>>> Lethokuhle
         
 </head>
 <body>
@@ -66,11 +82,24 @@
                     <span>Settings</span>
                 </a>
             </nav>
+<<<<<<< HEAD
+=======
+            <div class="sidebar-item mt-auto">
+                <a href="/logout" class="logout-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+>>>>>>> Lethokuhle
         </aside>
 
         <main class="user-content">
             @yield('content')
         </main>
     </div>
+<<<<<<< HEAD
+=======
+    @stack('scripts')
+>>>>>>> Lethokuhle
 </body>
 </html>

@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('addresses', function (Blueprint $table) {
             $table->uuid('address_id')->primary();
 
-            $table->uuid('user_id')->unique();
+            $table->uuid('user_id');
             $table->foreign('user_id')
              ->references('user_id')
-             ->on('users_profile')
+             ->on('users')
              ->onDelete('cascade');
             $table->enum('type', ['home', 'work', 'billing', 'shipping', 'other'])->default('home');
             $table->string('street');

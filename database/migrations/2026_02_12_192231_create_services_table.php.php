@@ -9,13 +9,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('services', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->uuid('service_id')->primary();
+            // Category relationship
+            $table->uuid('category_id');
+            $table->foreign('category_id')
+                ->references('id')
+                ->on('categories')
+                ->cascadeOnDelete();
+
+            // Provider relationship
+            $table->uuid('provider_id');
+            $table->foreign('provider_id')
+                ->references('provider_id')
+                ->on('provider_profiles')
+                ->cascadeOnDelete();
+
             $table->string('provider_name');
             $table->string('title');
             $table->text('description');
-            $table->decimal('price', 10, 2);
-            $table->integer('duration_minutes')->default(60);
+            $table->decimal('base_price', 10, 2);
+            $table->integer('min_duration')->default(60);
             $table->string('location');
             $table->decimal('rating', 2, 1)->default(0.0);
             $table->integer('reviews_count')->default(0);

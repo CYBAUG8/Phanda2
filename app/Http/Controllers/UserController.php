@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
+
 class UserController extends Controller
 {
     public function getUserInfo(Request $request)
@@ -34,7 +37,9 @@ class UserController extends Controller
 
         if ($request->field == 'full_name') {
             $user->full_name = $request->input('value');
-        } elseif ($request->field == 'email' || $request->field == 'phone') {
+        }
+         elseif ($request->field == 'email' || $request->field == 'phone') 
+            {
              
             $request->validate([
                 'otp' => 'required|digits:6',
@@ -65,10 +70,15 @@ class UserController extends Controller
         ]);
     }
 
-    // Send OTP for verification
+ 
     public function sendOtp(Request $request)
     {
         $user = $request->user();
+
+        $request->validate([
+        'field' => 'required|in:email,phone',
+        'value' => 'required|string'
+        ]);
 
         $otp = rand(100000, 999999);
 
@@ -77,11 +87,44 @@ class UserController extends Controller
             $otp,
             now()->addMinutes(10)
         );
-        
-        return response()->json([
+
+   
+
+        if ($request->field === 'email') {
+           Mail::to($request->value)->send(new OtpMail($otp));
+        }
+if ($request->field === 'phone') {
+        try {
+            $twilio = new \Twilio\Rest\Client(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
+
+            $twilio->messages->create(
+                $request->value,
+                [
+                    'from' => config('services.twilio.from'),
+                    'body' => "Your Phanda verification code is: {$otp}. It expires in 10 minutes. Do not share this code with anyone.",
+                ]
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send OTP SMS', [
+                'user_id' => $user->user_id,
+                'phone'   => $request->value,
+                'error'   => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to send OTP via SMS. Please try again.',
+            ], 500);
+        }
+    }
+
+         return response()->json([
             'message' => 'OTP sent successfully',
-            'otp' => $otp // In production, send via SMS/Email instead
         ]);
+        
+
     }
 
     // Update password
@@ -101,21 +144,20 @@ class UserController extends Controller
 
         $user = $request->user();
 
-        // Check if current password is correct
+       
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'Current password is incorrect'
             ], 400);
         }
 
-        // Check if new password is same as current password
         if (Hash::check($request->new_password, $user->password)) {
             return response()->json([
                 'message' => 'New password must be different from current password'
             ], 400);
         }
 
-        // Update password
+       
         $user->password = Hash::make($request->new_password);
         $user->save();
 
@@ -129,7 +171,7 @@ class UserController extends Controller
     {
         $user = $request->user();
         
-        // Optional: Validate password for extra security
+       
         $request->validate([
             'password' => 'required|string',
         ]);
@@ -140,8 +182,10 @@ class UserController extends Controller
             ], 400);
         }
         
-        // Soft delete if using soft deletes
-        $user->delete();
+   
+         $user->delete();
+         $user->is_deleted = true;
+         $user->save();
         
         Auth::logout();
         
@@ -149,5 +193,59 @@ class UserController extends Controller
             'message' => 'Account deleted successfully'
         ]);
     }
+public function downloadData(Request $request)
+{
+    $user = $request->user();
+
+    $emergencyContact = $user->emergencyContact;
+    $locations        = $user->locations;
+    $loginHistories   = $user->loginHistories()->latest()->take(10)->get();
+
+    $bookings = \App\Models\ServiceRequest::where('user_id', $user->user_id)
+                    ->with('service.category')
+                    ->latest('booking_date')
+                    ->get();
+
+    // ── Financial summaries ───────────────────────────────────────
+    $completedBookings = $bookings->where('status', 'completed');
+    $pendingBookings   = $bookings->whereIn('status', ['pending', 'confirmed']);
+
+    $totalSpent = $completedBookings->sum('total_price');
+
+    // Breakdown by category
+    $categoryBreakdown = $completedBookings
+        ->groupBy(fn($b) => $b->service?->category?->name ?? 'Uncategorised')
+        ->map(fn($group) => [
+            'count'  => $group->count(),
+            'total'  => $group->sum('total_price'),
+        ])
+        ->sortByDesc(fn($item) => $item['total']);
+
+    // Monthly spending summary (last 12 months)
+    $monthlySpending = $completedBookings
+        ->filter(fn($b) => \Carbon\Carbon::parse($b->booking_date)->gte(now()->subMonths(12)))
+        ->groupBy(fn($b) => \Carbon\Carbon::parse($b->booking_date)->format('M Y'))
+        ->map(fn($group) => [
+            'count' => $group->count(),
+            'total' => $group->sum('total_price'),
+        ]);
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.user_data', compact(
+        'user',
+        'emergencyContact',
+        'locations',
+        'loginHistories',
+        'bookings',
+        'completedBookings',
+        'pendingBookings',
+        'totalSpent',
+        'categoryBreakdown',
+        'monthlySpending'
+    ));
+
+    $pdf->setPaper('A4', 'portrait');
+
+    return $pdf->download('phanda-my-data-' . now()->format('Y-m-d') . '.pdf');
+}
     
 }

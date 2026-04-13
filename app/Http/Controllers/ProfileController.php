@@ -32,12 +32,12 @@ class ProfileController extends Controller
             'member_id' => $user->member_id ?? 'PAN-' . str_pad($user->id, 6, '0', STR_PAD_LEFT),
             'account_status' => $user->account_status ?? 'active',
             
-            // Mock service request stats (you would replace with actual queries)
-            'total_requests' => 0,
-            'active_requests' => 0,
-            'completed_requests' => 0,
+
+            'total_requests' => $user->bookings()->count(),
+            'active_requests' => $user->bookings()->whereIn('status', ['pending', 'accepted'])->count(),
+            'completed_requests' => $user->bookings()->where('status', 'completed')->count(),
             
-            // Addresses
+          
             'addresses' => $user->addresses()->get()->map(function ($address) {
                 return [
                     'address_id' => $address->address_id,
@@ -104,24 +104,41 @@ class ProfileController extends Controller
         // Map field names if needed
         $dbField = $field;
         if ($field === 'first_name' || $field === 'last_name') {
-            // Handle updating first_name/last_name
+           
+       
             if ($field === 'first_name') {
                 $user->first_name = $value;
             } else {
                 $user->last_name = $value;
             }
-            // Also update full_name
+           
             $fullName = ($user->first_name ?? '') . ' ' . ($user->last_name ?? '');
             $user->full_name = trim($fullName);
+
         } elseif ($field === 'gender') {
-            $user->gender = $value;
+            $user->userProfile->gender = $value;
         } else {
             // For other fields, check if they exist on the user model
             if (in_array($field, ['email', 'phone'])) {
+            $request->validate([
+                'otp' => 'required|digits:6',
+            ]);
+
+            $cachedOtp = Cache::get("otp_{$user->user_id}");
+
+            if (!$cachedOtp || $cachedOtp != $request->otp) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Email and phone require OTP verification'
+                    'message' => 'Invalid or expired OTP',
                 ], 400);
+            }
+           
+            Cache::forget("otp_{$user->user_id}");
+            
+            if ($request->field == 'email') {
+                $user->email = $request->input('value');
+            } else {
+                $user->phone = $request->input('value');
+            }
             }
             
             // Only update if the field exists
@@ -148,112 +165,60 @@ class ProfileController extends Controller
 
    
 
-    public function sendOtp(Request $request)
+     public function sendOtp(Request $request)
     {
         $user = $request->user();
-        
-        $validator = Validator::make($request->all(), [
-            'field' => 'required|in:email,phone',
-            'value' => 'required',
+
+        $request->validate([
+        'field' => 'required|in:email,phone',
+        'value' => 'required|string'
         ]);
-        
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-        
-        $field = $request->input('field');
-        $value = $request->input('value');
-  
 
         $otp = rand(100000, 999999);
-        
-        
-        $cacheKey = "profile_otp_{$user->user_id}_{$field}";
-        Cache::put($cacheKey, [
-            'otp' => $otp,
-            'value' => $value
-        ], now()->addMinutes(10));
-        
-       
-        return response()->json([
-            'success' => true,
-            'message' => 'OTP sent successfully',
-            'otp' => $otp 
-        ]);
-    }
 
-    
-    public function updateWithOtp(Request $request)
-    {
-        $user = $request->user();
-        
-        $validator = Validator::make($request->all(), [
-            'field' => 'required|in:email,phone',
-            'value' => 'required',
-            'otp' => 'required|digits:6',
-        ]);
-        
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-        
-        $field = $request->input('field');
-        $value = $request->input('value');
-        $otp = $request->input('otp');
-       
+        Cache::put(
+            "otp_{$user->user_id}",
+            $otp,
+            now()->addMinutes(10)
+        );
 
-        $cacheKey = "profile_otp_{$user->user_id}_{$field}";
-        $cachedData = Cache::get($cacheKey);
-        
-        if (!$cachedData || $cachedData['otp'] != $otp) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or expired OTP'
-            ], 400);
-        }
-        
+   
 
-        if ($cachedData['value'] != $value) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Value does not match OTP request'
-            ], 400);
+        if ($request->field === 'email') {
+           Mail::to($request->value)->send(new OtpMail($otp));
         }
-        
-
-        if ($field === 'email') {
-            $user->email = $value;
-            $user->email_verified_at = now();
-        } elseif ($field === 'phone') {
-            $user->phone = $value;
-            $user->phone_verified_at = now();
-        }
-        
+if ($request->field === 'phone') {
         try {
-            $user->save();
-           
+            $twilio = new \Twilio\Rest\Client(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
 
-            Cache::forget($cacheKey);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile updated and verified successfully',
-                'profile' => $this->getProfileData($user)
-            ]);
+            $twilio->messages->create(
+                $request->value,
+                [
+                    'from' => config('services.twilio.from'),
+                    'body' => "Your Phanda verification code is: {$otp}. It expires in 10 minutes. Do not share this code with anyone.",
+                ]
+            );
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send OTP SMS', [
+                'user_id' => $user->user_id,
+                'phone'   => $request->value,
+                'error'   => $e->getMessage(),
+            ]);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to update profile: ' . $e->getMessage()
+                'message' => 'Failed to send OTP via SMS. Please try again.',
             ], 500);
         }
+    }
+
+         return response()->json([
+            'message' => 'OTP sent successfully',
+        ]);
+        
+
     }
 
     

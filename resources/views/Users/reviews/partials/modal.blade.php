@@ -1,9 +1,17 @@
+<<<<<<< HEAD
 <div id="reviewModal"
+=======
+<div id="reviewModal" 
+>>>>>>> Lethokuhle
      style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
             align-items:center;justify-content:center;z-index:1000">
 
     <div style="background:#fff;padding:24px;border-radius:12px;width:92%;max-width:520px">
+<<<<<<< HEAD
         <h2 >
+=======
+        <h2>
+>>>>>>> Lethokuhle
             {{ $userReviewForSelected ? 'Edit Your Review' : 'Add Review' }}
         </h2>
 
@@ -12,10 +20,17 @@
 
             {{-- REQUIRED hidden fields --}}
             <input type="hidden" name="provider_id" value="{{ $selectedProviderId }}">
+<<<<<<< HEAD
             
             <input type="hidden" name="service_id" value="{{ $selectedProvider['name']}}">
 
             <input type="hidden" name="user_id" value="{{ $currentUser->id }}">
+=======
+
+            <input type="hidden" name="service_id" value="{{  $selectedProvider['full_name'] ?? null}}">
+
+            <input type="hidden" name="user_id" value="{{ $currentUser->user_id }}">
+>>>>>>> Lethokuhle
 
             {{-- Rating --}}
             <label style="font-weight:bold;margin-top:12px;display:block">Rating</label>
@@ -47,6 +62,7 @@
         </form>
     </div>
 </div>
+<<<<<<< HEAD
 
 <script>
 function openModal() {
@@ -56,3 +72,5 @@ function closeModal() {
     document.getElementById('reviewModal').style.display = 'none';
 }
 </script>
+=======
+>>>>>>> Lethokuhle
