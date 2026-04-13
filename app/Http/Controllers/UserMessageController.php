@@ -47,7 +47,7 @@ public function startConversation(Request $request)
 
         $selectedConversation = null;
 
-        return view('users.messages', compact('conversations', 'selectedConversation'));
+        return view('Users.messages', compact('conversations', 'selectedConversation'));
     }
 
     public function show(Conversation $conversation)
@@ -73,7 +73,7 @@ public function startConversation(Request $request)
             $q->orderBy('created_at', 'asc');
         }]);
 
-        return view('users.messages', compact('conversations'))
+        return view('Users.messages', compact('conversations'))
             ->with('selectedConversation', $conversation);
     }
 
@@ -81,33 +81,41 @@ public function startConversation(Request $request)
     {
         $request->validate([
             'conversation_id' => 'required|exists:conversations,conversation_id',
-            'message'         => 'required|string'
+            'message' => 'required|string'
         ]);
 
-        $userId = Auth::id();
+        $userId = Auth::user()->user_id;
+
+        $conversation = Conversation::query()
+            ->where('conversation_id', $request->conversation_id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$conversation) {
+            abort(403, 'Unauthorized access.');
+        }
 
         $message = Message::create([
-            'conversation_id' => $request->conversation_id,
-            'sender_id'       => $userId,
-            'sender_type'     => 'customer',
-            'message'         => $request->message,
-            'is_read'         => false,
+            'conversation_id' => $conversation->conversation_id,
+            'sender_id' => $userId,
+            'sender_type' => 'customer',
+            'message' => $request->message,
+            'is_read' => false,
         ]);
 
-        Conversation::where('conversation_id', $request->conversation_id)
-            ->update(['last_message_time' => now()]);
+        $conversation->update(['last_message_time' => now()]);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => [
-                    'id'          => $message->message_id,
-                    'message'     => $message->message,
+                    'id' => $message->message_id,
+                    'message' => $message->message,
                     'sender_type' => $message->sender_type,
-                    'is_read'     => false,
-                    'created_at'  => $message->created_at->toIso8601String(),
-                    'time'        => $message->created_at->format('H:i'),
-                    'human_time'  => $message->created_at->diffForHumans(),
+                    'is_read' => false,
+                    'created_at' => $message->created_at->toIso8601String(),
+                    'time' => $message->created_at->format('H:i'),
+                    'human_time' => $message->created_at->diffForHumans(),
                 ]
             ]);
         }
@@ -212,3 +220,4 @@ public function startConversation(Request $request)
         ]);
     }
 }
+

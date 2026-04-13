@@ -2,16 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
 use App\Models\Service;
+use App\Services\BookingCreationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ServiceRequestController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, BookingCreationService $bookingCreationService)
     {
+        $user = $request->user();
+
+        if ($user === null) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
         $validated = $request->validate([
-            'service_id' => 'required|exists:services,service_id',
+            'service_id' => ['required', Rule::exists('services', 'service_id')->whereNull('deleted_at')],
             'booking_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'address' => 'required|string|max:255',
@@ -22,20 +31,15 @@ class ServiceRequestController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $booking = Booking::create([
-            'user_id' => $request->user()->user_id,
-            'service_id' => $service->service_id,
-            'booking_date' => $validated['booking_date'],
-            'start_time' => $validated['start_time'],
-            'status' => 'pending',
-            'total_price' => $service->base_price,
-            'address' => $validated['address'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        $booking = $bookingCreationService->createFromService($user, $service, $validated);
+        $booking = $booking->fresh(['service']);
 
         return response()->json([
             'message' => 'Service request sent successfully',
-            'data' => $booking,
+            'data' => array_merge($booking->toArray(), [
+                'status_label' => $booking->status_label,
+                'display_status' => $booking->display_status,
+            ]),
         ]);
     }
 }

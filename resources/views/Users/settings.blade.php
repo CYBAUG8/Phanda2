@@ -1,6 +1,7 @@
-@extends('users.layout')
+@extends('Users.layout')
 @section('content')
 
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,11 +46,79 @@
                         </button>
                     </div>
                 @endforeach
+=======
+@push('styles')
+<style>
+    .toggle-checkbox:checked {
+        right: 0;
+        border-color: #f97316;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+        background-color: #f97316;
+    }
+    .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.4);
+        animation: fadeIn 0.2s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .modal-content {
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+@endpush
+
+<div class="user-page-shell space-y-6 text-gray-900 md:space-y-8" x-data="settingsData()" x-init="init()">
+    <section class="user-page-header">
+        <div>
+            <h1>Settings</h1>
+            <p class="user-page-subtitle">Control preferences, safety, notifications, and security for your account.</p>
+        </div>
+        <a href="/users/profile" class="ui-btn-secondary">
+            <i class="fa-solid fa-user"></i>
+            <span>Back to Profile</span>
+        </a>
+    </section>
+
+    @include('partials.ui.flash')
+
+        
+       <!-- PERSONAL INFO -->
+<section class="ui-card p-4 sm:p-6">
+    <h2 class="text-lg font-semibold mb-4 text-orange-500">Personal Information</h2>
+
+    <div class="space-y-3 text-gray-700">
+        @php
+            $userInfo = auth()->user();
+            $fields = [
+                'full_name' => $userInfo->full_name,
+                'email'     => $userInfo->email,
+                'phone'     => $userInfo->phone,
+            ];
+        @endphp
+
+        @foreach ($fields as $key => $value)
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-3 gap-2 sm:gap-0 hover:bg-gray-50 px-2 py-1 rounded transition-colors duration-200">
+                <div class="flex-1">
+                    <span class="capitalize font-medium">{{ str_replace('_', ' ', $key) }}</span>
+                    <span class="break-words capitalize">{{ $value ?? '' }}</span>
+                </div>
+                <button @click="openEditModal('{{ $key }}', '{{ $value }}')" 
+                        class="text-orange-500 hover:text-orange-600 text-sm font-medium px-3 py-1 rounded-md hover:bg-orange-50 transition-colors duration-200 w-fit">
+                    Edit
+                </button>
+>>>>>>> feature2
             </div>
         </section>
 
         <!-- SERVICE PREFERENCES -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Service Preferences</h2>
 
             <template x-if="loading.settings">
@@ -85,7 +154,7 @@
         </section>
 
         <!-- SAFETY & SHARING -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Safety & Sharing</h2>
             <div class="space-y-4">
                 <div class="border-b pb-4">
@@ -139,7 +208,7 @@
         </section>
 
         <!-- SAVED LOCATIONS -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Saved Locations</h2>
 
             <template x-if="loading.locations">
@@ -176,7 +245,7 @@
         </section>
 
         <!-- SECURITY & PRIVACY -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Security & Privacy</h2>
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b pb-3 hover:bg-gray-50 px-2 py-1 rounded transition-colors duration-200 cursor-pointer" @click="openPasswordModal()">
@@ -221,7 +290,7 @@
         </section>
 
         <!-- NOTIFICATIONS -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Notifications</h2>
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b pb-3 hover:bg-gray-50 px-2 py-1 rounded transition-colors duration-200">
@@ -235,7 +304,7 @@
         </section>
 
         <!-- DATA MANAGEMENT -->
-        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section class="ui-card p-4 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Data Management</h2>
             <div class="flex flex-col sm:flex-row gap-3">
                 <button @click="downloadData()" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border-2 border-orange-500 text-orange-500 font-medium rounded-lg hover:bg-orange-50 transition-all duration-200 w-full sm:w-auto">
@@ -736,7 +805,19 @@
                 await this.fetchRecoveryContact();
             },
 
+<<<<<<< HEAD
             // ── Fetchers ─────────────────────────────────────────────
+=======
+            notify(message, type = null) {
+                const resolvedType = type ?? (/fail|error|invalid|unable|cannot|must|required|please/i.test(String(message)) ? 'error' : 'success');
+                if (typeof window.uiToast === 'function') {
+                    window.uiToast(message, resolvedType);
+                    return;
+                }
+                console.log(message);
+            },
+
+>>>>>>> feature2
             async fetchUserInfo() {
                 try {
                     const res = await fetch('/userInfo', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
@@ -822,12 +903,22 @@
                     if (res.ok) {
                         this.editModal = false;
                         await this.fetchUserInfo();
+<<<<<<< HEAD
                         this.showAlert('Information updated successfully!', 'info');
                     } else {
                         this.showAlert(data.message || 'Failed to update. Please try again.', 'error');
                     }
                 } catch (e) {
                     this.showAlert('Failed to update. Please try again.', 'error');
+=======
+                        this.notify('Information updated successfully!');
+                    } else {
+                        this.notify(data.message || 'Failed to update. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error updating user info:', error);
+                    this.notify('Failed to update. Please try again.');
+>>>>>>> feature2
                 }
             },
 
@@ -854,10 +945,18 @@
                         this.otp = '';
                         this.otpError = '';
                     } else {
+<<<<<<< HEAD
                         this.showAlert(data.message || 'Failed to send verification code.', 'error');
                     }
                 } catch (e) {
                     this.showAlert('An error occurred while sending verification code.', 'error');
+=======
+                        this.notify(data.message || 'Failed to send verification code.');
+                    }
+                } catch (error) {
+                    console.error('Error sending OTP:', error);
+                    this.notify('An error occurred while sending verification code.');
+>>>>>>> feature2
                 }
             },
 
@@ -885,7 +984,11 @@
                         this.otpError = '';
                         this.pendingVerification = null;
                         await this.fetchUserInfo();
+<<<<<<< HEAD
                         this.showAlert('Information verified successfully!', 'info');
+=======
+                        this.notify('Information verified successfully!');
+>>>>>>> feature2
                     } else {
                         this.otpError = data.message || 'Invalid OTP. Please try again.';
                     }
@@ -908,9 +1011,15 @@
                         this.settings[key] = prev;
                         this.showAlert('Failed to update settings. Please try again.', 'error');
                     }
+<<<<<<< HEAD
                 } catch (e) {
                     this.settings[key] = prev;
                     this.showAlert('Failed to update settings. Please try again.', 'error');
+=======
+                } catch (error) {
+                    console.error('Error updating settings:', error);
+                    this.notify('Failed to update settings. Please try again.');
+>>>>>>> feature2
                 }
             },
 
@@ -923,7 +1032,11 @@
             async saveLocation() {
                 const clean = { ...this.newLocation, name: this.newLocation.name.trim(), address: this.newLocation.address.trim() };
                 if (!clean.name || !clean.address) {
+<<<<<<< HEAD
                     this.showAlert('Please fill in both location name and address', 'error');
+=======
+                    this.notify('Please fill in both location name and address');
+>>>>>>> feature2
                     return;
                 }
                 try {
@@ -934,6 +1047,7 @@
                     if (res.ok && data.success) {
                         this.locationModal = false;
                         await this.fetchLocations();
+<<<<<<< HEAD
                         this.showAlert('Location saved successfully!', 'info');
                     } else {
                         this.showAlert(data.message || 'Failed to save location', 'error');
@@ -958,6 +1072,48 @@
                         this.showAlert('Failed to delete location. Please try again.', 'error');
                     }
                 });
+=======
+                        this.notify('Location saved successfully!');
+                    } else {
+                        this.notify(data.message || 'Failed to save location');
+                    }
+                } catch (error) {
+                    console.error('Error saving location:', error);
+                    this.notify('Failed to save location. Please try again.');
+                }
+            },
+
+            async deleteLocation(id) {
+                const confirmed = await window.uiConfirm({
+                    title: 'Delete location',
+                    message: 'Delete this location?',
+                    confirmText: 'Delete',
+                    variant: 'danger',
+                });
+                if (!confirmed) return;
+                
+                try {
+                    const response = await fetch(`/locations/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        await this.fetchLocations();
+                        this.notify('Location deleted successfully!');
+                    } else {
+                        this.notify(data.message || 'Failed to delete location');
+                    }
+                } catch (error) {
+                    console.error('Error deleting location:', error);
+                    this.notify('Failed to delete location. Please try again.');
+                }
+>>>>>>> feature2
             },
 
             // ── Emergency Contact ─────────────────────────────────────
@@ -968,12 +1124,16 @@
 
             async saveEmergencyContact() {
                 if (!this.emergencyContact?.name?.trim() || !this.emergencyContact?.phone?.trim()) {
+<<<<<<< HEAD
                     this.showAlert('Please fill in both name and phone number', 'error');
                     return;
                 }
                 this.emergencyContact.phone = this.formatPhoneE164(this.emergencyContact.phone);
                 if (!this.validatePhoneE164(this.emergencyContact.phone)) {
                     this.showAlert('Please enter a valid phone number with country code (e.g. +27821234567)', 'error');
+=======
+                    this.notify('Please fill in both name and phone number');
+>>>>>>> feature2
                     return;
                 }
                 try {
@@ -987,6 +1147,7 @@
                     if (res.ok) {
                         this.emergencyContact = data.emergency_contact;
                         this.emergencyContactModal = false;
+<<<<<<< HEAD
                         this.showAlert('Emergency contact saved successfully!', 'info');
                     } else {
                         this.showAlert(data.message || 'Failed to save emergency contact', 'error');
@@ -1012,13 +1173,59 @@
                         this.showAlert('Failed to remove emergency contact', 'error');
                     }
                 });
+=======
+                        this.notify('Emergency contact saved successfully!');
+                    } else {
+                        this.notify(data.message || 'Failed to save emergency contact');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    this.notify('Could not save emergency contact. Please try again.');
+                }
+            },
+
+            async removeEmergencyContact() {
+                const confirmed = await window.uiConfirm({
+                    title: 'Remove emergency contact',
+                    message: 'Remove emergency contact?',
+                    confirmText: 'Remove',
+                    variant: 'danger',
+                });
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch('/emergency-contact', {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        }
+                    });
+
+                    if (response.ok) {
+                        this.emergencyContact = null;
+                        this.settings.auto_share = false;
+                        this.notify('Emergency contact removed.');
+                        await this.fetchSettings();
+                    }
+                } catch (error) {
+                    console.error(error);
+                    this.notify('Failed to remove emergency contact');
+                }
+>>>>>>> feature2
             },
 
             testShare() {
                 if (this.emergencyContact) {
+<<<<<<< HEAD
                     this.showAlert(`Test SMS would be sent to ${this.emergencyContact.name} at ${this.emergencyContact.phone}.`, 'info');
                 } else {
                     this.showAlert('Please add an emergency contact first', 'error');
+=======
+                    this.notify(`Test message would be sent to ${this.emergencyContact.name} at ${this.emergencyContact.phone}.`);
+                } else {
+                    this.notify('Please add an emergency contact first');
+>>>>>>> feature2
                 }
             },
 
@@ -1026,10 +1233,69 @@
             openPasswordModal() { this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' }; this.passwordModal = true; },
 
             async updatePassword() {
+<<<<<<< HEAD
                 const { currentPassword, newPassword, confirmPassword } = this.passwordData;
                 if (!currentPassword || !newPassword || !confirmPassword) {
                     this.showAlert('Please fill in all password fields', 'error');
                     return;
+=======
+    const { currentPassword, newPassword, confirmPassword } = this.passwordData;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        this.notify('Please fill in all password fields');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        this.notify('New password and confirm password do not match!');
+        return;
+    }
+
+    if (newPassword.length < 6 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        this.notify('Password must be at least 6 characters, and include letters and numbers.');
+        return;
+    }
+
+    if (newPassword === currentPassword) {
+        this.notify('New password must be different from current password.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/update-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            },
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword,
+                new_password_confirmation: confirmPassword
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            this.notify('Password updated successfully!');
+            this.passwordModal = false;
+            this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
+        } else {
+            this.notify(data.message || 'Failed to update password');
+        }
+    } catch (error) {
+        console.error('Error updating password:', error);
+        this.notify('Failed to update password. Please try again.');
+    }
+},
+
+
+            openRecoveryContactModal() {
+                if (!this.recoveryContact) {
+                    this.recoveryContact = { name: '', phone: '', email: '', relationship: '' };
+>>>>>>> feature2
                 }
                 if (newPassword !== confirmPassword) {
                     this.showAlert('New password and confirm password do not match!', 'error');
@@ -1069,6 +1335,7 @@
             },
 
             async saveRecoveryContact() {
+<<<<<<< HEAD
                 if (!this.recoveryContact?.name?.trim() || !this.recoveryContact?.phone?.trim()) {
                     this.showAlert('Please fill in both name and phone number', 'error');
                     return;
@@ -1096,6 +1363,78 @@
                 } catch (e) {
                     this.showAlert('Could not save recovery contact. Please try again.', 'error');
                 }
+=======
+    if (!this.recoveryContact?.name?.trim() || !this.recoveryContact?.phone?.trim()) {
+        this.notify('Please fill in both name and phone number');
+        return;
+    }
+
+    try {
+        const method = this.recoveryContact.recovery_contact_id ? 'PUT' : 'POST';
+        const response = await fetch('/recovery-contact', {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            },
+            body: JSON.stringify({
+                name: this.recoveryContact.name,
+                phone: this.recoveryContact.phone,
+                email: this.recoveryContact.email,
+                relationship: this.recoveryContact.relationship,
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            this.recoveryContact = data.recovery_contact;
+            this.recoveryContactModal = false;
+            this.notify('Recovery contact saved successfully!');
+        } else {
+            this.notify(data.message || 'Failed to save recovery contact');
+        }
+    } catch (error) {
+        console.error(error);
+        this.notify('Could not save recovery contact. Please try again.');
+    }
+},
+
+async removeRecoveryContact() {
+    const confirmed = await window.uiConfirm({
+        title: 'Remove recovery contact',
+        message: 'Remove recovery contact?',
+        confirmText: 'Remove',
+        variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch('/recovery-contact', {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            }
+        });
+
+        if (response.ok) {
+            this.recoveryContact = null;
+            this.notify('Recovery contact removed.');
+        } else {
+            this.notify('Failed to remove recovery contact');
+        }
+    } catch (error) {
+        console.error(error);
+        this.notify('Failed to remove recovery contact');
+    }
+},
+
+            openLoginHistoryModal() {
+                this.fetchLoginHistory();
+                this.loginHistoryModal = true;
+>>>>>>> feature2
             },
 
             removeRecoveryContact() {
@@ -1119,7 +1458,29 @@
 
             // ── Data Management ───────────────────────────────────────
             downloadData() {
+<<<<<<< HEAD
                 window.location.href = '/download-my-data';
+=======
+                const payload = {
+                    userInfo: this.userInfo,
+                    settings: this.settings,
+                    savedLocations: this.savedLocations,
+                    emergencyContact: this.emergencyContact,
+                    recoveryContact: this.recoveryContact,
+                    loginHistory: this.loginHistory,
+                    exportedAt: new Date().toISOString(),
+                };
+                
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'my-phanda-settings.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+>>>>>>> feature2
             },
 
             openDeleteModal() {
@@ -1147,6 +1508,7 @@
                     const data = await res.json();
                     if (res.ok) {
                         localStorage.clear();
+<<<<<<< HEAD
                         this.showAlert('Your account has been deleted', 'info');
                         window.location.href = '/';
                     } else {
@@ -1158,6 +1520,16 @@
                     }
                 } catch (e) {
                     this.showAlert('Failed to delete account', 'error');
+=======
+                        this.notify('Your account has been deleted');
+                        window.location.href = '/';
+                    } else {
+                        this.notify(data.message || 'Failed to delete account');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    this.notify('Failed to delete account');
+>>>>>>> feature2
                 }
             },
 
@@ -1165,6 +1537,6 @@
         }
     }
     </script>
-</body>
-</html>
 @endsection
+
+

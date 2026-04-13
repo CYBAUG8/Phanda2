@@ -35,4 +35,8 @@ class UserDashboardSummarySeeder extends Seeder
 
         $this->command->info('Customer dashboard summaries seeded successfully.');
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> feature2

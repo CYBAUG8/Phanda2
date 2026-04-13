@@ -1,241 +1,560 @@
 @extends('Providers.layout')
 
 @section('content')
-<div x-data="{
-        addModalOpen: @js($errors->any()),
-        editModalOpen: false,
-        editingService: {}
-    }" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    @php
-        $addDisabled = $categories->isEmpty() || empty($providerProfile->service_area);
-        $addDisabledReason = $categories->isEmpty()
-            ? 'Create categories first before adding services.'
-            : (empty($providerProfile->service_area) ? 'Complete your provider profile first.' : '');
-    @endphp
+@php
+    $showArchived = $showArchived ?? false;
+    $serviceMetrics = $serviceMetrics ?? ['total' => 0, 'active' => 0, 'paused' => 0, 'archived' => 0];
+    $serviceFilters = $serviceFilters ?? ['q' => '', 'category' => '', 'status' => 'all', 'sort' => 'newest'];
+    $openAddModalOnLoad = $errors->any() && old('_form_mode', 'add') === 'add';
+    $addDisabled = $categories->isEmpty() || empty($providerProfile->service_area);
+    $addDisabledReason = $categories->isEmpty()
+        ? 'Create categories first before adding services.'
+        : (empty($providerProfile->service_area) ? 'Complete your provider profile first.' : '');
 
-    <div class="mb-6 flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-semibold text-gray-900">Services</h1>
-            <p class="mt-1 text-sm text-gray-500">Manage your offerings and pricing.</p>
+    $sortOptions = [
+        'newest' => 'Newest',
+        'oldest' => 'Oldest',
+        'price_low' => 'Price: Low to High',
+        'price_high' => 'Price: High to Low',
+        'name_asc' => 'Name: A to Z',
+        'name_desc' => 'Name: Z to A',
+    ];
+
+    $hasFilters = trim((string) ($serviceFilters['q'] ?? '')) !== ''
+        || trim((string) ($serviceFilters['category'] ?? '')) !== ''
+        || (!$showArchived && (($serviceFilters['status'] ?? 'all') !== 'all'))
+        || (($serviceFilters['sort'] ?? 'newest') !== 'newest');
+@endphp
+
+<div
+    x-data="providerServicesPage({
+        initialAddOpen: @js($openAddModalOnLoad),
+        addDisabled: @js($addDisabled),
+    })"
+    class="mx-auto max-w-6xl space-y-6"
+>
+    <section class="provider-page-header">
+        <div class="space-y-3">
+            <div>
+                <h1>Services</h1>
+                <p class="provider-page-subtitle">
+                    {{ $showArchived ? 'Archived services are kept for your records.' : 'Manage pricing, availability, and service quality details.' }}
+                </p>
+            </div>
+
+            <div class="provider-segmented" role="tablist" aria-label="Service views">
+                <a
+                    href="{{ route('provider.services.index') }}"
+                    class="provider-segmented-link {{ !$showArchived ? 'is-active' : '' }}"
+                    role="tab"
+                    aria-selected="{{ !$showArchived ? 'true' : 'false' }}"
+                >
+                    <span>Active &amp; Paused</span>
+                    <span class="provider-status-badge provider-status-paused">{{ number_format((int) $serviceMetrics['total']) }}</span>
+                </a>
+                <a
+                    href="{{ route('provider.services.index', ['archived' => 1]) }}"
+                    class="provider-segmented-link {{ $showArchived ? 'is-active' : '' }}"
+                    role="tab"
+                    aria-selected="{{ $showArchived ? 'true' : 'false' }}"
+                >
+                    <span>Archived</span>
+                    <span class="provider-status-badge provider-status-archived">{{ number_format((int) $serviceMetrics['archived']) }}</span>
+                </a>
+            </div>
         </div>
-        <button @click="addModalOpen = true"
-                class="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+
+        @if(!$showArchived)
+            <button
+                type="button"
+                @click="openAddModal()"
+                class="ui-btn-primary min-h-11 justify-center px-4 py-2.5 disabled:cursor-not-allowed disabled:opacity-60"
                 title="{{ $addDisabled ? $addDisabledReason : 'Add a new service offering' }}"
-                @if($addDisabled) disabled @endif>
-            <i class="fa-solid fa-plus"></i>
-            Add Service
-        </button>
-    </div>
-
-    @if(session('success'))
-        <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>
-    @endif
-
-    @if(session('error'))
-        <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <ul class="list-disc list-inside space-y-1">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    @if($services->isEmpty())
-        <div class="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
-            <p class="text-base font-medium text-gray-800">No services yet</p>
-            <p class="mt-1 text-sm text-gray-500">Add your first service to get started.</p>
-            <button @click="addModalOpen = true"
-                    class="mt-4 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
-                    title="{{ $addDisabled ? $addDisabledReason : 'Add a new service offering' }}"
-                    @if($addDisabled) disabled @endif>
+                @if($addDisabled) disabled @endif
+            >
                 <i class="fa-solid fa-plus"></i>
-                Add Service
+                <span>Add Service</span>
             </button>
+        @endif
+    </section>
+
+    <section class="provider-metrics-grid" aria-label="Service summary metrics">
+        <article class="provider-metric-card">
+            <p class="provider-metric-label">Total Services</p>
+            <p class="provider-metric-value">{{ number_format((int) $serviceMetrics['total']) }}</p>
+        </article>
+        <article class="provider-metric-card">
+            <p class="provider-metric-label">Active</p>
+            <p class="provider-metric-value text-emerald-700">{{ number_format((int) $serviceMetrics['active']) }}</p>
+        </article>
+        <article class="provider-metric-card">
+            <p class="provider-metric-label">Paused</p>
+            <p class="provider-metric-value text-slate-700">{{ number_format((int) $serviceMetrics['paused']) }}</p>
+        </article>
+        <article class="provider-metric-card">
+            <p class="provider-metric-label">Archived</p>
+            <p class="provider-metric-value text-slate-600">{{ number_format((int) $serviceMetrics['archived']) }}</p>
+        </article>
+    </section>
+
+    @include('partials.ui.flash')
+
+    @if(!$showArchived && empty($providerProfile->service_area))
+        <div class="ui-alert ui-alert-error flex flex-wrap items-center justify-between gap-3">
+            <span>Add your service area in Provider Profile before creating or editing services.</span>
+            <a href="/providers/profile" class="ui-btn-secondary px-3 py-1.5 text-xs">Go to Profile</a>
         </div>
+    @endif
+
+    @if(!$showArchived && $categories->isEmpty())
+        <div class="ui-alert ui-alert-error">
+            Categories are currently unavailable. Create categories before adding services.
+        </div>
+    @endif
+
+    <form action="{{ route('provider.services.index') }}" method="GET" class="provider-filter-bar">
+        @if($showArchived)
+            <input type="hidden" name="archived" value="1">
+        @endif
+
+        <div class="provider-filter-grid">
+            <div>
+                <label for="serviceSearch" class="provider-label">Search</label>
+                <input
+                    id="serviceSearch"
+                    type="text"
+                    name="q"
+                    value="{{ $serviceFilters['q'] }}"
+                    class="provider-input"
+                    placeholder="Search by title, description, or category"
+                >
+            </div>
+
+            <div>
+                <label for="serviceCategory" class="provider-label">Category</label>
+                <select id="serviceCategory" name="category" class="provider-select">
+                    <option value="">All categories</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" @selected($serviceFilters['category'] === $category->id)>
+                            {{ $category->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="serviceStatus" class="provider-label">Status</label>
+                <select
+                    id="serviceStatus"
+                    name="status"
+                    class="provider-select"
+                    @if($showArchived) disabled @endif
+                >
+                    <option value="all" @selected(($serviceFilters['status'] ?? 'all') === 'all')>All</option>
+                    <option value="active" @selected(($serviceFilters['status'] ?? 'all') === 'active')>Active</option>
+                    <option value="paused" @selected(($serviceFilters['status'] ?? 'all') === 'paused')>Paused</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="serviceSort" class="provider-label">Sort</label>
+                <select id="serviceSort" name="sort" class="provider-select">
+                    @foreach($sortOptions as $key => $label)
+                        <option value="{{ $key }}" @selected(($serviceFilters['sort'] ?? 'newest') === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="provider-filter-actions">
+                <button type="submit" class="ui-btn-primary w-full justify-center">Apply</button>
+                <a
+                    href="{{ route('provider.services.index', $showArchived ? ['archived' => 1] : []) }}"
+                    class="ui-btn-secondary w-full justify-center"
+                >
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+
+    @if($services->total() === 0)
+        <section class="provider-empty-state">
+            @if($showArchived)
+                <h3>No archived services found</h3>
+                <p>Archived services will appear here once you archive active listings.</p>
+            @elseif($hasFilters)
+                <h3>No services match these filters</h3>
+                <p>Adjust search terms or filters to find matching services.</p>
+            @else
+                <h3>No services yet</h3>
+                <p>Create your first service to start receiving bookings from customers.</p>
+            @endif
+
+            @if(!$showArchived)
+                <div class="mt-4 flex flex-wrap justify-center gap-2">
+                    <button
+                        type="button"
+                        @click="openAddModal()"
+                        class="ui-btn-primary"
+                        @if($addDisabled) disabled @endif
+                        title="{{ $addDisabled ? $addDisabledReason : 'Add a new service offering' }}"
+                    >
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Service</span>
+                    </button>
+                    @if($hasFilters)
+                        <a href="{{ route('provider.services.index') }}" class="ui-btn-secondary">Clear Filters</a>
+                    @endif
+                </div>
+            @endif
+        </section>
     @else
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            @foreach($services as $ps)
-                <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            @foreach($services as $service)
+                @php
+                    $statusClass = $showArchived
+                        ? 'provider-status-archived'
+                        : ($service->is_active ? 'provider-status-active' : 'provider-status-paused');
+                @endphp
+                <article class="ui-card flex h-full flex-col p-4">
                     <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <p class="text-xs font-medium text-gray-500">{{ $ps->category?->name ?? 'Uncategorised' }}</p>
-                            <h3 class="mt-1 text-base font-semibold text-gray-900">{{ $ps->title ?: ($ps->category?->name ?? 'Service') }}</h3>
+                        <div class="min-w-0">
+                            <p class="text-xs font-medium text-slate-500">{{ $service->category?->name ?? 'Uncategorised' }}</p>
+                            <h2 class="mt-1 truncate text-base font-semibold text-slate-900">
+                                {{ $service->title ?: ($service->category?->name ?? 'Service') }}
+                            </h2>
                         </div>
-                        <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ $ps->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
-                            {{ $ps->is_active ? 'Active' : 'Paused' }}
+                        <span class="provider-status-badge {{ $statusClass }}">
+                            {{ $showArchived ? 'Archived' : ($service->is_active ? 'Active' : 'Paused') }}
                         </span>
                     </div>
 
-                    <p class="mt-2 text-sm text-gray-600">{{ \Illuminate\Support\Str::limit($ps->description, 90) }}</p>
+                    <p class="mt-3 text-sm leading-6 text-slate-600">{{ \Illuminate\Support\Str::limit($service->description, 120) }}</p>
 
-                    <div class="mt-3 flex items-center justify-between text-sm">
-                        <p class="font-semibold text-gray-900">R{{ number_format((float)$ps->base_price, 2) }}</p>
-                        <p class="text-gray-500">{{ (int)$ps->min_duration }} min</p>
+                    <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <p class="text-lg font-bold text-slate-900">R{{ number_format((float) $service->base_price, 2) }}</p>
+                        <p class="text-sm text-slate-500">{{ (int) $service->min_duration }} min</p>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-3 gap-2">
-                        <button @click="editingService = {
-                                    id: '{{ $ps->service_id }}',
-                                    category_id: '{{ $ps->category_id }}',
-                                    title: @js($ps->title),
-                                    description: @js($ps->description),
-                                    base_price: '{{ (float)$ps->base_price }}',
-                                    min_duration: '{{ (int)$ps->min_duration }}'
-                                }; editModalOpen = true"
-                                class="col-span-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
-                            Edit
-                        </button>
+                    @if(!$showArchived)
+                        <div class="mt-4 grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                @click="startEdit({
+                                    id: '{{ $service->service_id }}',
+                                    category_id: '{{ $service->category_id }}',
+                                    title: @js($service->title),
+                                    description: @js($service->description),
+                                    base_price: '{{ (float) $service->base_price }}',
+                                    min_duration: '{{ (int) $service->min_duration }}'
+                                })"
+                                class="ui-btn-secondary min-h-11 justify-center px-3 py-2 text-sm"
+                            >
+                                Edit
+                            </button>
 
-                        <form action="{{ route('provider.services.destroy', $ps->service_id) }}" method="POST" onsubmit="return confirm('Remove this service offering?')">
+                            <form
+                                action="{{ route('provider.services.destroy', $service->service_id) }}"
+                                method="POST"
+                                data-confirm="Archive this service offering?"
+                                data-confirm-title="Archive service"
+                                data-confirm-text="Archive"
+                                data-confirm-variant="danger"
+                                data-submit-lock="true"
+                            >
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="ui-btn-danger min-h-11 w-full justify-center px-3 py-2 text-sm" data-loading-text="Archiving...">
+                                    Archive
+                                </button>
+                            </form>
+                        </div>
+
+                        <form action="{{ route('provider.services.toggle', $service->service_id) }}" method="POST" class="mt-2" data-submit-lock="true">
                             @csrf
-                            @method('DELETE')
-                            <button type="submit" class="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100">
-                                <i class="fa-solid fa-trash"></i>
+                            @method('PATCH')
+                            <button
+                                type="submit"
+                                class="ui-btn-secondary min-h-11 w-full justify-center px-3 py-2 text-sm {{ $service->is_active ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}"
+                                data-loading-text="{{ $service->is_active ? 'Pausing...' : 'Resuming...' }}"
+                            >
+                                {{ $service->is_active ? 'Pause Service' : 'Resume Service' }}
                             </button>
                         </form>
-                    </div>
-
-                    <form action="{{ route('provider.services.toggle', $ps->service_id) }}" method="POST" class="mt-2">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit"
-                                class="w-full rounded-lg px-3 py-2 text-sm font-medium transition {{ $ps->is_active ? 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border border-green-200 bg-green-50 text-green-700 hover:bg-green-100' }}">
-                            {{ $ps->is_active ? 'Pause Service' : 'Resume Service' }}
-                        </button>
-                    </form>
-                </div>
+                    @else
+                        <p class="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                            Archived services are read-only.
+                        </p>
+                    @endif
+                </article>
             @endforeach
-        </div>
+        </section>
+
+        @if($services->hasPages())
+            <section class="pt-2">
+                {{ $services->onEachSide(1)->links() }}
+            </section>
+        @endif
     @endif
 
-    <div x-show="addModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none">
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="fixed inset-0 bg-black/50" @click="addModalOpen = false"></div>
-            <div class="relative z-10 w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-5 shadow-xl">
-                <div class="mb-4 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Add Service</h3>
-                    <button @click="addModalOpen = false" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+    @if(!$showArchived)
+        <div
+            x-show="addModalOpen"
+            x-cloak
+            x-on:keydown.escape.window="addModalOpen = false"
+            class="fixed inset-0 z-50 overflow-y-auto p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="addServiceTitle"
+        >
+            <div class="flex min-h-full items-center justify-center">
+                <div class="fixed inset-0 bg-slate-950/50" @click="addModalOpen = false"></div>
+                <div class="provider-modal-panel relative z-10 w-full max-w-2xl">
+                    <div class="provider-modal-header">
+                        <h3 id="addServiceTitle" class="text-lg font-semibold text-slate-900">Add Service</h3>
+                        <button type="button" class="text-slate-500 hover:text-slate-700" @click="addModalOpen = false" aria-label="Close add service modal">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <form action="{{ route('provider.services.store') }}" method="POST" class="provider-modal-body space-y-4" data-submit-lock="true">
+                        @csrf
+                        <input type="hidden" name="_form_mode" value="add">
+
+                        <div>
+                            <label class="provider-label normal-case tracking-normal text-slate-700">Service Title</label>
+                            <input
+                                type="text"
+                                name="title"
+                                required
+                                maxlength="255"
+                                value="{{ old('title') }}"
+                                class="provider-input @error('title') border-rose-400 ring-2 ring-rose-100 @enderror"
+                                placeholder="e.g. Deep Home Cleaning"
+                            >
+                            @error('title')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Category</label>
+                                <select
+                                    name="category_id"
+                                    required
+                                    class="provider-select @error('category_id') border-rose-400 ring-2 ring-rose-100 @enderror"
+                                >
+                                    <option value="">Select category</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('category_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Min Duration (minutes)</label>
+                                <input
+                                    type="number"
+                                    min="15"
+                                    max="1440"
+                                    name="min_duration"
+                                    required
+                                    value="{{ old('min_duration', 60) }}"
+                                    class="provider-input @error('min_duration') border-rose-400 ring-2 ring-rose-100 @enderror"
+                                >
+                                @error('min_duration')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Price (R)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="99999999.99"
+                                    name="base_price"
+                                    required
+                                    value="{{ old('base_price') }}"
+                                    placeholder="0.00"
+                                    class="provider-input @error('base_price') border-rose-400 ring-2 ring-rose-100 @enderror"
+                                >
+                                @error('base_price')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Location</label>
+                                <input
+                                    type="text"
+                                    class="provider-input bg-slate-50 text-slate-500"
+                                    value="{{ $providerProfile->service_area }}"
+                                    readonly
+                                >
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="provider-label normal-case tracking-normal text-slate-700">Description</label>
+                            <textarea
+                                name="description"
+                                rows="4"
+                                required
+                                maxlength="65535"
+                                class="provider-textarea @error('description') border-rose-400 ring-2 ring-rose-100 @enderror"
+                                placeholder="Describe what's included, equipment used, and what customers should expect."
+                            >{{ old('description') }}</textarea>
+                            @error('description')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="provider-modal-footer -mx-5 -mb-5 mt-2">
+                            <button type="button" @click="addModalOpen = false" class="ui-btn-secondary px-4 py-2">Cancel</button>
+                            <button type="submit" class="ui-btn-primary px-4 py-2" data-loading-text="Saving...">Save Service</button>
+                        </div>
+                    </form>
                 </div>
-
-                <form action="{{ route('provider.services.store') }}" method="POST" class="space-y-4">
-                    @csrf
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700">Service Title</label>
-                        <input type="text" name="title" required maxlength="255" value="{{ old('title') }}"
-                               class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900 @error('title') border-red-400 ring-1 ring-red-200 @enderror">
-                        @error('title')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-gray-700">Category</label>
-                            <select name="category_id" required
-                                    class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900 @error('category_id') border-red-400 ring-1 ring-red-200 @enderror">
-                                <option value="">Select category</option>
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat->id }}" @selected(old('category_id') == $cat->id)>{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('category_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-                        </div>
-
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-gray-700">Min Duration (minutes)</label>
-                            <input type="number" min="15" max="1440" name="min_duration" required value="{{ old('min_duration', 60) }}"
-                                   class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900 @error('min_duration') border-red-400 ring-1 ring-red-200 @enderror">
-                            @error('min_duration')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-gray-700">Price (R)</label>
-                            <input type="number" step="0.01" min="0" max="99999999.99" name="base_price" required value="{{ old('base_price') }}" placeholder="0.00"
-                                   class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900 @error('base_price') border-red-400 ring-1 ring-red-200 @enderror">
-                            @error('base_price')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-                        </div>
-
-
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700">Description</label>
-                        <textarea name="description" rows="4" required maxlength="65535" class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900 @error('description') border-red-400 ring-1 ring-red-200 @enderror">{{ old('description') }}</textarea>
-                        @error('description')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div class="flex justify-end gap-2 pt-2">
-                        <button type="button" @click="addModalOpen = false" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black">Save Service</button>
-                    </div>
-                </form>
             </div>
         </div>
-    </div>
 
-    <div x-show="editModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none">
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="fixed inset-0 bg-black/50" @click="editModalOpen = false"></div>
-            <div class="relative z-10 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-xl">
-                <div class="mb-4 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Edit Service</h3>
-                    <button @click="editModalOpen = false" class="text-gray-500 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+        <div
+            x-show="editModalOpen"
+            x-cloak
+            x-on:keydown.escape.window="editModalOpen = false"
+            class="fixed inset-0 z-50 overflow-y-auto p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="editServiceTitle"
+        >
+            <div class="flex min-h-full items-center justify-center">
+                <div class="fixed inset-0 bg-slate-950/50" @click="editModalOpen = false"></div>
+                <div class="provider-modal-panel relative z-10 w-full max-w-2xl">
+                    <div class="provider-modal-header">
+                        <h3 id="editServiceTitle" class="text-lg font-semibold text-slate-900">Edit Service</h3>
+                        <button type="button" class="text-slate-500 hover:text-slate-700" @click="editModalOpen = false" aria-label="Close edit service modal">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <form :action="'{{ url('/providers/services') }}/' + editingService.id" method="POST" class="provider-modal-body space-y-4" data-submit-lock="true">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="_form_mode" value="edit">
+
+                        <div>
+                            <label class="provider-label normal-case tracking-normal text-slate-700">Service Title</label>
+                            <input type="text" name="title" x-model="editingService.title" required maxlength="255" class="provider-input">
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Category</label>
+                                <select name="category_id" x-model="editingService.category_id" required class="provider-select">
+                                    <option value="">Select category</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Min Duration (minutes)</label>
+                                <input type="number" min="15" max="1440" name="min_duration" x-model="editingService.min_duration" required class="provider-input">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Price (R)</label>
+                                <input type="number" step="0.01" min="0" max="99999999.99" name="base_price" x-model="editingService.base_price" required class="provider-input">
+                            </div>
+                            <div>
+                                <label class="provider-label normal-case tracking-normal text-slate-700">Location</label>
+                                <input type="text" value="{{ $providerProfile->service_area }}" class="provider-input bg-slate-50 text-slate-500" readonly>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="provider-label normal-case tracking-normal text-slate-700">Description</label>
+                            <textarea name="description" rows="4" x-model="editingService.description" maxlength="65535" required class="provider-textarea"></textarea>
+                        </div>
+
+                        <div class="provider-modal-footer -mx-5 -mb-5 mt-2">
+                            <button type="button" @click="editModalOpen = false" class="ui-btn-secondary px-4 py-2">Cancel</button>
+                            <button type="submit" class="ui-btn-primary px-4 py-2" data-loading-text="Saving...">Save Changes</button>
+                        </div>
+                    </form>
                 </div>
-
-                <form :action="'{{ url('/providers/services') }}/' + editingService.id" method="POST" class="space-y-4">
-                    @csrf
-                    @method('PATCH')
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700">Service Title</label>
-                        <input type="text" name="title" x-model="editingService.title" required maxlength="255"
-                               class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700">Category</label>
-                        <select name="category_id" x-model="editingService.category_id" required
-                                class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
-                            <option value="">Select category</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700">Description</label>
-                        <textarea name="description" rows="3" x-model="editingService.description" maxlength="65535" required
-                                  class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-gray-700">Price (R)</label>
-                            <input type="number" step="0.01" min="0" max="99999999.99" name="base_price" x-model="editingService.base_price" required
-                                   class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-gray-700">Duration (min)</label>
-                            <input type="number" min="15" max="1440" name="min_duration" x-model="editingService.min_duration" required
-                                   class="w-full rounded-xl border-gray-300 text-sm focus:border-gray-900 focus:ring-gray-900">
-                        </div>
-                    </div>
-
-
-                    <div class="flex justify-end gap-2 pt-2">
-                        <button type="button" @click="editModalOpen = false" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black">Save Changes</button>
-                    </div>
-                </form>
             </div>
         </div>
-    </div>
+    @endif
 </div>
+
+@push('scripts')
+<script>
+function providerServicesPage(config) {
+    return {
+        addModalOpen: Boolean(config.initialAddOpen),
+        editModalOpen: false,
+        addDisabled: Boolean(config.addDisabled),
+        editingService: {
+            id: '',
+            category_id: '',
+            title: '',
+            description: '',
+            base_price: '',
+            min_duration: '',
+        },
+        openAddModal() {
+            if (this.addDisabled) {
+                return;
+            }
+            this.addModalOpen = true;
+        },
+        startEdit(service) {
+            this.editingService = { ...service };
+            this.editModalOpen = true;
+        },
+    };
+}
+
+(() => {
+    if (window.__providerSubmitLockInit) {
+        return;
+    }
+    window.__providerSubmitLockInit = true;
+
+    document.addEventListener('submit', (event) => {
+        if (event.defaultPrevented) {
+            return;
+        }
+
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+
+        if (form.dataset.submitLock !== 'true') {
+            return;
+        }
+
+        const submitter = event.submitter;
+        if (!(submitter instanceof HTMLButtonElement)) {
+            return;
+        }
+
+        if (submitter.disabled) {
+            event.preventDefault();
+            return;
+        }
+
+        submitter.disabled = true;
+        const loadingText = submitter.dataset.loadingText;
+        if (loadingText) {
+            submitter.dataset.originalText = submitter.innerHTML;
+            submitter.innerHTML = loadingText;
+        }
+    });
+})();
+</script>
+@endpush
 @endsection

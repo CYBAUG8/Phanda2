@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -10,7 +11,9 @@ use App\Http\Controllers\ReviewController;
 
 use App\Http\Controllers\UserServiceController;
 use App\Http\Controllers\UserBookingController;
-
+use App\Http\Controllers\UserPaymentController;
+//profile
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\LocationController;
@@ -30,7 +33,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserMessageController;
 use App\Http\Controllers\ProviderMessageController;
 use App\Http\Controllers\ServiceController;
-
+use Illuminate\Support\Facades\Http;
 /*`
 |--------------------------------------------------------------------------
 | Public Routes
@@ -174,6 +177,24 @@ Route::middleware('auth')->group(function () {
         ->name('provider.profile.update');
 
     Route::delete('provider-profile', [ProviderProfileController::class, 'destroy']);
+    Route::post('/providers/services', [ProviderServiceController::class, 'store'])
+        ->name('provider.services.store');
+    Route::put('/providers/services/{service}', [ProviderServiceController::class, 'update'])
+        ->name('provider.services.update');
+    Route::patch('/providers/services/{service}/toggle', [ProviderServiceController::class, 'toggle'])
+        ->name('provider.services.toggle');
+    Route::delete('/providers/services/{service}', [ProviderServiceController::class, 'destroy'])
+        ->name('provider.services.destroy');
+    Route::patch('/providers/bookings/{id}/confirm', [ProviderBookingController::class, 'confirm'])
+        ->name('provider.bookings.confirm');
+    Route::patch('/providers/bookings/{id}/start', [ProviderBookingController::class, 'start'])
+        ->name('provider.bookings.start');
+    Route::patch('/providers/bookings/{id}/complete', [ProviderBookingController::class, 'complete'])
+        ->name('provider.bookings.complete');
+    Route::patch('/providers/bookings/{id}/cancel', [ProviderBookingController::class, 'cancel'])
+        ->name('provider.bookings.cancel');
+
+
 
 
     /*

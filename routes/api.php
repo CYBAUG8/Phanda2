@@ -1,27 +1,23 @@
 <?php
 
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EmergencyContactController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\LoginHistoryController;
+use App\Http\Controllers\ProviderProfileController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ServiceRequestController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ReviewController;
-//profile
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\Api\EmergencyContactController;
-use App\Http\Controllers\Api\LocationController;
-use App\Http\Controllers\Api\LoginHistoryController;
-use App\Http\Controllers\Api\AccountController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProviderProfileController;
-use App\Http\Controllers\ServiceRequestController;
-use App\Http\Controllers\ServiceController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
 */
 
 // ----------------- Reviews API -----------------
@@ -32,30 +28,20 @@ Route::get('/reviews/{provider_id}', [ReviewController::class, 'apiIndex']);
 // Get all reviews for a specific user
 Route::get('/reviews/user/{user_id}', [ReviewController::class, 'userReviews']);
 
-// Create or update a review
-Route::post('/reviews', [ReviewController::class, 'store']);
-
-// Delete a review
-Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
-
-// ----------------- Optional Authenticated Routes -----------------
-// Uncomment if you want only authenticated users to access certain endpoints
-/*
 Route::middleware('auth:sanctum')->group(function () {
+    // Create or update a review
     Route::post('/reviews', [ReviewController::class, 'store']);
-    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
-});
-*/
 
-Route::middleware('auth:sanctum')->group(function () {
-    
+    // Delete a review
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+
     // User Info & Settings
     Route::prefix('settings')->group(function () {
-        Route::get('/userInfo', [SettingsController::class, 'getUserInfo']);
-        Route::post('/updateUserInfo', [SettingsController::class, 'updateUserInfo']);
-        Route::post('/sendOtp', [SettingsController::class, 'sendOtp']);
+        Route::get('/userInfo', [UserController::class, 'getUserInfo']);
+        Route::post('/updateUserInfo', [UserController::class, 'updateUserInfo']);
+        Route::post('/sendOtp', [UserController::class, 'sendOtp'])->middleware('throttle:6,1');
         Route::get('/getSettings', [SettingsController::class, 'getSettings']);
-        Route::post('/settings', [SettingsController::class, 'updateSettings']);
+        Route::post('/settings', [SettingsController::class, 'toggleSettings']);
         Route::post('/notification-preferences', [SettingsController::class, 'updateNotificationPreferences']);
     });
 
@@ -91,11 +77,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/', [AccountController::class, 'destroy']);
     });
 
+
     // Additional routes
     Route::get('/user', function (Request $request) {
         return response()->json([
             'success' => true,
-            'user' => $request->user()
+            'user' => $request->user(),
         ]);
     });
 });

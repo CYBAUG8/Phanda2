@@ -8,7 +8,9 @@ use Illuminate\Support\Str;
 class RecoveryContact extends Model
 {
     protected $primaryKey = 'recovery_contact_id';
-    
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'recovery_contact_id',
         'user_id',
@@ -17,8 +19,8 @@ class RecoveryContact extends Model
         'email',
         'relationship',
     ];
- 
-       protected static function booted()
+
+    protected static function booted()
     {
         static::creating(function ($model) {
             if (!$model->recovery_contact_id) {
@@ -26,6 +28,7 @@ class RecoveryContact extends Model
             }
         });
     }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

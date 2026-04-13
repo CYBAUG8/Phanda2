@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Address;
+<<<<<<< HEAD
 use App\Models\EmergencyContact;
 use App\Models\Service;
 use App\Models\ServiceRequest;
@@ -16,6 +17,27 @@ class UserBookingController extends Controller
         $user = $request->user();
 
         $query = ServiceRequest::with(['service.category'])
+=======
+use App\Models\Booking;
+use App\Models\Service;
+use App\Services\BookingCreationService;
+use App\Services\BookingLifecycleService;
+use App\Services\BookingPaymentService;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class UserBookingController extends Controller
+{
+    public function index(Request $request, BookingLifecycleService $bookingLifecycleService)
+    {
+        $user = $request->user();
+
+        $bookingLifecycleService->expireStaleBookings(
+            Booking::query()->where('user_id', $user->user_id)
+        );
+
+        $query = Booking::with(['service.category'])
+>>>>>>> feature2
             ->where('user_id', $user->user_id)
             ->orderByDesc('booking_date')
             ->orderByDesc('start_time');
@@ -26,10 +48,17 @@ class UserBookingController extends Controller
 
         $bookings = $query->get();
 
+<<<<<<< HEAD
         $allBookings = ServiceRequest::where('user_id', $user->user_id);
         $stats = [
             'total'     => (clone $allBookings)->count(),
             'upcoming'  => (clone $allBookings)->whereIn('status', ['pending', 'confirmed'])->count(),
+=======
+        $allBookings = Booking::where('user_id', $user->user_id);
+        $stats = [
+            'total' => (clone $allBookings)->count(),
+            'upcoming' => (clone $allBookings)->whereIn('status', ['pending', 'confirmed'])->count(),
+>>>>>>> feature2
             'completed' => (clone $allBookings)->where('status', 'completed')->count(),
         ];
 
@@ -38,10 +67,14 @@ class UserBookingController extends Controller
         return view('Users.bookings', compact('bookings', 'stats', 'activeStatus'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, BookingCreationService $bookingCreationService)
     {
         $validated = $request->validate([
+<<<<<<< HEAD
             'service_id'   => 'required|exists:services,service_id',
+=======
+            'service_id' => ['required', Rule::exists('services', 'service_id')->whereNull('deleted_at')],
+>>>>>>> feature2
             'booking_date' => 'required|date|after_or_equal:today',
             'start_time'   => 'required|date_format:H:i',
             'address'      => 'required|string|max:255',
@@ -83,6 +116,7 @@ class UserBookingController extends Controller
             return redirect()->back()->withInput()->with('error', 'You are outside this provider\'s service area.');
         }
 
+<<<<<<< HEAD
         $address = Address::where('user_id', $request->user()->user_id)
         ->where('is_default', true)
         ->first();
@@ -107,10 +141,14 @@ class UserBookingController extends Controller
 
         // ── auto_share: SMS emergency contact ─────────────────────────
         $this->maybeShareWithEmergencyContact($request->user(), $booking);
+=======
+        $bookingCreationService->createFromService($request->user(), $service, $validated);
+>>>>>>> feature2
 
         return redirect()->route('users.bookings')->with('success', 'Service request sent to provider.');
     }
 
+<<<<<<< HEAD
     public function cancel(Request $request, ServiceRequest $serviceRequest)
     {
         if ($serviceRequest->user_id !== $request->user()->user_id) {
@@ -122,6 +160,35 @@ class UserBookingController extends Controller
         }
 
         $serviceRequest->update(['status' => 'cancelled']);
+=======
+    public function cancel(
+        Request $request,
+        Booking $booking,
+        BookingLifecycleService $bookingLifecycleService,
+        BookingPaymentService $bookingPaymentService
+    ) {
+        if ($booking->user_id !== $request->user()->user_id) {
+            abort(403);
+        }
+
+        $booking = $bookingLifecycleService->syncBooking($booking);
+
+        if (!$booking->can_cancel) {
+            return redirect()->route('users.bookings')->with('error', 'This booking cannot be cancelled.');
+        }
+
+        $refund = $bookingPaymentService->refundIfEligible($booking);
+
+        $booking->update([
+            'status' => Booking::STATUS_CANCELLED,
+            'cancellation_reason' => Booking::CANCELLATION_REASON_USER,
+            'cancelled_at' => now(),
+        ]);
+
+        if ($refund !== null) {
+            return redirect()->route('users.bookings')->with('success', 'Booking cancelled and full refund processed.');
+        }
+>>>>>>> feature2
 
         return redirect()->route('users.bookings')->with('success', 'Booking has been cancelled.');
     }
@@ -209,7 +276,19 @@ class UserBookingController extends Controller
     {
         $dLat = deg2rad($lat2 - $lat1);
         $dLng = deg2rad($lng2 - $lng1);
+<<<<<<< HEAD
         $a    = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
         return 6371 * 2 * atan2(sqrt($a), sqrt(max(0, 1 - $a)));
+=======
+
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        $c = 2 * atan2(sqrt($a), sqrt(max(0, 1 - $a)));
+
+        return $earthRadiusKm * $c;
+>>>>>>> feature2
     }
 }
+
+

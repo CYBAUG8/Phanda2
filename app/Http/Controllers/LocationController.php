@@ -109,7 +109,7 @@ class LocationController extends Controller
                 $user->locations()->where('is_default', true)->update(['is_default' => false]);
             }
 
-            $location->update($request->all());
+            $location->update($request->only(['name', 'address', 'type', 'is_default']));
 
             return response()->json([
                 'success' => true,
@@ -198,3 +198,5 @@ class LocationController extends Controller
         }
     }
 }
+
+

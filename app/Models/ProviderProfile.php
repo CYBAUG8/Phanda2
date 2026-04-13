@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProviderProfile extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $primaryKey = 'provider_id';
     public $incrementing = false;
@@ -43,3 +44,4 @@ class ProviderProfile extends Model
     return $this->hasMany(ServiceRequest::class, 'provider_id', 'provider_id');
    }
 }
+

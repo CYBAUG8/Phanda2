@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('recovery_contacts', function (Blueprint $table) {
-            $table->uuid('recovery_contact_id');
+            $table->uuid('recovery_contact_id')->primary();
 
           
              $table->uuid('user_id')->unique();
@@ -23,8 +23,6 @@ return new class extends Migration
             $table->string('email', 160)->nullable();
             $table->string('relationship', 50)->nullable();
             $table->timestamps();
-
-           
         });
     }
 

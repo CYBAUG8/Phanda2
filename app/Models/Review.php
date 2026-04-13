@@ -9,6 +9,10 @@ use Illuminate\Support\Str;
 class Review extends Model
 {
     use HasFactory;
+<<<<<<< HEAD
+=======
+
+>>>>>>> feature2
     protected $table = 'service_reviews';
     protected $primaryKey = 'review_id';
     public $incrementing = false;
@@ -16,6 +20,7 @@ class Review extends Model
 
     protected $fillable = [
         'review_id',
+        'booking_id',
         'service_id',
         'to_user_id',
         'from_user_id',
@@ -28,13 +33,21 @@ class Review extends Model
         parent::boot();
 
         static::creating(function ($model) {
+<<<<<<< HEAD
             if (! $model->review_id) {
+=======
+            if (!$model->review_id) {
+>>>>>>> feature2
                 $model->review_id = (string) Str::uuid();
             }
         });
     }
 
+<<<<<<< HEAD
    // reviewer
+=======
+    // reviewer
+>>>>>>> feature2
     public function customer()
     {
         return $this->belongsTo(User::class, 'from_user_id', 'user_id');
@@ -44,5 +57,10 @@ class Review extends Model
     public function provider()
     {
         return $this->belongsTo(User::class, 'to_user_id', 'user_id');
+    }
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
     }
 }

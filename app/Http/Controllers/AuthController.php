@@ -13,6 +13,7 @@ use App\Models\ProviderProfile;
 
 class AuthController extends Controller
 {
+<<<<<<< HEAD
     
 
  
@@ -71,6 +72,52 @@ class AuthController extends Controller
        
         return redirect('/dashboard')->with('success', 'Welcome to Phanda, ' . $user->full_name . '!');
     }
+=======
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'required|unique:users,phone',
+            'password' => 'required|min:6|confirmed',
+            'full_name' => 'required|string',
+            'role' => 'required|in:customer,provider,admin',
+        ]);
+
+        $user = User::create([
+            'user_id' => (string) Str::uuid(),
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'password' => Hash::make($data['password']),
+            'full_name' => $data['full_name'],
+            'role' => $data['role'],
+        ]);
+
+        // Create a starter provider profile on provider registration.
+        if ($data['role'] === 'provider') {
+            ProviderProfile::create([
+                'provider_id' => (string) Str::uuid(),
+                'user_id' => $user->user_id,
+                'business_name' => $user->full_name . "'s Business",
+                'bio' => null,
+                'years_experience' => 0,
+            ]);
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'User created'], 201);
+        }
+
+        if ($user->role === 'provider') {
+            return redirect()->route('providers.profile');
+        }
+
+        return redirect()->route('users.dashboard');
+    }
+
+>>>>>>> feature2
     
 public function login(Request $request)
 {
@@ -86,6 +133,7 @@ public function login(Request $request)
     $request->session()->regenerate();
 
      $user = Auth::user();
+     $this->ensureProviderProfile($user);
 
     LoginHistory::create([
         'login_history_id' => Str::uuid(),   
@@ -98,17 +146,65 @@ public function login(Request $request)
         'status' => 'success',
     ]);
 
+<<<<<<< HEAD
      if ($user->role === 'provider') {
+=======
+        if (strtoupper($user->role) === 'PROVIDER') {
+>>>>>>> feature2
 
             return redirect()->route('providers.dashboard');
             
         }else{
 
-            return redirect()->route('users.dashboard');
+            return redirect()->intended(route('users.dashboard'));
         }
    
     
+<<<<<<< HEAD
    
+=======
+
+}
+
+private function ensureProviderProfile(User $user): void
+{
+    if (strtolower((string) $user->role) !== 'provider') {
+        return;
+    }
+
+    $profile = ProviderProfile::withTrashed()->firstOrNew([
+        'user_id' => $user->user_id,
+    ]);
+
+    if (!$profile->provider_id) {
+        $profile->provider_id = (string) Str::uuid();
+    }
+
+    if (!$profile->business_name) {
+        $profile->business_name = $user->full_name ?: "Provider {$user->user_id}";
+    }
+
+    if ($profile->years_experience === null) {
+        $profile->years_experience = 0;
+    }
+
+    if (!$profile->service_area) {
+        $profile->service_area = 'Johannesburg';
+    }
+
+    if (!$profile->kyc_status) {
+        $profile->kyc_status = 'PENDING';
+    }
+
+    if (!$profile->exists) {
+        $profile->is_online = false;
+        $profile->service_radius_km = 25;
+        $profile->rating_avg = 0;
+    }
+
+    $profile->deleted_at = null;
+    $profile->save();
+>>>>>>> feature2
 }
 
 private function parseDevice($ua)

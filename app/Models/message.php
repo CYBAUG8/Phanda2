@@ -18,10 +18,12 @@ class Message extends Model
         'sender_id',
         'sender_type',
         'message',
-        'is_read'
+        'is_read',
     ];
 
-    // Relationships
+    protected $casts = [
+        'is_read' => 'boolean',
+    ];
 
     public function conversation()
     {

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\ProviderProfile;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -16,7 +19,7 @@ class AccountController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             $validator = Validator::make($request->all(), [
                 'current_password' => 'required',
                 'new_password' => 'required|min:6|confirmed',
@@ -78,23 +81,39 @@ class AccountController extends Controller
     {
         try {
             $user = Auth::user();
-            
-            // Soft delete the user
-            $user->delete();
 
-            // Revoke all tokens
-            $user->tokens()->delete();
+            DB::transaction(function () use ($user) {
+                $providerProfile = ProviderProfile::withTrashed()->where('user_id', $user->user_id)->first();
+
+                if ($providerProfile !== null) {
+                    Service::where('provider_id', $providerProfile->provider_id)
+                        ->update(['is_active' => false]);
+
+                    Service::where('provider_id', $providerProfile->provider_id)->delete();
+
+                    if (!$providerProfile->trashed()) {
+                        $providerProfile->delete();
+                    }
+                }
+
+                $user->delete();
+            });
+
+            // Revoke all tokens when available
+            if (method_exists($user, 'tokens')) {
+                $user->tokens()->delete();
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Account deleted successfully'
+                'message' => 'Account archived successfully'
             ]);
 
         } catch (\Exception $e) {
             Log::error('Delete account error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete account'
+                'message' => 'Failed to archive account'
             ], 500);
         }
     }
@@ -104,7 +123,7 @@ class AccountController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             $data = [
                 'user_info' => [
                     'first_name' => $user->first_name,
@@ -142,11 +161,11 @@ class AccountController extends Controller
         // 1. Store the JSON file in storage
         // 2. Generate a signed URL
         // 3. Return the URL for download
-        
+
         // For simplicity, we'll return a base64 encoded data URL
         $json = json_encode($data, JSON_PRETTY_PRINT);
         $base64 = base64_encode($json);
-        
+
         return 'data:application/json;base64,' . $base64;
     }
 
@@ -155,7 +174,7 @@ class AccountController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             $validator = Validator::make($request->all(), [
                 'method' => 'required|in:Call,SMS,WhatsApp,Email',
             ]);
@@ -189,7 +208,7 @@ class AccountController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             $validator = Validator::make($request->all(), [
                 'enabled' => 'required|boolean',
             ]);

@@ -28,8 +28,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('login_histories', function (Blueprint $table) {
-            $table->dropColumn('login_at');
-        });
+        Schema::dropIfExists('login_histories');
     }
 };

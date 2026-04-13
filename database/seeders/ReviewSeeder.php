@@ -29,4 +29,8 @@ class ReviewSeeder extends Seeder {
             }
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> feature2

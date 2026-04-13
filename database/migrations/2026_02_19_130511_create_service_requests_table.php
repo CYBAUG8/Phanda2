@@ -28,13 +28,12 @@ return new class extends Migration
                   ->references('provider_id')
                   ->on('provider_profiles')
                   ->onDelete('cascade');
-            
+
             $table->uuid('address_id');
             $table->foreign('address_id')
                   ->references('address_id')
                   ->on('addresses')
                   ->onDelete('cascade');
-
 
             $table->date('booking_date');
             $table->time('start_time');
