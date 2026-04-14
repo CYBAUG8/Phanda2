@@ -16,12 +16,9 @@ class UserServiceController extends Controller
         $userSettings = $user?->settings;
         $userGender   = $user?->userProfile?->gender;
 
-<<<<<<< HEAD
         $categories  = Category::orderBy('name')->get();
         $radiusKm    = max(1, min((int) $request->input('radius_km', 100), 100));
-=======
-        $radiusKm = max(1, min((int) $request->input('radius_km', 25), 100));
->>>>>>> feature2
+       
         $coordinates = $this->resolveUserCoordinates($request);
 
         $query = Service::query()
@@ -59,22 +56,14 @@ class UserServiceController extends Controller
             });
         }
 
-<<<<<<< HEAD
         // ── category ──────────────────────────────────────────────────
-=======
->>>>>>> feature2
         if ($category = $request->input('category')) {
             $query->whereHas('category', function ($q) use ($category) {
                 $q->where('slug', $category);
             });
         }
 
-<<<<<<< HEAD
-        // ── location search ───────────────────────────────────────────
-        $location          = trim((string) $request->input('location', ''));
-=======
         $location = trim((string) $request->input('location', ''));
->>>>>>> feature2
         $hasLocationSearch = $location !== '';
 
         if ($hasLocationSearch) {
@@ -133,11 +122,6 @@ class UserServiceController extends Controller
                     $query->orderBy('rating', 'desc');
                 }
                 break;
-<<<<<<< HEAD
-            case 'price_asc':  $query->orderBy('base_price', 'asc');           break;
-            case 'price_desc': $query->orderBy('base_price', 'desc');          break;
-            case 'newest':     $query->orderBy('services.created_at', 'desc'); break;
-=======
             case 'price_asc':
                 $query->orderBy('base_price', 'asc');
                 break;
@@ -147,7 +131,6 @@ class UserServiceController extends Controller
             case 'newest':
                 $query->orderBy('services.created_at', 'desc');
                 break;
->>>>>>> feature2
             case 'rating':
             default:           $query->orderBy('rating', 'desc');              break;
         }
@@ -155,17 +138,10 @@ class UserServiceController extends Controller
         $services = $query->paginate(12)->withQueryString();
 
         $filters = [
-<<<<<<< HEAD
-            'search'    => (string) $request->input('search', ''),
-            'category'  => (string) $request->input('category', ''),
-            'location'  => (string) $request->input('location', ''),
-            'sort'      => (string) $sort,
-=======
             'search' => (string) $request->input('search', ''),
             'category' => (string) $request->input('category', ''),
             'location' => (string) $request->input('location', ''),
             'sort' => (string) $sort,
->>>>>>> feature2
             'radius_km' => $radiusKm,
             'lat'       => $coordinates['lat'] ?? null,
             'lng'       => $coordinates['lng'] ?? null,

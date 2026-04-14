@@ -38,7 +38,6 @@ class ProfileController extends Controller
             'updated_at' => $user->updated_at,
             'member_id' => $user->member_id ?? ('PAN-' . strtoupper(substr(str_replace('-', '', $user->user_id), 0, 6))),
             'account_status' => $user->account_status ?? 'active',
-<<<<<<< HEAD
             
 
             'total_requests' => $user->bookings()->count(),
@@ -46,11 +45,6 @@ class ProfileController extends Controller
             'completed_requests' => $user->bookings()->where('status', 'completed')->count(),
             
           
-=======
-            'total_requests' => $totalRequests,
-            'active_requests' => $activeRequests,
-            'completed_requests' => $completedRequests,
->>>>>>> feature2
             'addresses' => $user->addresses()->get()->map(function ($address) {
                 return [
                     'address_id' => $address->address_id,
@@ -112,7 +106,6 @@ class ProfileController extends Controller
 
         $field = $request->input('field');
         $value = $request->input('value');
-<<<<<<< HEAD
         
         // Map field names if needed
         $dbField = $field;
@@ -158,18 +151,6 @@ class ProfileController extends Controller
             if (in_array($field, $user->getFillable())) {
                 $user->$field = $value;
             }
-=======
-
-        if ($field === 'full_name') {
-            $user->full_name = (string) $value;
-        } elseif ($field === 'gender') {
-            $user->gender = (string) $value;
-        } elseif (in_array($field, ['email', 'phone'], true)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Email and phone require OTP verification',
-            ], 400);
->>>>>>> feature2
         }
 
         try {
@@ -187,7 +168,6 @@ class ProfileController extends Controller
         }
     }
 
-<<<<<<< HEAD
    
 
      public function sendOtp(Request $request)
@@ -226,85 +206,6 @@ if ($request->field === 'phone') {
                     'body' => "Your Phanda verification code is: {$otp}. It expires in 10 minutes. Do not share this code with anyone.",
                 ]
             );
-=======
-    public function sendOtp(Request $request)
-    {
-        $user = $request->user();
-
-        $validator = Validator::make($request->all(), [
-            'field' => 'required|in:email,phone',
-            'value' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $otp = rand(100000, 999999);
-
-        $cacheKey = "profile_otp_{$user->user_id}_{$request->field}";
-        Cache::put($cacheKey, [
-            'otp' => $otp,
-            'value' => $request->value,
-        ], now()->addMinutes(10));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'OTP sent successfully',
-        ]);
-    }
-
-    public function updateWithOtp(Request $request)
-    {
-        $user = $request->user();
-
-        $validator = Validator::make($request->all(), [
-            'field' => 'required|in:email,phone',
-            'value' => 'required',
-            'otp' => 'required|digits:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $cacheKey = "profile_otp_{$user->user_id}_{$request->field}";
-        $cachedData = Cache::get($cacheKey);
-
-        if (!$cachedData || $cachedData['otp'] != $request->otp || $cachedData['value'] != $request->value) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or expired OTP',
-            ], 400);
-        }
-
-        if ($request->field === 'email') {
-            $user->email = $request->value;
-            $user->email_verified_at = now();
-        }
-
-        if ($request->field === 'phone') {
-            $user->phone = $request->value;
-            $user->phone_verified_at = now();
-        }
-
-        try {
-            $user->save();
-            Cache::forget($cacheKey);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile updated and verified successfully',
-            ]);
->>>>>>> feature2
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to send OTP SMS', [
                 'user_id' => $user->user_id,
@@ -313,17 +214,11 @@ if ($request->field === 'phone') {
             ]);
 
             return response()->json([
-<<<<<<< HEAD
                 'message' => 'Failed to send OTP via SMS. Please try again.',
-=======
-                'success' => false,
-                'message' => 'Failed to update profile: ' . $e->getMessage(),
->>>>>>> feature2
             ], 500);
         }
     }
 
-<<<<<<< HEAD
          return response()->json([
             'message' => 'OTP sent successfully',
         ]);
@@ -332,8 +227,6 @@ if ($request->field === 'phone') {
     }
 
     
-=======
->>>>>>> feature2
     public function getAddresses(Request $request)
     {
         return response()->json([

@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use App\Models\ServiceRequest;
-=======
 use App\Models\Booking;
 use App\Services\BookingLifecycleService;
 use App\Services\BookingPaymentService;
 use Carbon\Carbon;
->>>>>>> feature2
 use Illuminate\Http\Request;
 
 class ProviderBookingController extends Controller
@@ -19,18 +15,9 @@ class ProviderBookingController extends Controller
         $providerProfile = $request->user()->providerProfile;
         abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
-<<<<<<< HEAD
-        $bookings = ServiceRequest::whereHas('service', function ($query) use ($providerProfile) {
-                $query->where('provider_id', $providerProfile->provider_id);
-            })
-            ->with(['user', 'service'])
-            ->orderByDesc('created_at')
-            ->get();
-=======
         $bookingLifecycleService->expireStaleBookings(
             $this->providerBookingQuery($providerProfile->provider_id)
         );
->>>>>>> feature2
 
         $status = trim((string) $request->query('status', 'pending'));
         $search = trim((string) $request->query('q', ''));
@@ -245,9 +232,6 @@ class ProviderBookingController extends Controller
             ->firstOrFail();
     }
 
-<<<<<<< HEAD
-    private function statusResponse(Request $request, ServiceRequest $booking, bool $success, string $message)
-=======
     private function providerBookingQuery(string $providerId)
     {
         return Booking::query()->whereHas('service', function ($query) use ($providerId) {
@@ -256,7 +240,6 @@ class ProviderBookingController extends Controller
     }
 
     private function statusResponse(Request $request, Booking $booking, bool $success, string $message)
->>>>>>> feature2
     {
         if ($request->expectsJson()) {
             return response()->json([

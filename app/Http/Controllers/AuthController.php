@@ -13,7 +13,6 @@ use App\Models\ProviderProfile;
 
 class AuthController extends Controller
 {
-<<<<<<< HEAD
     
 
  
@@ -72,52 +71,6 @@ class AuthController extends Controller
        
         return redirect('/dashboard')->with('success', 'Welcome to Phanda, ' . $user->full_name . '!');
     }
-=======
-    public function register(Request $request)
-    {
-        $data = $request->validate([
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'required|unique:users,phone',
-            'password' => 'required|min:6|confirmed',
-            'full_name' => 'required|string',
-            'role' => 'required|in:customer,provider,admin',
-        ]);
-
-        $user = User::create([
-            'user_id' => (string) Str::uuid(),
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-            'password' => Hash::make($data['password']),
-            'full_name' => $data['full_name'],
-            'role' => $data['role'],
-        ]);
-
-        // Create a starter provider profile on provider registration.
-        if ($data['role'] === 'provider') {
-            ProviderProfile::create([
-                'provider_id' => (string) Str::uuid(),
-                'user_id' => $user->user_id,
-                'business_name' => $user->full_name . "'s Business",
-                'bio' => null,
-                'years_experience' => 0,
-            ]);
-        }
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        if ($request->expectsJson() || $request->is('api/*')) {
-            return response()->json(['message' => 'User created'], 201);
-        }
-
-        if ($user->role === 'provider') {
-            return redirect()->route('providers.profile');
-        }
-
-        return redirect()->route('users.dashboard');
-    }
-
->>>>>>> feature2
     
 public function login(Request $request)
 {
@@ -146,11 +99,7 @@ public function login(Request $request)
         'status' => 'success',
     ]);
 
-<<<<<<< HEAD
-     if ($user->role === 'provider') {
-=======
         if (strtoupper($user->role) === 'PROVIDER') {
->>>>>>> feature2
 
             return redirect()->route('providers.dashboard');
             
@@ -160,9 +109,6 @@ public function login(Request $request)
         }
    
     
-<<<<<<< HEAD
-   
-=======
 
 }
 
@@ -204,7 +150,6 @@ private function ensureProviderProfile(User $user): void
 
     $profile->deleted_at = null;
     $profile->save();
->>>>>>> feature2
 }
 
 private function parseDevice($ua)

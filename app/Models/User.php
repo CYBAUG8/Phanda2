@@ -9,25 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-<<<<<<< HEAD
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Relations\HasOne; 
-use Illuminate\Database\Eloquent\SoftDeletes;
-=======
-use Illuminate\Support\Str;
->>>>>>> feature2
+
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-<<<<<<< HEAD
     use SoftDeletes;
     use HasFactory, Notifiable;
-=======
-    use HasFactory, Notifiable, SoftDeletes;
-
->>>>>>> feature2
     protected $primaryKey = 'user_id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -39,11 +28,8 @@ class User extends Authenticatable
         'password',
         'phone',
         'role',
-<<<<<<< HEAD
 
         
-=======
->>>>>>> feature2
     ];
 
     protected $hidden = [
@@ -61,22 +47,15 @@ class User extends Authenticatable
 
     public function bookings(): HasMany
     {
-<<<<<<< HEAD
         return $this->hasMany(ServiceRequest::class, 'user_id', 'user_id');
     }
     
     public function providerProfile()
     {
        return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
-=======
-        return $this->hasMany(Booking::class, 'user_id', 'user_id');
->>>>>>> feature2
+     
     }
 
-    public function providerProfile(): HasOne
-    {
-        return $this->hasOne(ProviderProfile::class, 'user_id', 'user_id');
-    }
 
     public function addresses(): HasMany
     {
@@ -135,8 +114,6 @@ class User extends Authenticatable
     public function payouts(): HasMany
     {
         return $this->hasMany(Payout::class, 'provider_id', 'user_id');
-<<<<<<< HEAD
-=======
     }
 
     public function payments(): HasMany
@@ -147,7 +124,6 @@ class User extends Authenticatable
     public function paymentMethods(): HasMany
     {
         return $this->hasMany(PaymentMethod::class, 'user_id', 'user_id');
->>>>>>> feature2
     }
     
 public function userProfile(): HasOne
@@ -155,8 +131,5 @@ public function userProfile(): HasOne
     return $this->hasOne(UserProfile::class, 'user_id', 'user_id');
 }
 
-public function emergencyContact(): HasOne
-{
-    return $this->hasOne(EmergencyContact::class, 'user_id', 'user_id');
-}
+
 }

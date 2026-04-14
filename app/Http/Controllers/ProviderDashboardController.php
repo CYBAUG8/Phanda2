@@ -2,18 +2,13 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ServiceRequest;
-=======
-use App\Models\Booking;
->>>>>>> feature2
 use App\Models\Payout;
 use App\Models\ProviderProfile;
 use App\Models\Review;
 use App\Services\BookingLifecycleService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProviderDashboardController extends Controller
@@ -44,7 +39,6 @@ class ProviderDashboardController extends Controller
             ])->with('error', 'Provider profile not found. Complete your profile to enable dashboard data.');
         }
 
-<<<<<<< HEAD
         $totalBookings = ServiceRequest::whereHas('service', function ($query) use ($providerProfile) {
             $query->where('provider_id', $providerProfile->provider_id);
             })->count();
@@ -60,35 +54,21 @@ class ProviderDashboardController extends Controller
         })
         ->where('status', 'pending')
         ->count();
-=======
-        $providerId = $profile->provider_id;
-
-        $bookingQuery = Booking::whereHas('service', function ($q) use ($providerId) {
-            $q->where('provider_id', $providerId);
-        });
-
-        $bookingLifecycleService->expireStaleBookings($bookingQuery);
->>>>>>> feature2
 
         $totalBookings = (clone $bookingQuery)->count();
         $completedBookings = (clone $bookingQuery)->where('status', 'completed')->count();
         $pendingBookings = (clone $bookingQuery)->where('status', 'pending')->count();
 
-<<<<<<< HEAD
         $totalRevenue = ServiceRequest::whereHas('service', function ($query) use ($providerProfile) {
             $query->where('provider_id',$providerProfile->provider_id);
         })
         ->where('status', 'completed')
         ->sum('total_price');
-=======
-        $totalRevenue = (clone $bookingQuery)->where('status', 'completed')->sum('total_price');
->>>>>>> feature2
 
         $commissionRate = 0.10;
         $commission = $totalRevenue * $commissionRate;
         $netEarnings = $totalRevenue - $commission;
 
-<<<<<<< HEAD
        /*
         |--------------------------------------------------------------------------
         | Withdrawals
@@ -97,10 +77,6 @@ class ProviderDashboardController extends Controller
 
         $totalWithdrawn = (float) Payout::where('provider_id', $user->user_id)
             ->whereIn('status', ['PAID', 'paid', 'SCHEDULED', 'scheduled'])
-=======
-        $totalPaidOut = Payout::where('provider_id', $user->user_id)
-            ->whereIn('status', ['PAID', 'paid'])
->>>>>>> feature2
             ->sum('amount');
 
         /*
@@ -121,7 +97,6 @@ class ProviderDashboardController extends Controller
 
         $isOnline = (bool) $profile->is_online;
 
-<<<<<<< HEAD
         // -----------------------------
         // RECENT BOOKINGS
         // -----------------------------
@@ -141,9 +116,6 @@ class ProviderDashboardController extends Controller
         $isOnline = $profile ? $profile->is_online : false;
 
         return view('providers.dashboard', compact(
-=======
-        return view('Providers.dashboard', compact(
->>>>>>> feature2
             'totalBookings',
             'completedBookings',
             'pendingBookings',

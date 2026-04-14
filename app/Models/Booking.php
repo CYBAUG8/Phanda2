@@ -10,8 +10,6 @@ class Booking extends Model
 {
     use HasFactory;
 
-<<<<<<< HEAD
-=======
     public const STATUS_PENDING = 'pending';
     public const STATUS_CONFIRMED = 'confirmed';
     public const STATUS_IN_PROGRESS = 'in_progress';
@@ -28,7 +26,6 @@ class Booking extends Model
     public const CANCELLATION_REASON_USER = 'user_cancelled';
     public const CANCELLATION_REASON_PROVIDER = 'provider_cancelled';
 
->>>>>>> feature2
     public $incrementing = false;
     protected $keyType = 'string';
 

@@ -3,13 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
-<<<<<<< HEAD
 use Illuminate\Support\Facades\Auth;
 use App\Models\ProviderProfile;
 use App\Models\Category;
-=======
 use Illuminate\Http\Request;
->>>>>>> feature2
 
 class ServiceController extends Controller
 {
