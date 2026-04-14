@@ -2,114 +2,68 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
 use App\Models\User;
 use App\Models\ServiceRequest;
 use App\Models\Message;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
-=======
-use App\Models\Booking;
-use App\Models\Message;
-use App\Models\Review;
-use App\Services\BookingLifecycleService;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
->>>>>>> feature2
 
 class DashboardController extends Controller
 {
-    public function index(BookingLifecycleService $bookingLifecycleService)
+    public function index()
     {
         $user = auth()->user();
-        abort_if(!$user, 403, 'Not authenticated');
 
-        $bookingLifecycleService->expireStaleBookings(
-            Booking::query()->where('user_id', $user->user_id)
-        );
+        if (!$user) {
+            abort(403, 'Not authenticated');
+        }
 
-<<<<<<< HEAD
         //Count bookings in progress
         $totalBookings = ServiceRequest::where('user_id', $user->user_id)
-=======
-        $bookings = Booking::query()->where('user_id', $user->user_id);
-        $bookingsInProgress = (clone $bookings)
->>>>>>> feature2
             ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
             ->count();
 
-        $conversationIds = $user->conversations()->pluck('conversation_id');
-        $unreadMessagesQuery = Message::query()
-            ->whereIn('conversation_id', $conversationIds)
-            ->where('sender_type', 'provider')
-            ->where('is_read', false);
+        //Count unread messages
+        $unreadMessages = Message::whereIn(
+                'conversation_id',
+                Conversation::where('user_id', $user->user_id)->pluck('conversation_id')//all conversation IDs the user is part of
+            )
+            ->where('sender_id', '!=', $user->user_id)
+            ->where('is_read', false)
+            ->count();
 
-        $unreadMessages = (clone $unreadMessagesQuery)->count();
-        $latestUnreadMessageAt = (clone $unreadMessagesQuery)->max('created_at');
-        $averageRating = (float) (Review::query()->where('from_user_id', $user->user_id)->avg('rating') ?? 0);
+        //Average rating (placeholder if you have reviews table)
+        $averageRating = 0; // replace with actual query if needed
 
-        $dashboardStats = [
-            [
-                'label' => 'Bookings in Progress',
-                'value' => $bookingsInProgress,
-                'href' => route('users.bookings'),
-                'icon' => 'fa-calendar-check',
-                'icon_class' => 'dashboard-stat-card__icon--bookings',
-            ],
-            [
-                'label' => 'Unread Messages',
-                'value' => $unreadMessages,
-                'href' => route('user.messages'),
-                'icon' => 'fa-comments',
-                'icon_class' => 'dashboard-stat-card__icon--messages',
-                'badge' => $unreadMessages > 0 ? $unreadMessages . ' unread' : null,
-            ],
-            [
-                'label' => 'Average Rating',
-                'value' => number_format($averageRating, 1),
-                'href' => route('reviews.reviews'),
-                'icon' => 'fa-star',
-                'icon_class' => 'dashboard-stat-card__icon--rating',
-            ],
-        ];
+        // Recent activities
+        $activities = [];
 
-<<<<<<< HEAD
         // Add latest bookings (limit 5)
         $latestBookings = ServiceRequest::where('user_id', $user->user_id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
-=======
-        $activityFeed = Booking::query()
-            ->where('user_id', $user->user_id)
-            ->with('service')
-            ->latest('updated_at')
-            ->take(6)
-            ->get()
-            ->map(fn (Booking $booking) => [
-                'text' => 'Booking ' . strtoupper($booking->status_label) . ' for ' . (optional($booking->service)->title ?? 'service'),
-                'timestamp' => $booking->updated_at,
-                'href' => route('users.bookings'),
-                'icon' => 'fa-calendar-day',
-                'icon_class' => 'dashboard-activity__icon--booking',
-            ]);
->>>>>>> feature2
 
-        if ($unreadMessages > 0) {
-            $activityFeed->push([
-                'text' => $unreadMessages . ' unread ' . Str::plural('message', $unreadMessages) . ' from providers',
-                'timestamp' => $latestUnreadMessageAt ? Carbon::parse($latestUnreadMessageAt) : now(),
-                'href' => route('user.messages'),
-                'icon' => 'fa-envelope',
-                'icon_class' => 'dashboard-activity__icon--message',
-            ]);
+        foreach ($latestBookings as $booking) {
+            $serviceTitle = $booking->service->title ?? 'Service';
+            $activities[] = [
+                'type' => 'booking',
+                'text' => "Booking for {$serviceTitle}",
+                'ts' => $booking->created_at
+            ];
         }
 
-        $activityFeed = $activityFeed
-            ->sortByDesc(fn (array $activity) => $activity['timestamp'])
-            ->values();
+        // Add latest unread messages (limit 5)
+        $latestMessages = Message::whereIn(
+                'conversation_id',
+                Conversation::where('user_id', $user->user_id)->pluck('conversation_id')
+            )
+            ->where('sender_id', '!=', $user->user_id)
+            ->where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
-<<<<<<< HEAD
         foreach ($latestMessages as $message) {
             $activities[] = [
                 'type' => 'message',
@@ -132,14 +86,3 @@ class DashboardController extends Controller
         ));
     }
 }
-=======
-        return view('Users.dashboard', [
-            'userDisplay' => $user->full_name ?? 'User',
-            'dashboardStats' => $dashboardStats,
-            'activityFeed' => $activityFeed,
-        ]);
-    }
-}
-
-
->>>>>>> feature2

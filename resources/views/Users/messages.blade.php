@@ -1,14 +1,7 @@
 @extends('Users.layout')
 
 @section('content')
-<<<<<<< HEAD
 <div class="h-[calc(100vh-120px)] flex bg-white rounded-lg shadow overflow-hidden">
-=======
-@php
-    $hasSelectedConversation = isset($selectedConversation) && $selectedConversation;
-    $activeConversationId = $hasSelectedConversation ? $selectedConversation->conversation_id : null;
-@endphp
->>>>>>> feature2
 
 <div class="user-page-shell space-y-6">
     <section class="user-page-header">

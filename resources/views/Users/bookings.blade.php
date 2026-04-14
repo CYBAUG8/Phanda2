@@ -7,50 +7,10 @@
             <h1>My Bookings</h1>
             <p class="user-page-subtitle">Track service progress, payments, and next actions for every booking.</p>
         </div>
-<<<<<<< HEAD
-        <div class="stat-card card">
-            <div class="stat-card__icon stat-card__icon--upcoming">
-                <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div class="stat-card__info">
-                <span class="stat-card__number">{{ $stats['upcoming'] }}</span>
-                <span class="stat-card__label">Upcoming</span>
-            </div>
-        </div>
-        <div class="stat-card card">
-            <div class="stat-card__icon stat-card__icon--completed">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-card__info">
-                <span class="stat-card__number">{{ $stats['completed'] }}</span>
-                <span class="stat-card__label">Completed</span>
-            </div>
-        </div>
-    </div>
-
-    {{-- Status Tabs --}}
-    <div class="status-tabs">
-        @php
-            $tabs = [
-                'all'         => ['label' => 'All',         'icon' => 'fa-list'],
-                'pending'     => ['label' => 'Pending',     'icon' => 'fa-clock'],
-                'confirmed'   => ['label' => 'Confirmed',   'icon' => 'fa-check'],
-                'in_progress' => ['label' => 'In Progress', 'icon' => 'fa-spinner'],
-                'completed'   => ['label' => 'Completed',   'icon' => 'fa-check-circle'],
-                'cancelled'   => ['label' => 'Cancelled',   'icon' => 'fa-times-circle'],
-            ];
-        @endphp
-        @foreach($tabs as $key => $tab)
-            <a href="{{ route('users.bookings', $key !== 'all' ? ['status' => $key] : []) }}"
-               class="status-tab {{ $activeStatus === $key ? 'status-tab--active' : '' }}">
-                <i class="fas {{ $tab['icon'] }}"></i>
-                <span>{{ $tab['label'] }}</span>
-=======
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('users.services') }}" class="ui-btn-primary">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <span>Find Services</span>
->>>>>>> feature2
             </a>
             <a href="{{ route('reviews.reviews') }}" class="ui-btn-secondary">
                 <i class="fa-solid fa-star"></i>
@@ -59,116 +19,6 @@
         </div>
     </section>
 
-<<<<<<< HEAD
- {{-- Booking Cards --}}
-@if($bookings->count() > 0)
-    <div class="bookings-list">
-        @foreach($bookings as $booking)
-            <div class="booking-card card">
-                <div class="booking-card__left">
-                    <div class="booking-card__icon">
-                        <i class="fas {{ optional($booking->service->category)->icon ?? 'fa-concierge-bell' }}"></i>
-                    </div>
-                </div>
-
-                <div class="booking-card__body">
-                    <div class="booking-card__header">
-                        <h3 class="booking-card__title">{{ $booking->service->title }}</h3>
-                        <span class="status-badge {{ $booking->status_color }}">
-                            {{ $booking->status_label }}
-                        </span>
-                    </div>
-
-                    <p class="booking-card__provider">
-                        <i class="fas fa-user-circle"></i> {{ $booking->service->provider_name }}
-                    </p>
-
-                    <div class="booking-card__details">
-                        <span>
-                            <i class="far fa-calendar"></i>
-                            {{ $booking->booking_date->format('d M Y') }}
-                        </span>
-                        <span>
-                            <i class="far fa-clock"></i>
-                            {{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }}
-                        </span>
-                        <span>
-                            <i class="fas fa-map-marker-alt"></i>
-                            {{ $booking->address }}
-                        </span>
-                    </div>
-
-                    @if($booking->notes)
-                        <p class="booking-card__notes">
-                            <i class="fas fa-sticky-note"></i> {{ $booking->notes }}
-                        </p>
-                    @endif
-                </div>
-
-                <div class="booking-card__right">
-                    <span class="booking-card__price">{{ $booking->formatted_price }}</span>
-
-                    <div class="booking-card__actions">
-                        @if($booking->can_cancel)
-                            <form action="{{ route('users.bookings.cancel', $booking->booking_id) }}" method="POST"
-                                  onsubmit="return confirm('Are you sure you want to cancel this booking?')">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn-danger btn-sm">
-                                    <i class="fas fa-times"></i> Cancel
-                                </button>
-                            </form>
-                        @endif
-
-                        {{-- Message Provider button — shown for all non-cancelled bookings --}}
-                        @if($booking->status !== 'cancelled')
-                            <form action="{{ route('user.messages.start') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="provider_id" value="{{ $booking->service->provider_id }}">
-                                <button type="submit" class="btn-outline btn-sm">
-                                    <i class="fas fa-comment"></i> Message
-                                </button>
-                            </form>
-                        @endif
-
-                        @if($booking->status === 'completed')
-                            <a href="{{ route('reviews.reviews') }}" class="btn-outline btn-sm">
-                                <i class="fas fa-star"></i> Review
-                            </a>
-                        @endif
-
-                        @if(in_array($booking->status, ['completed', 'cancelled']))
-                            <a href="{{ route('users.services') }}" class="btn-primary btn-sm">
-                                <i class="fas fa-redo"></i> Rebook
-                            </a>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    </div>
-    @else
-        {{-- Empty State --}}
-        <div class="empty-state card">
-            <div class="empty-state__icon">
-                <i class="fas fa-calendar-times"></i>
-            </div>
-            <h3>No bookings {{ $activeStatus !== 'all' ? 'with status "' . str_replace('_', ' ', $activeStatus) . '"' : 'yet' }}</h3>
-            <p>
-                @if($activeStatus === 'all')
-                    Find a service to get started with your first booking!
-                @else
-                    Try viewing all bookings or a different status filter.
-                @endif
-            </p>
-            <a href="{{ $activeStatus === 'all' ? route('users.services') : route('users.bookings') }}" class="btn-primary">
-                <i class="fas {{ $activeStatus === 'all' ? 'fa-search' : 'fa-list' }}"></i>
-                {{ $activeStatus === 'all' ? 'Find Services' : 'View All Bookings' }}
-            </a>
-        </div>
-    @endif
-@endsection
-=======
     @include('partials.ui.flash')
 
     <section class="user-metrics-grid" aria-label="Booking metrics">
@@ -383,4 +233,3 @@
     </section>
 </div>
 @endsection
->>>>>>> feature2

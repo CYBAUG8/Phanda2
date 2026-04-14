@@ -1,34 +1,12 @@
 @extends('Users.layout')
 
 @section('content')
-<<<<<<< HEAD
 <div class="page">
     <div class="mb-4">
         <h2>Review</h2>
         <p class="text-muted">Here you can give a review to a provider that has completed your requested service.</p>
     </div>
     <div class="card" style="padding:16px;border-radius:12px;border:1px solid #eee">
-=======
-<div class="user-page-shell space-y-6">
-    <section class="user-page-header">
-        <div>
-            <h1>Provider Reviews</h1>
-            <p class="user-page-subtitle">View provider feedback and submit reviews for completed bookings.</p>
-        </div>
-        <a href="{{ route('users.bookings', ['status' => 'completed']) }}" class="ui-btn-secondary">
-            <i class="fa-solid fa-calendar-check"></i>
-            <span>Completed Bookings</span>
-        </a>
-    </section>
-
-    @include('partials.ui.flash')
-
-    @if($bookingContextError)
-        <div class="ui-alert mb-0 border border-amber-200 bg-amber-50 text-amber-800">
-            {{ $bookingContextError }}
-        </div>
-    @endif
->>>>>>> feature2
 
     @if(!$reviewableBooking)
         <div class="ui-alert mb-0 border border-blue-200 bg-blue-50 text-blue-800">
@@ -39,11 +17,7 @@
     <div class="ui-card p-4 sm:p-5">
         <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-<<<<<<< HEAD
                 <h2 >
-=======
-                <h2 class="text-lg font-semibold text-slate-900">
->>>>>>> feature2
                     Reviews for {{ $selectedProvider['full_name'] ?? 'Provider' }}
                 </h2>
 
@@ -59,16 +33,10 @@
                 @endif
             </div>
 
-<<<<<<< HEAD
             <div style="display:flex;gap:8px">
                 @if($userReviewForSelected)
                     <form method="POST"
                           action="{{ route('reviews.destroy', $userReviewForSelected->review_id) }}">
-=======
-            <div class="flex flex-wrap gap-2">
-                @if($reviewForBooking)
-                    <form method="POST" action="{{ route('reviews.destroy', $reviewForBooking->review_id) }}">
->>>>>>> feature2
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="ui-btn-secondary">
@@ -125,15 +93,9 @@
                                 {{ $review->comment }}
                             </p>
 
-<<<<<<< HEAD
                             <div style="display:flex;justify-content:space-between">
                                 <strong style="color:#6b4f3b">
                                     {{ $review->user_id === optional($currentUser)->user_id ? 'You' : ($review->customer->full_name ?? 'Anonymous') }}
-=======
-                            <div class="mt-3 flex items-center justify-between text-sm">
-                                <strong class="text-slate-800">
-                                    {{ $review->from_user_id === optional($currentUser)->user_id ? 'You' : ($review->customer->full_name ?? 'Anonymous') }}
->>>>>>> feature2
                                 </strong>
                                 <small class="text-slate-500">
                                     {{ $review->created_at->format('d M Y') }}
@@ -155,7 +117,6 @@
     </div>
 </div>
 
-<<<<<<< HEAD
 @include('users.reviews.partials.modal')
 
 <script>
@@ -173,7 +134,4 @@
         }
     }
 </script>
-=======
-@include('Users.reviews.partials.modal')
->>>>>>> feature2
 @endsection

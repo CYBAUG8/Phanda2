@@ -6,17 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 class AddSoftDeletesToUsersTable extends Migration
 {
-    public function up(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
+public function up(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        if (!Schema::hasColumn('users', 'deleted_at')) {
             $table->softDeletes();
-        });
-    }
+        }
+    });
+}
 
-    public function down(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
+public function down(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        if (Schema::hasColumn('users', 'deleted_at')) {
             $table->dropSoftDeletes();
-        });
-    }
+        }
+    });
+}
 }

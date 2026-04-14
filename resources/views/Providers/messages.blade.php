@@ -1,614 +1,535 @@
-@extends('Providers.layout')
+@extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
 <div class="h-[calc(100vh-120px)] flex bg-white rounded-lg shadow overflow-hidden">
-=======
-@php
-    $hasSelectedConversation = isset($selectedConversation) && $selectedConversation;
-    $activeConversationId = $hasSelectedConversation ? $selectedConversation->conversation_id : null;
-@endphp
->>>>>>> feature2
 
-<div class="provider-page-shell space-y-6">
-    <section class="provider-page-header">
-        <div>
-            <h1>Messages</h1>
-            <p class="provider-page-subtitle">Respond quickly to customers and keep booking communication in one place.</p>
+    <!-- LEFT: Conversations List -->
+    <div class="w-1/3 border-r bg-gray-50 flex flex-col overflow-y-auto">
+        <h2 class="p-4 font-semibold text-gray-700 border-b">Messages</h2>
+
+        <!-- Search input -->
+        <div class="p-2 border-b">
+            <input type="text" id="conversationSearch"
+                   placeholder="Search by name..."
+                   class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
         </div>
-    </section>
 
-    @include('partials.ui.flash')
-
-    <section class="provider-two-pane">
-        <aside id="conversationSidebar" class="provider-pane-sidebar {{ $hasSelectedConversation ? 'hidden md:flex' : 'flex' }} flex-col">
-            <div class="provider-pane-header space-y-3">
-                <h2 class="provider-section-title">Conversations</h2>
-                <div>
-                    <label for="conversationSearch" class="sr-only">Search conversations</label>
-                    <input
-                        type="text"
-                        id="conversationSearch"
-                        placeholder="Search by customer name"
-                        class="provider-input"
-                    >
-                </div>
-            </div>
-
-            <div id="conversationSearchEmpty" class="hidden px-4 py-3 text-xs text-slate-500">
-                No conversations match your search.
-            </div>
-
-            <div id="conversationsList" class="provider-pane-body">
-                @forelse($conversations as $conversation)
-                    @php
-                        $unreadCount = $conversation->messages()
-                            ->where('sender_type', '!=', 'provider')
-                            ->where('is_read', false)
-                            ->count();
-                        $lastMsg = $conversation->messages->sortByDesc('created_at')->first();
-                        $lastTime = $lastMsg?->created_at ?? $conversation->last_message_time ?? $conversation->created_at;
-                    @endphp
-                    <a
-                        href="{{ route('provider.messages.show', $conversation->conversation_id) }}"
-                        data-conversation-id="{{ $conversation->conversation_id }}"
-                        data-last-time="{{ optional($lastTime)->toIso8601String() }}"
-                        class="conversation-item flex items-center gap-3 border-b border-slate-100 px-4 py-3 no-underline transition hover:bg-slate-100 {{ $activeConversationId === $conversation->conversation_id ? 'bg-orange-50' : '' }}"
-                    >
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-semibold text-white">
-                            {{ strtoupper(substr($conversation->user->full_name ?? 'U', 0, 2)) }}
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center justify-between gap-2">
-                                <p class="truncate text-sm font-semibold text-slate-900">{{ $conversation->user->full_name ?? 'Unknown Customer' }}</p>
-                                <span
-                                    class="unread-badge {{ $unreadCount > 0 ? 'inline-flex' : 'hidden' }} min-h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1 text-[11px] font-bold text-white"
-                                >
+        <!-- Conversation list container -->
+        <div id="conversationsList" class="flex-1 overflow-y-auto">
+            @forelse($conversations as $conversation)
+                @php
+                    $unreadCount = $conversation->messages
+                        ->where('sender_type', '!=', 'provider')
+                        ->where('is_read', false)
+                        ->count();
+                    $lastMsg = $conversation->messages->sortByDesc('created_at')->first();
+                    $lastTime = $lastMsg?->created_at ?? $conversation->created_at;
+                @endphp
+                <a href="{{ route('provider.messages.show', $conversation->conversation_id) }}"
+                   data-conversation-id="{{ $conversation->conversation_id }}"
+                   data-last-time="{{ $lastTime }}"
+                   class="conversation-item p-4 border-b hover:bg-gray-100 flex items-center gap-3
+                          {{ isset($selectedConversation) && $selectedConversation->conversation_id === $conversation->conversation_id ? 'bg-gray-200' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+                        {{ strtoupper(substr($conversation->user->full_name ?? 'U', 0, 2)) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-medium text-gray-900 {{ $unreadCount > 0 ? 'font-semibold' : '' }}">
+                                {{ $conversation->user->full_name ?? 'Unknown' }}
+                            </h3>
+                            @if($unreadCount > 0)
+                                <span class="unread-badge ml-2 min-w-[20px] h-5 px-1 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
                                     {{ $unreadCount > 99 ? '99+' : $unreadCount }}
                                 </span>
-                            </div>
-                            <p class="conversation-preview truncate text-xs {{ $unreadCount > 0 ? 'font-semibold text-slate-700' : 'text-slate-500' }}">
-                                @if($lastMsg)
-                                    @if($lastMsg->sender_type === 'provider')
-                                        You: {{ \Illuminate\Support\Str::limit($lastMsg->message, 34) }}
-                                    @else
-                                        {{ \Illuminate\Support\Str::limit($lastMsg->message, 34) }}
-                                    @endif
+                            @else
+                                <span class="unread-badge ml-2 min-w-[20px] h-5 px-1 bg-orange-500 text-white text-xs rounded-full items-center justify-center font-bold hidden">0</span>
+                            @endif
+                        </div>
+                        <p class="text-xs text-gray-500 truncate conversation-preview {{ $unreadCount > 0 ? 'font-medium text-gray-700' : '' }}">
+                            @if($lastMsg)
+                                @if($lastMsg->sender_type === 'provider')
+                                    <span class="text-gray-400">You: </span>{{ \Illuminate\Support\Str::limit($lastMsg->message, 25) }}
                                 @else
-                                    No messages yet
+                                    {{ \Illuminate\Support\Str::limit($lastMsg->message, 25) }}
                                 @endif
-                            </p>
-                        </div>
-                    </a>
-                @empty
-                    <div class="p-4">
-                        <div class="provider-empty-inline">
-                            No conversations yet. Messages from customers will appear here.
-                        </div>
+                            @else
+                                <span class="text-gray-300">· · ·</span>
+                            @endif
+                        </p>
                     </div>
-                @endforelse
+                </a>
+            @empty
+                <p class="p-4 text-gray-400">No conversations yet.</p>
+            @endforelse
+        </div>
+    </div>
+
+    <!-- RIGHT: Chat Area -->
+    <div class="flex-1 flex flex-col">
+
+        @if($selectedConversation ?? false)
+
+        <!-- Chat Header -->
+        <div class="p-4 border-b bg-white flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">
+                {{ strtoupper(substr($selectedConversation->user->full_name ?? 'U', 0, 2)) }}
             </div>
-        </aside>
+            <div>
+                <h3 class="font-medium text-gray-900">
+                    {{ $selectedConversation->user->full_name }}
+                </h3>
+                <p class="text-xs text-green-500">Online</p>
+            </div>
+        </div>
 
-        <section id="threadPane" class="provider-pane-main {{ $hasSelectedConversation ? 'flex' : 'hidden md:flex' }} flex-col">
-            @if($hasSelectedConversation)
-                @php
-                    $lastMsgTs = $selectedConversation->messages->last()?->created_at?->toIso8601String() ?? '';
-                    $groupedMessages = $selectedConversation->messages->groupBy(fn($message) => $message->created_at->toDateString());
-                @endphp
-                <header class="provider-pane-header">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex min-w-0 items-center gap-3">
-                            <a href="{{ route('provider.messages') }}" class="ui-btn-secondary px-3 py-2 text-xs md:hidden">
-                                <i class="fa-solid fa-arrow-left"></i>
-                                <span>Back</span>
-                            </a>
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-semibold text-white">
-                                {{ strtoupper(substr($selectedConversation->user->full_name ?? 'U', 0, 2)) }}
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="truncate text-sm font-semibold text-slate-900">{{ $selectedConversation->user->full_name ?? 'Unknown Customer' }}</h3>
-                                <p id="pollStatus" class="text-xs text-slate-500">Syncing messages</p>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+        <!-- Messages Area -->
+        @php
+            $lastMsgTs = $selectedConversation->messages->last()?->created_at?->toIso8601String() ?? '';
+            $groupedMessages = $selectedConversation->messages->groupBy(fn($m) => $m->created_at->toDateString());
+        @endphp
+        <div id="messagesArea"
+             data-last-ts="{{ $lastMsgTs }}"
+             class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
 
-                <div id="messagesArea" data-last-ts="{{ $lastMsgTs }}" class="provider-pane-body space-y-3 bg-slate-50 px-4 py-4">
-                    <div id="threadLoading" class="hidden rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
-                        Loading latest messages...
-                    </div>
+            @foreach($groupedMessages as $date => $messages)
+                {{-- Date Separator --}}
+                <div class="date-separator flex items-center gap-3 my-2" data-date="{{ $date }}">
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                    <span class="text-xs text-gray-400 font-medium px-2 whitespace-nowrap">
+                        @php
+                            $d = \Carbon\Carbon::parse($date);
+                            if ($d->isToday()) echo 'Today';
+                            elseif ($d->isYesterday()) echo 'Yesterday';
+                            else echo $d->format('F j, Y');
+                        @endphp
+                    </span>
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                </div>
 
-                    @if($selectedConversation->messages->isEmpty())
-                        <div class="provider-empty-inline" id="threadEmptyState">
-                            No messages yet. Start the conversation below.
-                        </div>
-                    @else
-                        <div id="threadEmptyState" class="hidden provider-empty-inline">No messages yet. Start the conversation below.</div>
-                        @foreach($groupedMessages as $date => $messages)
-                            <div class="date-separator my-2 flex items-center gap-3" data-date="{{ $date }}">
-                                <div class="h-px flex-1 bg-slate-200"></div>
-                                <span class="whitespace-nowrap px-2 text-xs font-medium text-slate-500">
-                                    @php
-                                        $day = \Carbon\Carbon::parse($date);
-                                        if ($day->isToday()) {
-                                            echo 'Today';
-                                        } elseif ($day->isYesterday()) {
-                                            echo 'Yesterday';
-                                        } else {
-                                            echo $day->format('F j, Y');
-                                        }
-                                    @endphp
+                @foreach($messages as $message)
+                    @php $isProvider = $message->sender_type === 'provider'; @endphp
+                    <div data-id="{{ $message->message_id }}"
+                         data-sender="{{ $message->sender_type }}"
+                         data-read="{{ $message->is_read ? 'true' : 'false' }}"
+                         class="{{ $isProvider ? 'flex justify-end' : 'flex items-start gap-2' }}">
+                        <div class="{{ $isProvider
+                            ? 'flex flex-col items-end bg-orange-500 text-white'
+                            : 'bg-white flex flex-col text-gray-800' }}
+                            px-4 py-2 rounded-lg shadow max-w-xs">
+
+                            <p class="text-sm">{{ $message->message }}</p>
+
+                            <div class="flex items-center gap-1 mt-1">
+                                <span class="{{ $isProvider ? 'text-xs text-orange-100' : 'text-xs text-gray-500' }}"
+                                      title="{{ $message->created_at }}">
+                                    {{ $message->created_at->format('H:i') }}
                                 </span>
-                                <div class="h-px flex-1 bg-slate-200"></div>
+                                @if($isProvider)
+                                    <span class="read-receipt ml-0.5">
+@if($message->is_read)
+<svg class="w-4 h-4 text-orange-200" viewBox="0 0 20 16" fill="none">
+  <path d="M2 8L6 12L11 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 8L12 12L17 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+@else
+<svg class="w-4 h-4 text-orange-200" viewBox="0 0 20 16" fill="none">
+  <path d="M4 8L8 12L16 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+@endif
+                                    </span>
+                                @endif
                             </div>
-
-                            @foreach($messages as $message)
-                                @php $isProvider = $message->sender_type === 'provider'; @endphp
-                                <div
-                                    data-id="{{ $message->message_id }}"
-                                    data-sender="{{ $message->sender_type }}"
-                                    data-read="{{ $message->is_read ? 'true' : 'false' }}"
-                                    class="message-row flex {{ $isProvider ? 'justify-end' : 'justify-start' }}"
-                                >
-                                    <div class="provider-chat-bubble {{ $isProvider ? 'provider-chat-bubble-out' : 'provider-chat-bubble-in' }}">
-                                        <p>{{ $message->message }}</p>
-                                        <div class="mt-1 flex items-center gap-1 text-[11px] {{ $isProvider ? 'text-orange-100' : 'text-slate-500' }}">
-                                            <span title="{{ $message->created_at }}">{{ $message->created_at->format('H:i') }}</span>
-                                            @if($isProvider)
-                                                <span class="read-receipt">{!! $message->is_read ? '&#10003;&#10003;' : '&#10003;' !!}</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @endforeach
-                    @endif
-                </div>
-
-                <footer class="provider-pane-footer">
-                    <form id="messageForm" class="flex items-center gap-2">
-                        @csrf
-                        <input type="hidden" name="conversation_id" value="{{ $selectedConversation->conversation_id }}">
-                        <label for="messageInput" class="sr-only">Type your message</label>
-                        <input
-                            id="messageInput"
-                            type="text"
-                            name="message"
-                            class="provider-input"
-                            placeholder="Type your message..."
-                            autocomplete="off"
-                            required
-                        >
-                        <button type="submit" id="sendButton" class="ui-btn-primary min-h-11 justify-center px-4 py-2.5">
-                            <i id="sendSpinner" class="fa-solid fa-spinner hidden animate-spin"></i>
-                            <span>Send</span>
-                        </button>
-                    </form>
-                </footer>
-            @else
-                <div class="flex h-full items-center justify-center p-6">
-                    <div class="provider-empty-inline w-full max-w-md text-center">
-                        Select a conversation to start messaging your customer.
+                        </div>
                     </div>
-                </div>
-            @endif
-        </section>
-    </section>
+                @endforeach
+            @endforeach
+        </div>
+
+        <!-- Message Input Form -->
+        <form id="messageForm" class="p-4 border-t bg-white flex items-center gap-3">
+            @csrf
+            <input type="hidden" name="conversation_id"
+                   value="{{ $selectedConversation->conversation_id }}">
+
+            <input id="messageInput" type="text" name="message"
+                   placeholder="Type your message..."
+                   class="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                   required>
+
+            <button type="submit" id="sendButton"
+                    class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-full transition flex items-center gap-2">
+                <span>Send</span>
+                <svg id="sendSpinner" class="hidden w-4 h-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </form>
+
+        @else
+        <div class="flex-1 flex items-center justify-center text-gray-400">
+            <p>Select a conversation to start messaging</p>
+        </div>
+        @endif
+
+    </div>
 </div>
-@endsection
 
-@push('styles')
+<div id="toast" class="fixed bottom-4 right-4 z-50 hidden bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300"></div>
+
 <style>
-.message-row.is-new {
-    animation: providerMessageIn 180ms ease-out;
-}
-
-@keyframes providerMessageIn {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 </style>
-@endpush
+@endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+    // ----- Search / Filter Conversations -----
     const searchInput = document.getElementById('conversationSearch');
     const conversationsList = document.getElementById('conversationsList');
-    const searchEmptyState = document.getElementById('conversationSearchEmpty');
 
+    function applySearch() {
+        if (!searchInput || !conversationsList) return;
+        const term = searchInput.value.toLowerCase().trim();
+        conversationsList.querySelectorAll('a.conversation-item').forEach(link => {
+            const name = (link.querySelector('h3')?.textContent ?? '').toLowerCase();
+            link.style.display = (term === '' || name.includes(term)) ? 'flex' : 'none';
+        });
+    }
+    if (searchInput) searchInput.addEventListener('keyup', applySearch);
+
+    // ----- Messaging -----
     const messagesArea = document.getElementById('messagesArea');
     const messageForm = document.getElementById('messageForm');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
-    const sendSpinner = document.getElementById('sendSpinner');
-    const threadLoading = document.getElementById('threadLoading');
-    const threadEmptyState = document.getElementById('threadEmptyState');
-    const pollStatus = document.getElementById('pollStatus');
+    const spinner = document.getElementById('sendSpinner');
+    const toast = document.getElementById('toast');
 
+    // Track seen message IDs to avoid duplicates
     const seenMessageIds = new Set();
-    messagesArea?.querySelectorAll('[data-id]').forEach((el) => {
-        seenMessageIds.add(String(el.getAttribute('data-id')));
+    messagesArea?.querySelectorAll('[data-id]').forEach(el => {
+        seenMessageIds.add(el.getAttribute('data-id'));
     });
 
-    const activeConversationId = messageForm ? String(messageForm.conversation_id.value) : '';
     let lastCreatedAt = messagesArea ? (messagesArea.dataset.lastTs || '') : '';
-    let failedPollCount = 0;
+    const activeConversationId = messageForm ? messageForm.conversation_id.value : null;
 
-    function applySearch() {
-        if (!searchInput || !conversationsList) {
-            return;
-        }
+    // SVG ticks
+const singleTickSVG = `
+<svg class="w-4 h-4 text-orange-200" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 8L8 12L16 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+const doubleTickSVG = `
+<svg class="w-4 h-4 text-orange-200" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M2 8L6 12L11 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 8L12 12L17 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
 
-        const term = searchInput.value.toLowerCase().trim();
-        let visibleCount = 0;
-
-        conversationsList.querySelectorAll('a.conversation-item').forEach((item) => {
-            const name = (item.querySelector('p')?.textContent || '').toLowerCase();
-            const shouldShow = term === '' || name.includes(term);
-            item.classList.toggle('hidden', !shouldShow);
-            if (shouldShow) {
-                visibleCount += 1;
-            }
-        });
-
-        if (searchEmptyState) {
-            searchEmptyState.classList.toggle('hidden', !(term !== '' && visibleCount === 0));
-        }
-    }
-
-    searchInput?.addEventListener('input', applySearch);
-
-    function escapeHTML(str) {
-        return String(str).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
-    }
-
+    // Helper: check if user is near bottom (within 50px)
     function isNearBottom() {
-        if (!messagesArea) {
-            return true;
-        }
-        const threshold = 56;
+        if (!messagesArea) return true;
+        const threshold = 50;
         return messagesArea.scrollHeight - messagesArea.scrollTop - messagesArea.clientHeight < threshold;
     }
 
     function scrollToBottom(force = false) {
-        if (!messagesArea) {
-            return;
-        }
+        if (!messagesArea) return;
         if (force || isNearBottom()) {
-            messagesArea.scrollTo({ top: messagesArea.scrollHeight, behavior: force ? 'auto' : 'smooth' });
+            messagesArea.scrollTo({ top: messagesArea.scrollHeight, behavior: 'smooth' });
         }
     }
 
+    function escapeHTML(str) {
+        return str.replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    }
+
+    function showToast(message, type = 'error') {
+        toast.textContent = message;
+        toast.className = `fixed bottom-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'} text-white`;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    // Date handling
     function formatDateLabel(dateStr) {
-        const target = new Date(dateStr);
+        const d = new Date(dateStr);
         const today = new Date();
         const yesterday = new Date();
         yesterday.setDate(today.getDate() - 1);
+        const toDateStr = (dt) => dt.toISOString().split('T')[0];
 
-        const ymd = (date) => date.toISOString().slice(0, 10);
-        if (ymd(target) === ymd(today)) {
-            return 'Today';
-        }
-        if (ymd(target) === ymd(yesterday)) {
-            return 'Yesterday';
-        }
-
-        return target.toLocaleDateString('en-ZA', { year: 'numeric', month: 'long', day: 'numeric' });
+        if (toDateStr(d) === toDateStr(today)) return 'Today';
+        if (toDateStr(d) === toDateStr(yesterday)) return 'Yesterday';
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     }
 
-    function ensureDateSeparator(dateStr) {
-        if (!messagesArea) {
-            return;
+    function getOrCreateDateSeparator(dateStr) {
+        let sep = messagesArea.querySelector(`.date-separator[data-date="${dateStr}"]`);
+        if (!sep) {
+            sep = document.createElement('div');
+            sep.className = 'date-separator flex items-center gap-3 my-2 fade-in';
+            sep.setAttribute('data-date', dateStr);
+            sep.innerHTML = `
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="text-xs text-gray-400 font-medium px-2 whitespace-nowrap">${formatDateLabel(dateStr)}</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            `;
+            messagesArea.appendChild(sep);
         }
-
-        let separator = messagesArea.querySelector(`.date-separator[data-date="${dateStr}"]`);
-        if (separator) {
-            return separator;
-        }
-
-        separator = document.createElement('div');
-        separator.className = 'date-separator my-2 flex items-center gap-3';
-        separator.setAttribute('data-date', dateStr);
-        separator.innerHTML = `
-            <div class="h-px flex-1 bg-slate-200"></div>
-            <span class="whitespace-nowrap px-2 text-xs font-medium text-slate-500">${formatDateLabel(dateStr)}</span>
-            <div class="h-px flex-1 bg-slate-200"></div>
-        `;
-        messagesArea.appendChild(separator);
-        return separator;
+        return sep;
     }
 
-    function appendMessage(message, isMine) {
-        if (!messagesArea) {
-            return;
-        }
+    // Append a single message to the messages area
+    function appendMessage(msg, isMine) {
+        if (!messagesArea) return;
+        const msgId = String(msg.id);
+        if (seenMessageIds.has(msgId)) return;
 
-        const messageId = String(message.id);
-        if (seenMessageIds.has(messageId)) {
-            return;
-        }
+        const msgDate = (msg.created_at || '').split('T')[0] || new Date().toISOString().split('T')[0];
+        getOrCreateDateSeparator(msgDate);
 
-        const dateStr = (message.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
-        ensureDateSeparator(dateStr);
+        const div = document.createElement('div');
+        div.setAttribute('data-id', msgId);
+        div.setAttribute('data-sender', msg.sender_type || (isMine ? 'provider' : 'customer'));
+        div.setAttribute('data-read', msg.is_read ? 'true' : 'false'); // ✅ use actual read status
+        div.className = `flex ${isMine ? 'justify-end' : 'items-start'} fade-in`;
 
-        const row = document.createElement('div');
-        row.className = `message-row is-new flex ${isMine ? 'justify-end' : 'justify-start'}`;
-        row.setAttribute('data-id', messageId);
-        row.setAttribute('data-sender', message.sender_type || (isMine ? 'provider' : 'customer'));
-        row.setAttribute('data-read', message.is_read ? 'true' : 'false');
+        const tick = msg.is_read ? doubleTickSVG : singleTickSVG; // ✅ show correct tick immediately
 
-        const readReceipt = isMine ? `<span class="read-receipt">${message.is_read ? '&#10003;&#10003;' : '&#10003;'}</span>` : '';
-
-        row.innerHTML = `
-            <div class="provider-chat-bubble ${isMine ? 'provider-chat-bubble-out' : 'provider-chat-bubble-in'}">
-                <p>${escapeHTML(message.message || '')}</p>
-                <div class="mt-1 flex items-center gap-1 text-[11px] ${isMine ? 'text-orange-100' : 'text-slate-500'}">
-                    <span>${escapeHTML(message.time || '')}</span>
-                    ${readReceipt}
+        div.innerHTML = `
+            <div class="${isMine
+                ? 'flex flex-col items-end bg-orange-500 text-white'
+                : 'bg-white flex flex-col text-gray-800'}
+                px-4 py-2 rounded-lg shadow max-w-xs">
+                <p class="text-sm">${escapeHTML(msg.message)}</p>
+                <div class="flex items-center gap-1 mt-1">
+                    <span class="text-xs ${isMine ? 'text-orange-100' : 'text-gray-500'}">${msg.time}</span>
+                    ${isMine ? `<span class="read-receipt ml-0.5">${tick}</span>` : ''}
                 </div>
             </div>
         `;
+        messagesArea.appendChild(div);
+        seenMessageIds.add(msgId);
 
-        messagesArea.appendChild(row);
-        seenMessageIds.add(messageId);
-        threadEmptyState?.classList.add('hidden');
-
-        if (message.created_at && message.created_at > lastCreatedAt) {
-            lastCreatedAt = message.created_at;
+        if (msg.created_at && msg.created_at > lastCreatedAt) {
+            lastCreatedAt = msg.created_at;
         }
     }
 
+    // Update read receipts for messages that became read
     function updateReadReceipts(readMessageIds) {
-        if (!messagesArea || !Array.isArray(readMessageIds)) {
-            return;
-        }
-
-        readMessageIds.forEach((id) => {
-            const item = messagesArea.querySelector(`[data-id="${id}"]`);
-            if (!item || item.getAttribute('data-read') === 'true') {
-                return;
-            }
-            item.setAttribute('data-read', 'true');
-            const badge = item.querySelector('.read-receipt');
-            if (badge) {
-                badge.innerHTML = '&#10003;&#10003;';
-            }
+        if (!readMessageIds || !readMessageIds.length) return;
+        readMessageIds.forEach(id => {
+            const el = messagesArea?.querySelector(`[data-id="${id}"]`);
+            if (!el) return;
+            if (el.getAttribute('data-read') === 'true') return;
+            el.setAttribute('data-read', 'true');
+            const receipt = el.querySelector('.read-receipt');
+            if (receipt) receipt.innerHTML = doubleTickSVG;
         });
     }
 
-    function setConversationPreview(conversationId, text, isMine, lastTime) {
-        if (!conversationsList) {
-            return;
-        }
-
-        const item = conversationsList.querySelector(`a[data-conversation-id="${conversationId}"]`);
-        if (!item) {
-            return;
-        }
-
-        const preview = item.querySelector('.conversation-preview');
-        if (preview) {
-            const snippet = String(text || '').slice(0, 34);
-            preview.textContent = isMine ? `You: ${snippet}` : snippet || 'No messages yet';
-            preview.classList.add('text-slate-700');
-        }
-
-        if (lastTime) {
-            item.setAttribute('data-last-time', lastTime);
-        }
-    }
-
+    // Update conversation list badge and preview, then reorder list
     function setUnreadBadge(conversationId, count) {
-        if (!conversationsList) {
-            return;
-        }
-
-        const item = conversationsList.querySelector(`a[data-conversation-id="${conversationId}"]`);
-        if (!item) {
-            return;
-        }
-
-        const badge = item.querySelector('.unread-badge');
-        if (!badge) {
-            return;
-        }
-
+        const link = conversationsList?.querySelector(`a[data-conversation-id="${conversationId}"]`);
+        if (!link) return;
+        const badge = link.querySelector('.unread-badge');
+        if (!badge) return;
         if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : String(count);
+            badge.textContent = count > 99 ? '99+' : count;
             badge.classList.remove('hidden');
-            badge.classList.add('inline-flex');
+            badge.classList.add('flex');
         } else {
             badge.classList.add('hidden');
-            badge.classList.remove('inline-flex');
+            badge.classList.remove('flex');
         }
     }
 
-    function reorderConversations() {
-        if (!conversationsList) {
-            return;
+    function updateConversationPreview(conversationId, messageText, isMine, lastTime) {
+        const link = conversationsList?.querySelector(`a[data-conversation-id="${conversationId}"]`);
+        if (!link) return;
+
+        // Update preview text
+        const preview = link.querySelector('.conversation-preview');
+        if (preview) {
+            const truncated = messageText.length > 25 ? messageText.substring(0, 25) + '…' : messageText;
+            preview.innerHTML = isMine
+                ? `<span class="text-gray-400">You: </span>${escapeHTML(truncated)}`
+                : escapeHTML(truncated);
         }
 
-        const items = Array.from(conversationsList.querySelectorAll('a.conversation-item'));
+        // Update last message time attribute for sorting
+        if (lastTime) {
+            link.setAttribute('data-last-time', lastTime);
+        }
+    }
+
+    // Reorder conversation list based on data-last-time (descending)
+    function reorderConversationList() {
+        const container = conversationsList;
+        if (!container) return;
+        const items = Array.from(container.querySelectorAll('a.conversation-item'));
         items.sort((a, b) => {
-            const aTime = a.getAttribute('data-last-time') || '';
-            const bTime = b.getAttribute('data-last-time') || '';
-            return bTime.localeCompare(aTime);
+            const timeA = a.getAttribute('data-last-time') || '0';
+            const timeB = b.getAttribute('data-last-time') || '0';
+            return timeB.localeCompare(timeA); // descending
         });
-        items.forEach((item) => conversationsList.appendChild(item));
+        // Re-attach in new order
+        items.forEach(item => container.appendChild(item));
+        // Re-apply search filter after reorder
+        applySearch();
     }
 
-    async function markConversationRead() {
-        if (!activeConversationId) {
-            return;
-        }
-
+    async function markMessagesRead(conversationId) {
         try {
-            await fetch(`/providers/messages/${activeConversationId}/read`, {
+            await fetch(`/providers/messages/${conversationId}/read`, {
                 method: 'POST',
                 headers: {
-                    'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                },
-            });
-            setUnreadBadge(activeConversationId, 0);
-        } catch (error) {
-            console.error('Failed to mark conversation as read:', error);
-        }
-    }
-
-    async function fetchMessages() {
-        if (!activeConversationId) {
-            return;
-        }
-
-        threadLoading?.classList.remove('hidden');
-        pollStatus && (pollStatus.textContent = 'Syncing messages');
-        pollStatus && pollStatus.classList.remove('text-rose-600');
-        pollStatus && pollStatus.classList.add('text-slate-500');
-
-        try {
-            const query = lastCreatedAt ? `?after=${encodeURIComponent(lastCreatedAt)}` : '';
-            const response = await fetch(`/providers/messages/${activeConversationId}/latest${query}`, {
-                headers: { 'Accept': 'application/json' },
-            });
-
-            if (!response.ok) {
-                throw new Error('Unable to load latest messages.');
-            }
-
-            const payload = await response.json();
-            const messages = Array.isArray(payload.messages) ? payload.messages : [];
-
-            messages.forEach((message) => {
-                const isMine = String(message.sender_type) === 'provider';
-                appendMessage(message, isMine);
-                setConversationPreview(activeConversationId, message.message, isMine, message.created_at);
-            });
-
-            updateReadReceipts(payload.read_message_ids || []);
-            if (messages.length > 0) {
-                reorderConversations();
-                scrollToBottom();
-                await markConversationRead();
-            }
-
-            failedPollCount = 0;
-            pollStatus && (pollStatus.textContent = 'Messages are up to date');
-        } catch (error) {
-            failedPollCount += 1;
-            console.error('Message polling error:', error);
-            pollStatus && (pollStatus.textContent = 'Connection issue. Retrying...');
-            pollStatus && pollStatus.classList.remove('text-slate-500');
-            pollStatus && pollStatus.classList.add('text-rose-600');
-            if (failedPollCount === 1) {
-                window.uiToast('Unable to sync messages right now. Retrying automatically.', 'warning');
-            }
-        } finally {
-            threadLoading?.classList.add('hidden');
-        }
-    }
-
-    async function fetchConversationList() {
-        if (!conversationsList) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/providers/messages/list', {
-                headers: { 'Accept': 'application/json' },
-            });
-            if (!response.ok) {
-                throw new Error('Unable to refresh conversation list.');
-            }
-
-            const payload = await response.json();
-            const conversations = Array.isArray(payload.conversations) ? payload.conversations : [];
-
-            conversations.forEach((conversation) => {
-                const id = String(conversation.id);
-                if (id !== activeConversationId) {
-                    setUnreadBadge(id, Number(conversation.unread_count || 0));
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                        || messageForm?._token?.value || ''
                 }
-                setConversationPreview(id, conversation.last_message || '', conversation.last_sender === 'provider', conversation.last_time || '');
             });
-
-            reorderConversations();
-            applySearch();
-        } catch (error) {
-            console.error('Conversation polling error:', error);
+            setUnreadBadge(conversationId, 0);
+        } catch (e) {
+            console.error('Mark read error:', e);
         }
     }
 
     if (activeConversationId) {
-        markConversationRead();
-        scrollToBottom(true);
+        markMessagesRead(activeConversationId);
     }
 
-    const messagePollTimer = activeConversationId ? setInterval(fetchMessages, 4000) : null;
-    const conversationPollTimer = setInterval(fetchConversationList, 7000);
-
-    window.addEventListener('beforeunload', () => {
-        if (messagePollTimer) {
-            clearInterval(messagePollTimer);
-        }
-        clearInterval(conversationPollTimer);
-    });
-
-    messageForm?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const text = String(messageInput.value || '').trim();
-        if (!text) {
-            return;
-        }
-
-        sendButton.disabled = true;
-        messageInput.disabled = true;
-        sendSpinner?.classList.remove('hidden');
+    // Poll for new messages in the active conversation
+    async function fetchMessages() {
+        if (!activeConversationId) return;
 
         try {
-            const response = await fetch('{{ route('provider.messages.send') }}', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: JSON.stringify({
-                    conversation_id: activeConversationId,
-                    message: text,
-                }),
+            const url = `/providers/messages/${activeConversationId}/latest`
+                + (lastCreatedAt ? `?after=${encodeURIComponent(lastCreatedAt)}` : '');
+
+            const res = await fetch(url);
+            if (!res.ok) return;
+            const data = await res.json();
+
+            requestAnimationFrame(() => {
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        const isMine = msg.sender_type === 'provider';
+                        appendMessage(msg, isMine);
+                        // Update conversation preview with the latest message
+                        updateConversationPreview(activeConversationId, msg.message, isMine, msg.created_at);
+                    });
+                    // Reorder list because the active conversation might now be the most recent
+                    reorderConversationList();
+                    scrollToBottom(); // auto-scroll only if user was near bottom
+                    markMessagesRead(activeConversationId);
+                }
+
+                if (data.read_message_ids && data.read_message_ids.length > 0) {
+                    updateReadReceipts(data.read_message_ids);
+                }
+            });
+        } catch (err) {
+            console.error('Polling error:', err);
+        }
+    }
+
+    // Poll for conversation list updates (unread counts, previews, ordering)
+    async function fetchConversationList() {
+        try {
+            const res = await fetch('/providers/messages/list', {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            data.conversations.forEach(conv => {
+                const convId = String(conv.id);
+
+                // Update badge for non-active conversations only
+                if (convId !== String(activeConversationId)) {
+                    setUnreadBadge(convId, conv.unread_count);
+                }
+
+                // Update preview and last-time attribute
+                updateConversationPreview(convId, conv.last_message, conv.last_sender === 'provider', conv.last_time);
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to send message.');
-            }
-
-            const payload = await response.json();
-            appendMessage(payload.message, true);
-            setConversationPreview(activeConversationId, payload.message?.message || text, true, payload.message?.created_at || '');
-            reorderConversations();
-            scrollToBottom(true);
-            messageInput.value = '';
-            messageInput.focus();
-        } catch (error) {
-            console.error('Send message error:', error);
-            window.uiToast('Message could not be sent. Please try again.', 'error');
-        } finally {
-            sendSpinner?.classList.add('hidden');
-            sendButton.disabled = false;
-            messageInput.disabled = false;
+            // Reorder the whole list based on updated last-time
+            reorderConversationList();
+        } catch (err) {
+            console.error('Conversation list polling error:', err);
         }
+    }
+
+    // Polling intervals
+    const pollInterval = setInterval(fetchMessages, 3000);
+    const listPollInterval = setInterval(fetchConversationList, 5000);
+
+    window.addEventListener('beforeunload', () => {
+        clearInterval(pollInterval);
+        clearInterval(listPollInterval);
     });
+
+    // Send message
+    if (messageForm) {
+        messageForm.addEventListener('submit', async e => {
+            e.preventDefault();
+
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            spinner.classList.remove('hidden');
+
+            try {
+                const res = await fetch("{{ route('provider.messages.send') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': messageForm._token.value,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        conversation_id: activeConversationId,
+                        message: message
+                    })
+                });
+
+                if (!res.ok) throw new Error('Send failed');
+
+                const data = await res.json();
+                const newMsg = data.message;
+
+                appendMessage(newMsg, true);
+                scrollToBottom(true); // always scroll when sending
+                updateConversationPreview(activeConversationId, newMsg.message, true, newMsg.created_at);
+                reorderConversationList(); // move this conversation to top
+
+                messageInput.value = '';
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to send message. Please try again.');
+            } finally {
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        });
+    }
+
+    // Initial scroll
+    scrollToBottom();
 });
 </script>
 @endpush

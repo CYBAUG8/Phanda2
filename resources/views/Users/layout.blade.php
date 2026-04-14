@@ -3,33 +3,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-<<<<<<< HEAD
     <title>Panda User</title>
        <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-=======
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Phanda User</title>
-    @include('partials.ui.favicons')
->>>>>>> feature2
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     @vite(['resources/css/app.css', 'resources/css/users.css', 'resources/css/dashboard.css', 'resources/js/firstpage.js'])
 
-<<<<<<< HEAD
     @else
         <link rel="stylesheet" href="/build/assets/users.css">
         <script src="/build/assets/firstpage.js"></script>
     @endif
         
-=======
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        [x-cloak] { display: none !important; }
-    </style>
-    @stack('styles')
->>>>>>> feature2
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
     @php
@@ -74,16 +60,9 @@
                     </a>
                 @endforeach
             </nav>
-<<<<<<< HEAD
             <div class="sidebar-item mt-auto">
                 <a href="/logout" class="logout-link">
                     <i class="fas fa-sign-out-alt"></i>
-=======
-
-            <div class="border-t border-slate-200 p-4">
-                <a href="/logout" class="ui-btn-secondary w-full justify-center">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
->>>>>>> feature2
                     <span>Logout</span>
                 </a>
             </div>
@@ -134,11 +113,6 @@
             </main>
         </div>
     </div>
-<<<<<<< HEAD
-=======
-
-    @include('partials.ui.feedback')
->>>>>>> feature2
     @stack('scripts')
 </body>
 </html>

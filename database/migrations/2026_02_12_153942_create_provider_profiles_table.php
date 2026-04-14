@@ -28,6 +28,7 @@ return new class extends Migration
             $table->decimal('last_lat', 10, 7)->nullable();
             $table->decimal('last_lng', 10, 7)->nullable();
             $table->decimal('rating_avg', 3, 2)->default(0.00);
+               
             $table->timestamps();
         });
     }

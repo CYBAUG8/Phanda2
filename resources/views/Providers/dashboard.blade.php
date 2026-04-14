@@ -1,196 +1,140 @@
-@extends('Providers.layout')
+@extends('providers.layout')
 
 @section('content')
-<<<<<<< HEAD
 <div class="px-6 py-6">
-=======
-<div x-data="providerDashboardPage()" class="provider-page-shell space-y-6">
-    <section class="provider-page-header">
-        <div>
-            <h1>Dashboard</h1>
-            <p class="provider-page-subtitle">Monitor bookings, earnings, and your provider availability from one place.</p>
-        </div>
->>>>>>> feature2
 
-        <div class="ui-card w-full max-w-sm p-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Availability</p>
-            <div class="mt-2 flex items-center justify-between gap-3">
-                <div>
-                    <p class="provider-status-dot" :class="active ? 'text-emerald-700' : 'text-slate-500'" x-text="active ? 'Online' : 'Offline'"></p>
-                    <p class="mt-1 text-xs text-slate-500" x-text="active ? 'Customers can send new requests.' : 'New requests are temporarily paused.'"></p>
-                </div>
-                <button
-                    type="button"
-                    class="relative inline-flex h-7 w-12 items-center rounded-full border border-transparent transition focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                    :class="active ? 'bg-emerald-500' : 'bg-slate-300'"
-                    :aria-checked="active ? 'true' : 'false'"
-                    :aria-busy="pending ? 'true' : 'false'"
-                    role="switch"
-                    @click="toggle()"
-                    :disabled="pending"
-                >
-                    <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition" :class="active ? 'translate-x-6' : 'translate-x-1'"></span>
-                    <span class="sr-only">Toggle provider availability</span>
-                </button>
-            </div>
-        </div>
-    </section>
+    <!-- Page Header -->
+    <section class="bg-white border rounded-lg p-8 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-6 ">
 
-    @include('partials.ui.flash')
-
-    <section class="provider-metrics-grid" aria-label="Provider dashboard metrics">
-        <article class="provider-metric-card">
-            <p class="provider-metric-label">Average Rating</p>
-            <p class="provider-metric-value text-amber-600">{{ number_format((float) ($averageRating ?? 0), 1) }}</p>
-            <p class="mt-1 text-xs text-slate-500">{{ number_format((int) ($totalReviews ?? 0)) }} reviews</p>
-        </article>
-        <article class="provider-metric-card">
-            <p class="provider-metric-label">Total Bookings</p>
-            <p class="provider-metric-value">{{ number_format((int) ($totalBookings ?? 0)) }}</p>
-        </article>
-        <article class="provider-metric-card">
-            <p class="provider-metric-label">Completed</p>
-            <p class="provider-metric-value text-emerald-700">{{ number_format((int) ($completedBookings ?? 0)) }}</p>
-        </article>
-        <article class="provider-metric-card">
-            <p class="provider-metric-label">Pending</p>
-            <p class="provider-metric-value text-amber-700">{{ number_format((int) ($pendingBookings ?? 0)) }}</p>
-        </article>
-        <article class="provider-metric-card">
-            <p class="provider-metric-label">Available Balance</p>
-            <p class="provider-metric-value text-orange-700">R{{ number_format((float) ($availableBalance ?? 0), 2) }}</p>
-        </article>
-    </section>
-
-    <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <article class="provider-section-card">
-            <h2 class="provider-section-title">Bookings</h2>
-            <p class="provider-section-copy">Review and action customer requests.</p>
-            <div class="mt-4">
-                <a href="{{ route('provider.bookings.index') }}" class="ui-btn-secondary">Manage Bookings</a>
-            </div>
-        </article>
-        <article class="provider-section-card">
-            <h2 class="provider-section-title">Services</h2>
-            <p class="provider-section-copy">Update pricing, details, and availability.</p>
-            <div class="mt-4">
-                <a href="{{ route('provider.services.index') }}" class="ui-btn-secondary">Manage Services</a>
-            </div>
-        </article>
-        <article class="provider-section-card">
-            <h2 class="provider-section-title">Earnings</h2>
-            <p class="provider-section-copy">Track payouts and available funds.</p>
-            <div class="mt-4">
-                <a href="{{ route('provider.earnings') }}" class="ui-btn-secondary">View Earnings</a>
-            </div>
-        </article>
-    </section>
-
-    <section class="ui-card overflow-hidden">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
             <div>
-                <h2 class="provider-section-title">Recent Bookings</h2>
-                <p class="provider-section-copy">Latest activity from your customer requests.</p>
+                <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+                <p class="text-sm text-gray-500">Welcome back, Here's what's happening today.</p>
             </div>
-            <a href="{{ route('provider.bookings.index') }}" class="ui-btn-secondary">View All</a>
+
+            <!-- Active Toggle -->
+            <div 
+                x-data="{
+                    active: {{ $isOnline ? 'true' : 'false' }},
+                    toggle(){
+                        this.active = !this.active
+
+                        fetch('{{ route('provider.toggleOnline') }}', {
+                            method:'POST',
+                            headers:{
+                                'Content-Type':'application/json',
+                                'X-CSRF-TOKEN':'{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                is_online:this.active
+                            })
+                        })
+                    }
+                }"
+                class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm"
+            >
+
+            <span 
+                class="text-sm font-semibold"
+                :class="active ? 'text-orange-600' : 'text-gray-400'"
+                x-text="active ? 'Active' : 'Offline'">
+            </span>
+
+            <button 
+                @click="toggle()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition"
+                :class="active ? 'bg-orange-500' : 'bg-gray-300'"
+            >
+            <span 
+                class="inline-block h-4 w-4 transform rounded-full bg-white transition"
+                :class="active ? 'translate-x-6' : 'translate-x-1'">
+            </span>
+            </button>
+
+            </div>
+
+        </div>
+    </section>
+    <!-- ===================== -->
+    <!-- SUMMARY CARDS -->
+    <!-- ===================== -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+
+       <!-- Service Rating -->
+        <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Service Rating</p>
+
+            <div class="flex items-center mt-2">
+                <span class="text-2xl font-bold text-yellow-500 mr-2">
+                    {{ number_format($averageRating,1) }}
+                </span>
+
+                <span class="text-sm text-gray-400">
+                    ({{ $totalReviews ?? 0}} reviews)
+                </span>
+            </div>
+        </div>
+        <!-- Total Bookings -->
+        <a href="{{ url('/providers/bookings') }}" class="block bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Total Bookings</p>
+            <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ $totalBookings }}</h2>
+        </a>
+        <!-- Completed -->
+        <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Completed</p>
+            <h2 class="text-2xl font-bold text-green-600 mt-2">{{ $completedBookings }}</h2>
         </div>
 
-        @if(($recentBookings ?? collect())->isNotEmpty())
-            <div class="overflow-x-auto px-5 py-4">
-                <table class="min-w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            <th class="py-3 pr-3">Booking</th>
-                            <th class="py-3 pr-3">Service</th>
-                            <th class="py-3 pr-3">Status</th>
-                            <th class="py-3 pr-3">Amount</th>
-                            <th class="py-3">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @foreach(($recentBookings ?? collect()) as $booking)
-                            @php
-                                $statusClass = match ($booking->status) {
-                                    'completed' => 'provider-status-completed',
-                                    'pending' => 'provider-status-pending',
-                                    'confirmed' => 'provider-status-confirmed',
-                                    'in_progress' => 'provider-status-in-progress',
-                                    'cancelled' => 'provider-status-cancelled',
-                                    default => 'provider-status-paused',
-                                };
-                            @endphp
-                            <tr class="align-top">
-                                <td class="py-3 pr-3 font-medium text-slate-700">#{{ $booking->id }}</td>
-                                <td class="py-3 pr-3 text-slate-800">{{ $booking->service->title ?? 'Service' }}</td>
-                                <td class="py-3 pr-3">
-                                    <span class="provider-status-badge {{ $statusClass }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span>
-                                </td>
-                                <td class="py-3 pr-3 font-semibold text-slate-900">R{{ number_format((float) $booking->total_price, 2) }}</td>
-                                <td class="py-3 text-slate-600">{{ optional($booking->created_at)->format('d M Y') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        <!-- Pending -->
+        <div class="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Pending</p>
+            <h2 class="text-2xl font-bold text-yellow-500 mt-2">{{ $pendingBookings }}</h2>
+        </div>
+
+        <!-- Available Balance -->
+        <div class="bg-gradient-to-r from-orange-600 to-orange-600 text-white rounded-xl shadow-sm p-5">
+            <p class="text-sm opacity-80">Available Balance</p>
+            <h2 class="text-2xl font-bold mt-2">R{{ number_format($availableBalance, 2) }}</h2>
+        </div>
+
+    </div>
+    
+
+    {{-- Recent Bookings --}}
+    <section class="card">
+        <div class="card-header">
+            <div class="card-title">Recent Bookings</div>
+        </div>
+
+        @if($recentBookings->count() > 0)
+            <div class="list">
+                @foreach($recentBookings as $booking)
+                    <div class="list-row">
+                        {{-- Booking Details --}}
+                        <div class="activity-body">
+                            <div class="row-title">
+                                {{ $booking->service->title ?? 'Service Booking' }}
+                            </div>
+                            
+                            <div class="row-note">
+                                R {{ number_format($booking->total_price, 2) }} • 
+                                {{ ucfirst(str_replace('_',' ',$booking->status)) }} • 
+                                {{ $booking->created_at->diffForHumans() }}
+                            </div>
+                            <br>
+                        </div>
+
+                    </div>
+                @endforeach
             </div>
         @else
-            <div class="provider-empty-state border-0 border-t border-slate-200 rounded-none">
-                <h3>No bookings yet</h3>
-                <p>New customer requests will appear here once your services are live.</p>
-                <div class="mt-4">
-                    <a href="{{ route('provider.services.index') }}" class="ui-btn-secondary">Review Services</a>
-                </div>
+            <div class="empty">
+                <div class="empty-emoji">📅</div>
+                <div class="empty-title">No bookings yet</div>
+                <div class="empty-note">Your recent bookings will appear here.</div>
             </div>
         @endif
     </section>
+
 </div>
 @endsection
-<<<<<<< HEAD
-=======
-
-@push('scripts')
-<script>
-function providerDashboardPage() {
-    return {
-        active: @json((bool) ($isOnline ?? false)),
-        pending: false,
-        async toggle() {
-            if (this.pending) {
-                return;
-            }
-
-            const previous = this.active;
-            const next = !this.active;
-
-            this.active = next;
-            this.pending = true;
-
-            try {
-                const response = await fetch('{{ route('provider.toggleOnline') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    body: JSON.stringify({ is_online: next }),
-                });
-
-                const payload = await response.json();
-                if (!response.ok || !payload.success) {
-                    throw new Error(payload.message || 'Unable to update your availability.');
-                }
-
-                this.active = Boolean(payload.is_online);
-                window.uiToast(this.active ? 'You are now online.' : 'You are now offline.', 'success');
-            } catch (error) {
-                this.active = previous;
-                window.uiToast(error.message || 'Unable to update availability right now.', 'error');
-            } finally {
-                this.pending = false;
-            }
-        },
-    };
-}
-</script>
-@endpush
->>>>>>> feature2

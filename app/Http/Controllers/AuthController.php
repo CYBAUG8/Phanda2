@@ -86,7 +86,6 @@ public function login(Request $request)
     $request->session()->regenerate();
 
      $user = Auth::user();
-     $this->ensureProviderProfile($user);
 
     LoginHistory::create([
         'login_history_id' => Str::uuid(),   
@@ -99,57 +98,17 @@ public function login(Request $request)
         'status' => 'success',
     ]);
 
-        if (strtoupper($user->role) === 'PROVIDER') {
+     if ($user->role === 'provider') {
 
             return redirect()->route('providers.dashboard');
             
         }else{
 
-            return redirect()->intended(route('users.dashboard'));
+            return redirect()->route('users.dashboard');
         }
    
     
-
-}
-
-private function ensureProviderProfile(User $user): void
-{
-    if (strtolower((string) $user->role) !== 'provider') {
-        return;
-    }
-
-    $profile = ProviderProfile::withTrashed()->firstOrNew([
-        'user_id' => $user->user_id,
-    ]);
-
-    if (!$profile->provider_id) {
-        $profile->provider_id = (string) Str::uuid();
-    }
-
-    if (!$profile->business_name) {
-        $profile->business_name = $user->full_name ?: "Provider {$user->user_id}";
-    }
-
-    if ($profile->years_experience === null) {
-        $profile->years_experience = 0;
-    }
-
-    if (!$profile->service_area) {
-        $profile->service_area = 'Johannesburg';
-    }
-
-    if (!$profile->kyc_status) {
-        $profile->kyc_status = 'PENDING';
-    }
-
-    if (!$profile->exists) {
-        $profile->is_online = false;
-        $profile->service_radius_km = 25;
-        $profile->rating_avg = 0;
-    }
-
-    $profile->deleted_at = null;
-    $profile->save();
+   
 }
 
 private function parseDevice($ua)
