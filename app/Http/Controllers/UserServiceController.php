@@ -5,20 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Address;
 use App\Models\Category;
 use App\Models\Service;
-use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
 
 class UserServiceController extends Controller
 {
     public function index(Request $request)
     {
-        $user         = $request->user();
-        $userSettings = $user?->settings;
-        $userGender   = $user?->userProfile?->gender;
+        $categories = Category::orderBy('name')->get();
 
-        $categories  = Category::orderBy('name')->get();
-        $radiusKm    = max(1, min((int) $request->input('radius_km', 100), 100));
-       
+        $radiusKm = max(1, min((int) $request->input('radius_km', 25), 100));
         $coordinates = $this->resolveUserCoordinates($request);
 
         $query = Service::query()
@@ -27,27 +22,6 @@ class UserServiceController extends Controller
             ->withAvg('reviews as live_rating', 'rating')
             ->where('is_active', true);
 
-        // ── same_gender_provider ──────────────────────────────────────
-        if ($userSettings?->same_gender_provider && $userGender) {
-            $query->whereHas('providerProfile.user.userProfile', function ($q) use ($userGender) {
-                $q->where('gender', $userGender);
-            });
-        }
-
-        // ── repeat_providers ──────────────────────────────────────────
-        if ($userSettings?->repeat_providers) {
-            $usedProviderIds = ServiceRequest::where('user_id', $user->user_id)
-                ->where('status', 'completed')
-                ->pluck('provider_id');
-
-            if ($usedProviderIds->isEmpty()) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->whereIn('services.provider_id', $usedProviderIds);
-            }
-        }
-
-        // ── search ────────────────────────────────────────────────────
         if ($search = trim((string) $request->input('search', ''))) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
@@ -56,7 +30,6 @@ class UserServiceController extends Controller
             });
         }
 
-        // ── category ──────────────────────────────────────────────────
         if ($category = $request->input('category')) {
             $query->whereHas('category', function ($q) use ($category) {
                 $q->where('slug', $category);
@@ -74,23 +47,26 @@ class UserServiceController extends Controller
 
             $query->where(function ($q) use ($location, $terms) {
                 $full = mb_strtolower($location);
+
                 $q->whereRaw('LOWER(services.location) like ?', ['%' . $full . '%']);
+
                 foreach ($terms as $term) {
                     $q->orWhereRaw('LOWER(services.location) like ?', ['%' . $term . '%']);
                 }
             });
         }
 
-        // ── proximity ─────────────────────────────────────────────────
         $showProximityWarning = false;
 
         if ($hasLocationSearch) {
+            // Location search should return services in the searched area,
+            // regardless of current GPS coordinates.
             $query->select('services.*');
         } elseif ($coordinates !== null) {
-            $lat         = $coordinates['lat'];
-            $lng         = $coordinates['lng'];
+            $lat = $coordinates['lat'];
+            $lng = $coordinates['lng'];
             $distanceSql = $this->distanceSql('pp.last_lat', 'pp.last_lng');
-            $bindings    = [$lat, $lng, $lat];
+            $bindings = [$lat, $lng, $lat];
 
             $query->join('provider_profiles as pp', 'pp.provider_id', '=', 'services.provider_id')
                 ->whereNotNull('pp.last_lat')
@@ -108,7 +84,6 @@ class UserServiceController extends Controller
             $query->whereRaw('1 = 0');
         }
 
-        // ── sorting ───────────────────────────────────────────────────
         $sort = $request->input('sort');
         if (!$sort) {
             $sort = (!$hasLocationSearch && $coordinates) ? 'nearest' : 'rating';
@@ -132,7 +107,9 @@ class UserServiceController extends Controller
                 $query->orderBy('services.created_at', 'desc');
                 break;
             case 'rating':
-            default:           $query->orderBy('rating', 'desc');              break;
+            default:
+                $query->orderBy('rating', 'desc');
+                break;
         }
 
         $services = $query->paginate(12)->withQueryString();
@@ -143,8 +120,8 @@ class UserServiceController extends Controller
             'location' => (string) $request->input('location', ''),
             'sort' => (string) $sort,
             'radius_km' => $radiusKm,
-            'lat'       => $coordinates['lat'] ?? null,
-            'lng'       => $coordinates['lng'] ?? null,
+            'lat' => $coordinates['lat'] ?? null,
+            'lng' => $coordinates['lng'] ?? null,
         ];
 
         return view('Users.services', compact('services', 'categories', 'filters', 'showProximityWarning'));
@@ -178,6 +155,7 @@ class UserServiceController extends Controller
         if (is_numeric($requestLat) && is_numeric($requestLng)) {
             $lat = (float) $requestLat;
             $lng = (float) $requestLng;
+
             if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
                 return ['lat' => $lat, 'lng' => $lng];
             }
@@ -191,7 +169,11 @@ class UserServiceController extends Controller
             ->orderByDesc('updated_at')
             ->first();
 
-        return $address === null ? null : [
+        if ($address === null) {
+            return null;
+        }
+
+        return [
             'lat' => (float) $address->latitude,
             'lng' => (float) $address->longitude,
         ];

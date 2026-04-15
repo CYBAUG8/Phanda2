@@ -1,4 +1,4 @@
-@extends('Users.layout')
+@extends('users.layout')
 @section('content')
 
 <!DOCTYPE html>
@@ -49,7 +49,7 @@
         </section>
 
         <!-- SERVICE PREFERENCES -->
-        <section class="ui-card p-4 sm:p-6">
+        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Service Preferences</h2>
 
             <template x-if="loading.settings">
@@ -85,7 +85,7 @@
         </section>
 
         <!-- SAFETY & SHARING -->
-        <section class="ui-card p-4 sm:p-6">
+        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Safety & Sharing</h2>
             <div class="space-y-4">
                 <div class="border-b pb-4">
@@ -139,7 +139,7 @@
         </section>
 
         <!-- SAVED LOCATIONS -->
-        <section class="ui-card p-4 sm:p-6">
+        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Saved Locations</h2>
 
             <template x-if="loading.locations">
@@ -176,7 +176,7 @@
         </section>
 
         <!-- SECURITY & PRIVACY -->
-        <section class="ui-card p-4 sm:p-6">
+        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Security & Privacy</h2>
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b pb-3 hover:bg-gray-50 px-2 py-1 rounded transition-colors duration-200 cursor-pointer" @click="openPasswordModal()">
@@ -221,7 +221,7 @@
         </section>
 
         <!-- NOTIFICATIONS -->
-        <section class="ui-card p-4 sm:p-6">
+        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Notifications</h2>
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b pb-3 hover:bg-gray-50 px-2 py-1 rounded transition-colors duration-200">
@@ -235,7 +235,7 @@
         </section>
 
         <!-- DATA MANAGEMENT -->
-        <section class="ui-card p-4 sm:p-6">
+        <section class="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <h2 class="text-lg font-semibold mb-4 text-orange-500">Data Management</h2>
             <div class="flex flex-col sm:flex-row gap-3">
                 <button @click="downloadData()" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border-2 border-orange-500 text-orange-500 font-medium rounded-lg hover:bg-orange-50 transition-all duration-200 w-full sm:w-auto">
@@ -1165,6 +1165,6 @@
         }
     }
     </script>
+</body>
+</html>
 @endsection
-
-

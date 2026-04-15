@@ -216,12 +216,12 @@ class ProviderBookingController extends Controller
         return $this->statusResponse($request, $booking, true, 'Booking cancelled.');
     }
 
-    private function findProviderBooking(Request $request, string $id): ServiceRequest
+    private function findProviderBooking(Request $request, string $id): Booking
     {
         $providerProfile = $request->user()->providerProfile;
         abort_if(!$providerProfile, 403, 'Provider profile not found.');
 
-        return ServiceRequest::where('booking_id', $id)
+        return Booking::where('id', $id)
             ->whereHas('service', function ($query) use ($providerProfile) {
                 $query->withTrashed()->where('provider_id', $providerProfile->provider_id);
             })
@@ -249,7 +249,7 @@ class ProviderBookingController extends Controller
                 'cancellation_reason' => $booking->cancellation_reason,
                 'status_label' => $booking->status_label,
                 'message' => $message,
-                'booking_id' => $booking->booking_id,
+                'booking_id' => $booking->id,
             ], $success ? 200 : 422);
         }
 

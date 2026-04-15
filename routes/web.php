@@ -331,6 +331,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/users/messages/{conversation}/read', [UserMessageController::class, 'markRead'])
         ->name('user.messages.read');
     
+    Route::post('/users/bookings/{booking}/payments/initiate', [UserPaymentController::class, 'initiate'])
+    ->middleware('auth')
+    ->name('users.payments.initiate');
+    
     Route::post('/users/messages/start', [UserMessageController::class, 'startConversation'])
         ->name('user.messages.start');
 

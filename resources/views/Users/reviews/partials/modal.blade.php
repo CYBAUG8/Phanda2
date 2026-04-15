@@ -7,28 +7,13 @@
             {{ $userReviewForSelected ? 'Edit Your Review' : 'Add Review' }}
         </h2>
 
-        @if($reviewableBooking)
-            <p class="mt-2 text-sm text-slate-500">
-                Booking {{ $reviewableBooking->booking_code }} on {{ $reviewableBooking->booking_date->format('d M Y') }}
-            </p>
-        @endif
-
-        <form method="POST" action="{{ route('reviews.store') }}" class="mt-4 space-y-4">
+        <form method="POST" action="{{ route('reviews.store') }}">
             @csrf
 
             {{-- REQUIRED hidden fields --}}
             <input type="hidden" name="provider_id" value="{{ $selectedProviderId }}">
 
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-slate-700">Comment</label>
-                <textarea
-                    name="comment"
-                    rows="4"
-                    required
-                    class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                    placeholder="Write your review..."
-                >{{ old('comment', optional($reviewForBooking)->comment) }}</textarea>
-            </div>
+            <input type="hidden" name="service_id" value="{{  $selectedProvider['full_name'] ?? null}}">
 
             <input type="hidden" name="user_id" value="{{ $currentUser->user_id }}">
 

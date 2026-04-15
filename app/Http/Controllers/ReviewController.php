@@ -9,14 +9,14 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
+
 
 class ReviewController extends Controller
 {
     /**
      * ================= Web: Show reviews for a provider =================
      */
-    public function index(Request $request, BookingLifecycleService $bookingLifecycleService)
+    public function index(Request $request)
     {
         $currentUser = Auth::user();
 
@@ -96,11 +96,10 @@ class ReviewController extends Controller
             'totalReviews',
             'averageRating',
             'ratingCounts',
-            'reviewableBooking',
-            'reviewForBooking',
-            'bookingContextError'
+            'userReviewForSelected'
         ));
     }
+
 
     /**
      * ================= API: Get reviews for a specific provider =================
@@ -113,8 +112,7 @@ class ReviewController extends Controller
             ->get()
             ->map(function ($r) {
                 return [
-                    'id' => $r->review_id,
-                    'booking_id' => $r->booking_id,
+                    'id' => $r->id,
                     'service_id' => $r->service_id,
                     'provider_id' => $r->to_user_id,
                     'user_id' => $r->from_user_id,
@@ -144,7 +142,7 @@ class ReviewController extends Controller
             ->get();
 
         return response()->json([
-            'reviews' => $reviews,
+            'reviews' => $reviews
         ], 200);
     }
 
@@ -160,103 +158,30 @@ class ReviewController extends Controller
             'comment' => 'required|string',
         ]);
 
-        $user = Auth::user();
-        $booking = Booking::with('service.providerProfile')
-            ->where('id', $validated['booking_id'])
-            ->firstOrFail();
-
-        $booking = $bookingLifecycleService->syncBooking($booking);
-
-        if ($booking->user_id !== $user->user_id) {
-            return $this->forbiddenReviewResponse($request, 'You can only review your own completed bookings.');
-        }
-
-        if ($booking->status !== 'completed') {
-            return $this->invalidReviewStateResponse($request, 'Only completed bookings can be reviewed.');
-        }
-
-        $providerUserId = optional(optional($booking->service)->providerProfile)->user_id;
-        if (!$providerUserId) {
-            return $this->invalidReviewStateResponse($request, 'Provider details are missing for this booking.');
-        }
-
-        $existingReview = Review::where('booking_id', $booking->id)->first();
-        if ($existingReview && $existingReview->from_user_id !== $user->user_id) {
-            return $this->forbiddenReviewResponse($request, 'You cannot modify this review.');
-        }
-
-        if ($existingReview) {
-            $existingReview->update([
-                'service_id' => $booking->service_id,
-                'to_user_id' => $providerUserId,
-                'from_user_id' => $user->user_id,
-                'rating' => $validated['rating'],
-                'comment' => $validated['comment'],
-            ]);
-
-            $review = $existingReview;
-            $statusCode = 200;
-        } else {
-            $review = Review::create([
-                'booking_id' => $booking->id,
-                'service_id' => $booking->service_id,
-                'to_user_id' => $providerUserId,
-                'from_user_id' => $user->user_id,
-                'rating' => $validated['rating'],
-                'comment' => $validated['comment'],
-            ]);
-
-            $statusCode = 201;
-        }
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => 'Review submitted successfully.',
-                'review' => [
-                    'review_id' => $review->review_id,
-                    'booking_id' => $review->booking_id,
-                    'service_id' => $review->service_id,
-                    'provider_id' => $review->to_user_id,
-                    'user_id' => $review->from_user_id,
-                    'rating' => $review->rating,
-                    'comment' => $review->comment,
-                ],
-            ], $statusCode);
-        }
+        Review::updateOrCreate(
+            [
+                'from_user_id' => Auth::user()->user_id,
+                'to_user_id'   => $request->provider_id,
+            ],
+            [
+                'service_id' => $request->service_id,
+                'rating'     => $request->rating,
+                'comment'    => $request->comment,
+            ]
+        );
 
         return back()->with('success', 'Review submitted successfully.');
     }
 
+
     /**
      * ================= API: Delete a review =================
      */
-    public function destroy(Request $request, string $id)
+    public function destroy($id)
     {
         Review::where('review_id', $id)->delete();
 
         return redirect()->back()->with('success', 'Review deleted successfully.');
     }
 
-    private function forbiddenReviewResponse(Request $request, string $message)
-    {
-        if ($request->expectsJson()) {
-            return response()->json(['message' => $message], 403);
-        }
-
-        return back()->with('error', $message);
-    }
-
-    private function invalidReviewStateResponse(Request $request, string $message)
-    {
-        if ($request->expectsJson()) {
-            return response()->json(['message' => $message], 422);
-        }
-
-        return back()->with('error', $message);
-    }
-
-    private function isBookingReviewSchemaReady(): bool
-    {
-        return Schema::hasColumn('service_reviews', 'booking_id');
-    }
 }

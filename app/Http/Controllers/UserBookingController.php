@@ -49,12 +49,12 @@ class UserBookingController extends Controller
         $validated = $request->validate([
             'service_id' => ['required', Rule::exists('services', 'service_id')->whereNull('deleted_at')],
             'booking_date' => 'required|date|after_or_equal:today',
-            'start_time'   => 'required|date_format:H:i',
-            'address'      => 'required|string|max:255',
-            'notes'        => 'nullable|string|max:1000',
-            'search_lat'   => 'nullable|numeric|between:-90,90',
-            'search_lng'   => 'nullable|numeric|between:-180,180',
-            'radius_km'    => 'nullable|numeric|min:1|max:100',
+            'start_time' => 'required|date_format:H:i',
+            'address' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+            'search_lat' => 'nullable|numeric|between:-90,90',
+            'search_lng' => 'nullable|numeric|between:-180,180',
+            'radius_km' => 'nullable|numeric|min:1|max:100',
         ]);
 
         $service = Service::query()
@@ -75,8 +75,10 @@ class UserBookingController extends Controller
         }
 
         $distanceKm = $this->distanceKm(
-            $coordinates['lat'], $coordinates['lng'],
-            (float) $provider->last_lat, (float) $provider->last_lng
+            $coordinates['lat'],
+            $coordinates['lng'],
+            (float) $provider->last_lat,
+            (float) $provider->last_lng
         );
 
         $userRadiusKm = max(1.0, min((float) ($validated['radius_km'] ?? 25), 100.0));
@@ -125,62 +127,6 @@ class UserBookingController extends Controller
         return redirect()->route('users.bookings')->with('success', 'Booking has been cancelled.');
     }
 
-    private function maybeShareWithEmergencyContact($user, ServiceRequest $booking): void
-    {
-        $settings = $user->settings;
-
-        if (!$settings?->auto_share) {
-            return;
-        }
-
-        $emergencyContact = EmergencyContact::where('user_id', $user->user_id)->first();
-
-        if (!$emergencyContact || !$emergencyContact->phone) {
-            return;
-        }
-
-        $booking->load(['service', 'user']);
-
-        $date     = \Carbon\Carbon::parse($booking->booking_date)->format('D, d M Y');
-        $time     = \Carbon\Carbon::parse($booking->start_time)->format('H:i');
-        $price    = 'R' . number_format((float) $booking->total_price, 2);
-        $userName = $booking->user->full_name;
-        $service  = $booking->service->title ?? 'a service';
-        $provider = $booking->service->provider_name ?? 'a provider';
-        $address  = $booking->address;
-
-        $message = "🔔 Phanda Safety Alert\n"
-            . "Hi {$emergencyContact->name}, {$userName} has booked a service.\n\n"
-            . "📋 Service: {$service}\n"
-            . "👤 Provider: {$provider}\n"
-            . "📅 Date: {$date}\n"
-            . "⏰ Time: {$time}\n"
-            . "📍 Address: {$address}\n"
-            . "💰 Price: {$price}\n\n"
-            . "If you have concerns about their safety, please contact them directly.";
-
-        try {
-            $twilio = new \Twilio\Rest\Client(
-                config('services.twilio.sid'),
-                config('services.twilio.token')
-            );
-
-            $twilio->messages->create(
-                $emergencyContact->phone,
-                [
-                    'from' => config('services.twilio.from'),
-                    'body' => $message,
-                ]
-            );
-        } catch (\Exception $e) {
-            Log::error('Failed to send emergency contact SMS', [
-                'user_id' => $user->user_id,
-                'contact' => $emergencyContact->phone,
-                'error'   => $e->getMessage(),
-            ]);
-        }
-    }
-
     private function resolveUserCoordinates(Request $request, array $validated): ?array
     {
         if (isset($validated['search_lat'], $validated['search_lng'])) {
@@ -198,7 +144,11 @@ class UserBookingController extends Controller
             ->orderByDesc('updated_at')
             ->first();
 
-        return $address === null ? null : [
+        if ($address === null) {
+            return null;
+        }
+
+        return [
             'lat' => (float) $address->latitude,
             'lng' => (float) $address->longitude,
         ];
@@ -206,6 +156,8 @@ class UserBookingController extends Controller
 
     private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
+        $earthRadiusKm = 6371;
+
         $dLat = deg2rad($lat2 - $lat1);
         $dLng = deg2rad($lng2 - $lng1);
 
@@ -217,5 +169,4 @@ class UserBookingController extends Controller
         return $earthRadiusKm * $c;
     }
 }
-
 

@@ -6,13 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\ServiceRequest;
 use App\Models\Payout;
 use App\Models\ProviderProfile;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ProviderEarningsController extends Controller
 {
     private const COMMISSION_RATE = 0.10;
-    private const HOLD_HOURS = 48;
 
     public function index(Request $request)
     {
