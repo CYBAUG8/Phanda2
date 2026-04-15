@@ -522,10 +522,7 @@
         </form>
     </div>
 </div>
-<<<<<<< HEAD
-=======
 </div>
->>>>>>> feature2
 @endsection
 
 @push('scripts')

@@ -4,30 +4,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Phanda Provider</title>
- 
-     
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-  <script src="https://unpkg.com/@heroicons/react@24/outline/index.js"></script>
-  
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
- 
- 
-   {{-- Load Vite JS and providers CSS (reuses firstpage entry) --}}
-    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/js/firstpage.js', 'resources/css/providers.css'])
-         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    @else
-        <link rel="stylesheet" href="/build/assets/providers.css">
-        <script src="/build/assets/firstpage.js"></script>
-    @endif
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-     @stack('styles')
-     <style>
+    {{-- Icons & external styles --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    {{-- FullCalendar (FIXED CSS) --}}
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+    {{-- ✅ VITE (THIS IS THE KEY FIX) --}}
+    @vite(['resources/css/app.css', 'resources/css/providers.css', 'resources/js/firstpage.js'])
+
+    {{-- Alpine --}}
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    @stack('styles')
+
+    <style>
         [x-cloak] { display: none !important; }
     </style>
 </head>
