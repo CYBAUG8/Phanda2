@@ -26,15 +26,20 @@ class Booking extends Model
     public const CANCELLATION_REASON_USER = 'user_cancelled';
     public const CANCELLATION_REASON_PROVIDER = 'provider_cancelled';
 
+    protected $table = 'service_requests';
+    protected $primaryKey = 'booking_id';
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id',
+        'booking_id',
         'user_id',
         'service_id',
+        'provider_id',
+        'address_id',
         'booking_date',
         'start_time',
+        'end_time',
         'status',
         'cancellation_reason',
         'cancelled_at',
@@ -58,15 +63,15 @@ class Booking extends Model
     protected static function booted()
     {
         static::creating(function ($model) {
-            if (!$model->id) {
-                $model->id = (string) Str::uuid();
+            if (!$model->booking_id) {
+                $model->booking_id = (string) Str::uuid();
             }
         });
     }
 
     public function getBookingCodeAttribute(): string
     {
-        return 'BKG-' . strtoupper(substr((string) $this->id, 0, 8));
+        return 'BKG-' . strtoupper(substr((string) $this->booking_id, 0, 8));
     }
 
     public function getFormattedPriceAttribute(): string
@@ -163,8 +168,18 @@ class Booking extends Model
         return $this->belongsTo(Service::class, 'service_id', 'service_id');
     }
 
+    public function providerProfile()
+    {
+        return $this->belongsTo(ProviderProfile::class, 'provider_id', 'provider_id');
+    }
+
+    public function address()
+    {
+        return $this->belongsTo(Address::class, 'address_id', 'address_id');
+    }
+
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'booking_id', 'id');
+        return $this->hasMany(Payment::class, 'booking_id', 'booking_id');
     }
 }

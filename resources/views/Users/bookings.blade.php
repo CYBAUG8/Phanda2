@@ -169,7 +169,7 @@
                                 <p class="text-lg font-bold text-slate-900">{{ $booking->formatted_price }}</p>
 
                                 @if($booking->status === \App\Models\Booking::STATUS_CONFIRMED && in_array($booking->payment_status, [\App\Models\Booking::PAYMENT_STATUS_REQUIRED, \App\Models\Booking::PAYMENT_STATUS_FAILED, \App\Models\Booking::PAYMENT_STATUS_UNPAID], true))
-                                    <form action="{{ route('users.payments.initiate', $booking->id) }}" method="POST">
+                                    <form action="{{ route('users.payments.initiate', $booking->booking_id) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="ui-btn-primary min-h-11 w-full justify-center">
                                             <i class="fa-solid fa-credit-card"></i>
@@ -180,7 +180,7 @@
 
                                 @if($booking->can_cancel)
                                     <form
-                                        action="{{ route('users.bookings.cancel', $booking->id) }}"
+                                        action="{{ route('users.bookings.cancel', $booking->booking_id) }}"
                                         method="POST"
                                         data-confirm="Are you sure you want to cancel this booking?"
                                         data-confirm-title="Cancel booking"

@@ -255,7 +255,7 @@
                             </button>
 
                             @if($booking->status === \App\Models\Booking::STATUS_PENDING)
-                                <form method="POST" action="{{ route('provider.bookings.confirm', $booking->id) }}" data-submit-lock="true">
+                                <form method="POST" action="{{ route('provider.bookings.confirm', $booking->booking_id) }}" data-submit-lock="true">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="ui-btn-primary min-h-11 w-full justify-center" data-loading-text="Accepting...">Accept</button>
@@ -263,7 +263,7 @@
 
                                 <form
                                     method="POST"
-                                    action="{{ route('provider.bookings.cancel', $booking->id) }}"
+                                    action="{{ route('provider.bookings.cancel', $booking->booking_id) }}"
                                     data-confirm="Decline this booking request?"
                                     data-confirm-title="Decline booking"
                                     data-confirm-text="Decline"

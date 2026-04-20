@@ -27,21 +27,20 @@ class BookingPaymentService
         string $method,
         ?PaymentMethod $paymentMethod = null,
         array $methodMetadata = []
-    ): Payment
-    {
+    ): Payment {
         return DB::transaction(function () use ($booking, $method, $paymentMethod, $methodMetadata) {
             $payment = Payment::create([
-                'booking_id' => $booking->id,
-                'user_id' => $booking->user_id,
+                'booking_id'        => $booking->booking_id,
+                'user_id'           => $booking->user_id,
                 'payment_method_id' => $paymentMethod?->payment_method_id,
-                'provider' => self::PROVIDER,
-                'method' => $method,
-                'amount' => (float) $booking->total_price,
-                'currency' => 'ZAR',
-                'status' => 'paid',
-                'reference' => $this->generateReference(),
-                'paid_at' => now(),
-                'metadata' => $this->composeMetadata($paymentMethod, $methodMetadata),
+                'provider'          => self::PROVIDER,
+                'method'            => $method,
+                'amount'            => (float) $booking->total_price,
+                'currency'          => 'ZAR',
+                'status'            => 'paid',
+                'reference'         => $this->generateReference(),
+                'paid_at'           => now(),
+                'metadata'          => $this->composeMetadata($paymentMethod, $methodMetadata),
             ]);
 
             $booking->update([
@@ -58,21 +57,20 @@ class BookingPaymentService
         string $method,
         ?PaymentMethod $paymentMethod = null,
         array $methodMetadata = []
-    ): Payment
-    {
+    ): Payment {
         return DB::transaction(function () use ($booking, $method, $paymentMethod, $methodMetadata) {
             $payment = Payment::create([
-                'booking_id' => $booking->id,
-                'user_id' => $booking->user_id,
+                'booking_id'        => $booking->booking_id,
+                'user_id'           => $booking->user_id,
                 'payment_method_id' => $paymentMethod?->payment_method_id,
-                'provider' => self::PROVIDER,
-                'method' => $method,
-                'amount' => (float) $booking->total_price,
-                'currency' => 'ZAR',
-                'status' => 'failed',
-                'reference' => $this->generateReference(),
-                'failed_at' => now(),
-                'metadata' => $this->composeMetadata($paymentMethod, $methodMetadata),
+                'provider'          => self::PROVIDER,
+                'method'            => $method,
+                'amount'            => (float) $booking->total_price,
+                'currency'          => 'ZAR',
+                'status'            => 'failed',
+                'reference'         => $this->generateReference(),
+                'failed_at'         => now(),
+                'metadata'          => $this->composeMetadata($paymentMethod, $methodMetadata),
             ]);
 
             $booking->update([
@@ -92,7 +90,7 @@ class BookingPaymentService
         return DB::transaction(function () use ($booking, $reason) {
             /** @var Payment|null $payment */
             $payment = Payment::query()
-                ->where('booking_id', $booking->id)
+                ->where('booking_id', $booking->booking_id)
                 ->where('status', 'paid')
                 ->latest('created_at')
                 ->first();
@@ -102,17 +100,17 @@ class BookingPaymentService
             }
 
             $payment->update([
-                'status' => 'refunded',
+                'status'   => 'refunded',
                 'metadata' => array_merge($payment->metadata ?? [], [
                     'refunded' => true,
                 ]),
             ]);
 
             $refund = Refund::create([
-                'payment_id' => $payment->payment_id,
-                'amount' => (float) $booking->total_price,
-                'status' => 'refunded',
-                'reason' => $reason,
+                'payment_id'  => $payment->payment_id,
+                'amount'      => (float) $booking->total_price,
+                'status'      => 'refunded',
+                'reason'      => $reason,
                 'refunded_at' => now(),
             ]);
 
@@ -166,9 +164,9 @@ class BookingPaymentService
     private function composeMetadata(?PaymentMethod $paymentMethod, array $methodMetadata): array
     {
         $metadata = array_filter([
-            'simulated' => true,
-            'card_brand' => $paymentMethod?->brand ?? ($methodMetadata['card_brand'] ?? null),
-            'card_last_four' => $paymentMethod?->last_four ?? ($methodMetadata['card_last_four'] ?? null),
+            'simulated'        => true,
+            'card_brand'       => $paymentMethod?->brand ?? ($methodMetadata['card_brand'] ?? null),
+            'card_last_four'   => $paymentMethod?->last_four ?? ($methodMetadata['card_last_four'] ?? null),
             'card_holder_name' => $paymentMethod?->holder_name ?? ($methodMetadata['card_holder_name'] ?? null),
         ], static fn ($value) => $value !== null && $value !== '');
 

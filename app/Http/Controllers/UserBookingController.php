@@ -34,8 +34,8 @@ class UserBookingController extends Controller
 
         $allBookings = Booking::where('user_id', $user->user_id);
         $stats = [
-            'total' => (clone $allBookings)->count(),
-            'upcoming' => (clone $allBookings)->whereIn('status', ['pending', 'confirmed'])->count(),
+            'total'     => (clone $allBookings)->count(),
+            'upcoming'  => (clone $allBookings)->whereIn('status', ['pending', 'confirmed'])->count(),
             'completed' => (clone $allBookings)->where('status', 'completed')->count(),
         ];
 
@@ -47,14 +47,14 @@ class UserBookingController extends Controller
     public function store(Request $request, BookingCreationService $bookingCreationService)
     {
         $validated = $request->validate([
-            'service_id' => ['required', Rule::exists('services', 'service_id')->whereNull('deleted_at')],
+            'service_id'  => ['required', Rule::exists('services', 'service_id')->whereNull('deleted_at')],
             'booking_date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'address' => 'required|string|max:255',
-            'notes' => 'nullable|string|max:1000',
-            'search_lat' => 'nullable|numeric|between:-90,90',
-            'search_lng' => 'nullable|numeric|between:-180,180',
-            'radius_km' => 'nullable|numeric|min:1|max:100',
+            'start_time'  => 'required|date_format:H:i',
+            'address'     => 'required|string|max:255',
+            'notes'       => 'nullable|string|max:1000',
+            'search_lat'  => 'nullable|numeric|between:-90,90',
+            'search_lng'  => 'nullable|numeric|between:-180,180',
+            'radius_km'   => 'nullable|numeric|min:1|max:100',
         ]);
 
         $service = Service::query()
@@ -96,6 +96,8 @@ class UserBookingController extends Controller
         return redirect()->route('users.bookings')->with('success', 'Service request sent to provider.');
     }
 
+    // NOTE: ensure your route uses {booking:booking_id} for explicit key binding:
+    // Route::patch('/bookings/{booking:booking_id}/cancel', [UserBookingController::class, 'cancel']);
     public function cancel(
         Request $request,
         Booking $booking,
@@ -115,9 +117,9 @@ class UserBookingController extends Controller
         $refund = $bookingPaymentService->refundIfEligible($booking);
 
         $booking->update([
-            'status' => Booking::STATUS_CANCELLED,
+            'status'              => Booking::STATUS_CANCELLED,
             'cancellation_reason' => Booking::CANCELLATION_REASON_USER,
-            'cancelled_at' => now(),
+            'cancelled_at'        => now(),
         ]);
 
         if ($refund !== null) {
@@ -169,4 +171,3 @@ class UserBookingController extends Controller
         return $earthRadiusKm * $c;
     }
 }
-

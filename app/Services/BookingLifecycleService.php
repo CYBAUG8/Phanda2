@@ -65,6 +65,25 @@ class BookingLifecycleService
 
     public function scheduledEndAt(Booking $booking): ?CarbonImmutable
     {
+        if (!$booking->booking_date) {
+            return null;
+        }
+
+        // Prefer the stored end_time column from service_requests
+        if ($booking->end_time) {
+            $date = $booking->booking_date->format('Y-m-d');
+            $time = CarbonImmutable::parse((string) $booking->end_time, self::BUSINESS_TIMEZONE)->format('H:i:s');
+
+            $end = CarbonImmutable::createFromFormat(
+                'Y-m-d H:i:s',
+                "{$date} {$time}",
+                self::BUSINESS_TIMEZONE
+            );
+
+            return $end === false ? null : $end;
+        }
+
+        // Fallback: derive from start_time + service duration
         $start = $this->scheduledStartAt($booking);
 
         if ($start === null) {
@@ -87,9 +106,9 @@ class BookingLifecycleService
         }
 
         $booking->update([
-            'status' => 'cancelled',
+            'status'              => 'cancelled',
             'cancellation_reason' => Booking::CANCELLATION_REASON_EXPIRED,
-            'cancelled_at' => now(),
+            'cancelled_at'        => now(),
         ]);
 
         return true;
@@ -97,6 +116,6 @@ class BookingLifecycleService
 
     private function resolveDurationMinutes(Booking $booking): int
     {
-        return max((int) ($booking->service?->min_duration ?? 60), 30);
+        return max((int) ($booking->service?->duration_minutes ?? $booking->service?->min_duration ?? 60), 30);
     }
 }
