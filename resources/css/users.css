@@ -456,48 +456,6 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
     position: relative;
 }
 
-.services-page .category-pills-container {
-    width: 100%;
-    margin-bottom: 0.25rem;
-    overflow-x: auto;
-}
-
-.services-page .category-pills {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.5rem;
-    padding: 0.15rem 0 0.75rem;
-    min-width: max-content;
-}
-
-.services-page .category-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.46rem 0.92rem;
-    border-radius: 999px;
-    text-decoration: none;
-    font-size: 0.82rem;
-    font-weight: 600;
-    white-space: nowrap;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-    background: #fff;
-    transition: all 0.2s ease;
-}
-
-.services-page .category-pill:hover {
-    border-color: #fdba74;
-    color: #c2410c;
-    background: #fff7ed;
-}
-
-.services-page .category-pill--active {
-    background: #f97316;
-    color: #fff;
-    border-color: #ea580c;
-    box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
-}
 
 .services-page .services-grid {
     display: grid;
@@ -923,16 +881,12 @@ html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system,
     color: #f97316;
 }
 
-.services-page .category-pills-container,
-.services-page .category-pills,
 .services-page .booking-modal,
 .services-page .location-autocomplete-dropdown {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
 
-.services-page .category-pills-container::-webkit-scrollbar,
-.services-page .category-pills::-webkit-scrollbar,
 .services-page .booking-modal::-webkit-scrollbar,
 .services-page .location-autocomplete-dropdown::-webkit-scrollbar {
     width: 0;

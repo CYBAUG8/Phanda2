@@ -67,24 +67,23 @@
             </button>
         </div>
 
-        <div class="hidden">
-            <small class="text-muted" id="locationStatusText" aria-live="polite"></small>
+        <div>
+            <label for="categorySelect" class="form-label">Category</label>
+            <select id="categorySelect" name="category" class="sort-dropdown" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->slug }}" {{ $filters['category'] === $cat->slug ? 'selected' : '' }}>
+                        {{ $cat->name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
     </div>
-</form>
 
-<div class="category-pills-container">
-    <div class="category-pills">
-        <a href="{{ route('users.services', array_merge($filters, ['category' => ''])) }}" class="category-pill {{ $filters['category'] === '' ? 'category-pill--active' : '' }}">
-            <i class="fas fa-th-large"></i><span>All</span>
-        </a>
-        @foreach($categories as $cat)
-            <a href="{{ route('users.services', array_merge($filters, ['category' => $cat->slug])) }}" class="category-pill {{ $filters['category'] === $cat->slug ? 'category-pill--active' : '' }}">
-                <i class="fas {{ $cat->icon }}"></i><span>{{ $cat->name }}</span>
-            </a>
-        @endforeach
+    <div class="hidden">
+        <small class="text-muted" id="locationStatusText" aria-live="polite"></small>
     </div>
-</div>
+</form>
 
 <div class="results-header flex items-center justify-between gap-3">
     <span class="text-sm text-slate-500">Showing <strong class="text-slate-900">{{ $services->total() }}</strong> services</span>
@@ -881,4 +880,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
-
